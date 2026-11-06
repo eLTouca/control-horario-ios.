@@ -1,0 +1,3349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Horas" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="description" content="Control de horas extras y nómina. Optimizado para iPhone y uso rápido." />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <title>Control de Horas Extras & Nómina</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --primary-soft: #eef2ff;
+      --accent: #0ea5e9;
+      --success: #059669;
+      --success-soft: #ecfdf5;
+      --danger: #e11d48;
+      --danger-soft: #fff1f2;
+      --warning: #d97706;
+      --bg: #f8fafc;
+      --bg-pattern: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --text-secondary: #64748b;
+      --muted: #94a3b8;
+      --border: #e2e8f0;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 1px 3px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06);
+      --shadow-lg: 0 4px 6px rgba(15,23,42,0.03), 0 16px 40px rgba(15,23,42,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 100% 80% at 0% 0%, rgba(79, 70, 229, 0.07), transparent 50%),
+        radial-gradient(ellipse 80% 60% at 100% 0%, rgba(14, 165, 233, 0.06), transparent 45%);
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 1.2rem 1.75rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.8);
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    header h1 span.logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+    }
+
+    header p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+      font-weight: 500;
+      margin-left: 44px;
+    }
+
+    nav {
+      display: flex;
+      gap: 0.3rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      background: var(--bg-pattern);
+      padding: 0.3rem;
+      border-radius: 999px;
+      width: fit-content;
+      border: 1px solid var(--border);
+    }
+
+    nav button {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.5rem 1.1rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    nav button:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.7);
+    }
+
+    nav button.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(15,23,42,0.08);
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 1.75rem 1.25rem 4rem;
+    }
+
+    .panel {
+      display: none;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .panel.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.35rem 1.25rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      max-width: 100%;
+    }
+
+    .card h2 {
+      font-size: 1.05rem;
+      margin-bottom: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      align-items: flex-end;
+    }
+
+    .form-group {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      background: #fafbfc;
+      color: var(--text);
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .form-group input::placeholder { color: var(--muted); }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.9rem center;
+      padding-right: 2.2rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.65rem 1.2rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: white;
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+    }
+    .btn-success:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #e11d48, #f43f5e);
+      color: white;
+    }
+    .btn-danger:hover { filter: brightness(1.05); }
+
+    .btn-outline {
+      background: white;
+      border: 1.5px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .btn-outline:hover {
+      background: var(--bg-pattern);
+      color: var(--text);
+      border-color: #cbd5e1;
+    }
+
+    .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; border-radius: 8px; }
+
+
+    .periodo-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: linear-gradient(135deg, #eef2ff 0%, #e0f2fe 100%);
+      border: 1px solid #c7d2fe;
+      border-radius: 14px;
+      padding: 0.85rem 1.1rem;
+      margin-bottom: 1rem;
+    }
+
+    .periodo-banner .titulo {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--primary);
+    }
+
+    .periodo-banner .rango {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .periodo-banner .badge-h {
+      background: white;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid #c7d2fe;
+      box-shadow: var(--shadow);
+    }
+
+    .chart-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem 0.85rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .chart-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .chart-card h3 span {
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+    }
+
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 110px;
+      width: 100%;
+      padding-top: 0.5rem;
+    }
+
+    .bar-col {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      gap: 0.2rem;
+    }
+
+    .bar {
+      width: 100%;
+      max-width: 18px;
+      border-radius: 5px 5px 2px 2px;
+      background: linear-gradient(180deg, #6366f1, #4f46e5);
+      min-height: 2px;
+      transition: height 0.25s ease;
+    }
+
+    .bar.alto {
+      background: linear-gradient(180deg, #34d399, #059669);
+    }
+
+    .bar-col:hover .bar {
+      filter: brightness(1.1);
+    }
+
+    .bar-label {
+      font-size: 0.58rem;
+      color: var(--muted);
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .bar-val {
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+
+    .lista-resumen {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      padding: 0.75rem 0.9rem;
+      margin-bottom: 0.75rem;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .lista-resumen strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .reg-item.has-horas {
+      border-left: 3px solid #6366f1;
+    }
+
+    .reg-item.has-horas.alto {
+      border-left-color: #059669;
+    }
+
+    .reg-fecha-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      min-width: 0;
+    }
+
+    .reg-dia {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: capitalize;
+      font-weight: 500;
+    }
+
+    .reg-item {
+      grid-template-columns: minmax(4.5rem, 6.5rem) 3.5rem 1fr auto;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.35rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.2rem 1rem;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #4f46e5, #0ea5e9);
+    }
+
+    .stat-card:nth-child(2)::before { background: linear-gradient(90deg, #0ea5e9, #06b6d4); }
+    .stat-card:nth-child(3)::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .stat-card:nth-child(4)::before { background: linear-gradient(90deg, #059669, #34d399); }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    .stat-card .label {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Lista de registros (no tabla) */
+    .reg-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 100%;
+    }
+
+    .reg-item {
+      display: grid;
+      grid-template-columns: 5.5rem 3.2rem 1fr auto;
+      align-items: center;
+      gap: 0.5rem 0.65rem;
+      padding: 0.7rem 0.75rem;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .reg-item:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .reg-fecha {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .reg-horas {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .reg-concepto {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .reg-acciones {
+      display: flex;
+      gap: 0.3rem;
+      flex-shrink: 0;
+    }
+
+    .reg-acciones .btn {
+      height: 32px;
+      padding: 0 0.65rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 1.1rem 0.85rem; }
+      .reg-item {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        gap: 0.25rem 0.5rem;
+      }
+      .reg-fecha { grid-column: 1; grid-row: 1; }
+      .reg-horas { grid-column: 1; grid-row: 1; justify-self: end; margin-right: 0.25rem; }
+      .reg-concepto { grid-column: 1; grid-row: 2; }
+      .reg-acciones { grid-column: 2; grid-row: 1 / 3; align-self: center; flex-direction: column; }
+      .reg-acciones .btn { width: 100%; padding: 0 0.5rem; font-size: 0.7rem; }
+    }
+
+    /* tablas genéricas (por si se usan en otros sitios) */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 0.65rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tr:hover td { background: #f8fafc; }
+
+    .empty {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .result-box {
+      background: var(--success-soft);
+      border: 1px solid #a7f3d0;
+      border-radius: var(--radius);
+      padding: 1.35rem 1.5rem;
+      margin-top: 1.15rem;
+    }
+
+    .result-box h3 {
+      color: var(--success);
+      margin-bottom: 0.9rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem 1.5rem;
+      font-size: 0.92rem;
+    }
+
+    .result-grid .label { color: var(--text-secondary); }
+    .result-grid .value { font-weight: 600; text-align: right; color: var(--text); }
+    .result-grid .label.total {
+      border-top: 1.5px solid #6ee7b7;
+      padding-top: 0.8rem;
+      margin-top: 0.35rem;
+      font-size: 1rem;
+      color: var(--success);
+      font-weight: 700;
+    }
+    .result-grid .value.total {
+      border-top: 1.5px solid #6ee7b7;
+      padding-top: 0.8rem;
+      margin-top: 0.35rem;
+      font-size: 1.25rem;
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .note {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #0f172a;
+      color: white;
+      padding: 0.8rem 1.3rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transform: translateY(16px);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .pdf-preview-box {
+      display: none;
+      margin-top: 1.25rem;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #f1f5f9;
+    }
+
+    .pdf-preview-box.visible {
+      display: block;
+    }
+
+    .pdf-preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      padding: 0.85rem 1rem;
+      background: white;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pdf-preview-header strong {
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .pdf-preview-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .pdf-preview-frame {
+      width: 100%;
+      height: min(70vh, 640px);
+      border: 0;
+      background: #e2e8f0;
+    }
+
+        .pdf-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+      width: 100%;
+      margin-top: 0.25rem;
+    }
+
+    .pdf-options label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      background: #f8fafc;
+      padding: 0.7rem 0.75rem;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      font-size: 0.88rem !important;
+      font-weight: 600 !important;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      margin: 0;
+      text-align: center;
+      min-height: 44px;
+      box-sizing: border-box;
+      white-space: nowrap;
+    }
+
+    .pdf-options label:has(input:checked) {
+      background: var(--primary-soft);
+      border-color: #a5b4fc;
+      color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.12);
+    }
+
+    .pdf-options input {
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      margin: 0;
+    }
+
+    @media (min-width: 520px) {
+      .pdf-options {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    .horas-btns {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.35rem;
+      align-items: center;
+      width: 100%;
+    }
+
+    .btn-hora {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 40px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1.5px solid #c7d2fe;
+      background: var(--primary-soft);
+      color: var(--primary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      padding: 0 0.15rem;
+      white-space: nowrap;
+    }
+
+    .btn-hora:hover {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-hora:active { transform: scale(0.96); }
+
+    .btn-hora.media {
+      background: var(--success-soft);
+      border-color: #a7f3d0;
+      color: var(--success);
+    }
+
+    .btn-hora.media:hover {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 3px 10px rgba(5, 150, 105, 0.28);
+    }
+
+    .btn-hora.menos {
+      background: #fff7ed;
+      border-color: #fed7aa;
+      color: #c2410c;
+    }
+
+    .btn-hora.menos:hover {
+      background: linear-gradient(135deg, #ea580c, #f97316);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 3px 10px rgba(234, 88, 12, 0.28);
+    }
+
+    .btn-hora.reset {
+      flex: 0 0 38px;
+      max-width: 38px;
+      background: var(--danger-soft);
+      border-color: #fecdd3;
+      color: var(--danger);
+      font-size: 0.95rem;
+    }
+
+    .btn-hora.reset:hover {
+      background: linear-gradient(135deg, #e11d48, #f43f5e);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 3px 10px rgba(225, 29, 72, 0.28);
+    }
+
+    .horas-display {
+      flex: 0 0 auto;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      min-width: 44px;
+      max-width: 58px;
+      text-align: center;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      height: 40px;
+      line-height: 40px;
+      padding: 0 0.35rem;
+      color: var(--primary);
+    }
+
+
+    .horas-btns-secondary {
+      margin-top: 0.45rem;
+      justify-content: flex-start;
+      gap: 0.5rem;
+    }
+
+    .horas-btns-secondary .horas-display {
+      min-width: 72px;
+      max-width: none;
+      flex: 0 0 auto;
+      font-size: 1.25rem;
+    }
+
+    .horas-btns-secondary .btn-hora.reset {
+      flex: 0 0 44px;
+      max-width: 44px;
+      height: 40px;
+    }
+
+
+    /* ===== MODO RÁPIDO (iPhone / Watch companion) ===== */
+    body.modo-rapido header,
+    body.modo-rapido nav,
+    body.modo-rapido .panel:not(#panel-rapido) {
+      display: none !important;
+    }
+
+    body.modo-rapido main {
+      max-width: 420px;
+      padding: 0.75rem;
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+
+    body.modo-rapido #panel-rapido.panel {
+      display: block !important;
+    }
+
+    .rapido-card {
+      background: white;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      padding: 1.25rem 1.1rem 1.4rem;
+      text-align: center;
+    }
+
+    .rapido-fecha {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.35rem;
+    }
+
+    .rapido-total {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--primary);
+      line-height: 1.1;
+      margin: 0.4rem 0 0.25rem;
+    }
+
+    .rapido-total span {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .rapido-periodo {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .rapido-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .rapido-btn {
+      border: none;
+      border-radius: 16px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 1.5rem;
+      padding: 1.15rem 0.5rem;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      box-shadow: 0 4px 14px rgba(79,70,229,0.3);
+      min-height: 64px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .rapido-btn:active { transform: scale(0.97); filter: brightness(0.95); }
+
+    .rapido-btn.media {
+      background: linear-gradient(135deg, #059669, #10b981);
+      box-shadow: 0 4px 14px rgba(5,150,105,0.28);
+    }
+
+    .rapido-btn.menos {
+      background: linear-gradient(135deg, #ea580c, #f97316);
+      box-shadow: 0 4px 14px rgba(234,88,12,0.28);
+    }
+
+    .rapido-btn.reset {
+      background: linear-gradient(135deg, #e11d48, #f43f5e);
+      box-shadow: 0 4px 14px rgba(225,29,72,0.28);
+      font-size: 1.1rem;
+    }
+
+    .rapido-btn.full {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #0f172a, #334155);
+      box-shadow: 0 4px 14px rgba(15,23,42,0.25);
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .rapido-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.85rem;
+    }
+
+    .rapido-actions .btn {
+      flex: 1;
+      min-height: 48px;
+      border-radius: 12px;
+    }
+
+    .nav-btn[data-panel="rapido"] {
+      /* highlight as quick access */
+    }
+
+    /* ===== CALENDARIO ===== */
+    #panel-calendario .card {
+      overflow: hidden;
+      max-width: 100%;
+    }
+
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      gap: 0.5rem;
+    }
+
+    .cal-header h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      flex: 1;
+      text-align: center;
+    }
+
+    .cal-nav-btn {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: white;
+      color: var(--text-secondary);
+      font-size: 1.15rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-family: inherit;
+      line-height: 1;
+    }
+
+    .cal-nav-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 5px;
+      width: 100%;
+    }
+
+    .cal-weekday {
+      text-align: center;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 0.3rem 0;
+      overflow: hidden;
+    }
+
+    .cal-day {
+      width: 100%;
+      height: 52px;
+      border-radius: 10px;
+      border: 1.5px solid transparent;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      font-family: inherit;
+      padding: 2px;
+      margin: 0;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .cal-day:hover:not(.empty) {
+      border-color: #c7d2fe;
+      background: var(--primary-soft);
+    }
+
+    .cal-day.empty {
+      background: transparent;
+      cursor: default;
+      border: none;
+    }
+
+    .cal-day.today {
+      border-color: var(--primary);
+      box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.2);
+    }
+
+    .cal-day.has-hours {
+      background: linear-gradient(145deg, #eef2ff, #e0e7ff);
+      border-color: #c7d2fe;
+    }
+
+    .cal-day.has-hours:hover {
+      background: linear-gradient(145deg, #e0e7ff, #c7d2fe);
+    }
+
+    .cal-day .day-num {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .cal-day.has-hours .day-num {
+      color: var(--primary-dark);
+    }
+
+    .cal-day .day-hours {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .cal-day.high {
+      background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+      border-color: #6ee7b7;
+    }
+
+    .cal-day.high .day-num { color: #047857; }
+    .cal-day.high .day-hours { color: var(--success); }
+
+    .cal-legend {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .cal-legend span {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .cal-legend i {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .cal-summary {
+      margin-top: 1rem;
+      padding-top: 0.9rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      font-size: 0.88rem;
+    }
+
+    .cal-summary strong {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    @media (max-width: 600px) {
+      .form-row { flex-direction: column; }
+      .result-grid { grid-template-columns: 1fr; }
+      .result-grid .value { text-align: left; }
+      header h1 { font-size: 1.2rem; }
+      header p { margin-left: 0; }
+      nav { width: 100%; justify-content: center; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .cal-day { height: 44px; border-radius: 8px; }
+      .cal-day .day-num { font-size: 0.78rem; }
+      .cal-day .day-hours { font-size: 0.6rem; }
+      .cal-grid { gap: 3px; }
+      .cal-nav-btn { width: 32px; height: 32px; }
+    }
+
+    @media (min-width: 700px) {
+      .cal-day { height: 58px; }
+      .cal-day .day-num { font-size: 0.9rem; }
+      .cal-day .day-hours { font-size: 0.72rem; }
+    }
+  
+    /* ===== REDISEÑO VISUAL · CONTROL HORARIO ===== */
+    :root {
+      --primary: #3657d6;
+      --primary-dark: #243fae;
+      --primary-soft: #edf1ff;
+      --accent: #0f9f91;
+      --success: #07866f;
+      --success-soft: #e9f8f3;
+      --danger: #d94b62;
+      --danger-soft: #fff0f2;
+      --warning: #c27a22;
+      --bg: #f3f5fa;
+      --bg-pattern: #e9edf5;
+      --card: #ffffff;
+      --text: #172238;
+      --text-secondary: #64718a;
+      --muted: #8d98aa;
+      --border: #e4e9f2;
+      --radius: 19px;
+      --radius-sm: 12px;
+      --shadow: 0 2px 5px rgba(25, 39, 72, .035), 0 12px 30px rgba(25, 39, 72, .055);
+      --shadow-lg: 0 8px 24px rgba(25, 39, 72, .10);
+    }
+
+    body {
+      background:
+        radial-gradient(ellipse 75% 45% at 0% 0%, rgba(54,87,214,.075), transparent 62%),
+        radial-gradient(ellipse 55% 40% at 100% 4%, rgba(15,159,145,.055), transparent 60%),
+        #f3f5fa;
+      letter-spacing: -.01em;
+    }
+
+    header {
+      padding: 1rem max(1.25rem, calc((100vw - 1120px)/2)) .85rem;
+      background: rgba(250,252,255,.91);
+      border-bottom: 1px solid rgba(220,227,239,.9);
+      box-shadow: 0 5px 24px rgba(27,42,75,.045);
+    }
+    header h1 { font-size: 1.28rem; letter-spacing: -.045em; }
+    header h1 span.logo-icon {
+      width: 39px; height: 39px; border-radius: 13px;
+      background: linear-gradient(145deg,#243fae,#5274ed);
+      box-shadow: 0 6px 15px rgba(54,87,214,.25);
+    }
+    header p { margin-top: .12rem; color: #77839a; font-size: .76rem; }
+
+    nav {
+      margin-top: .85rem;
+      gap: .22rem;
+      background: #edf0f6;
+      border: 1px solid #e5e9f1;
+      padding: .25rem;
+      border-radius: 14px;
+      width: 100%;
+      max-width: max-content;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    nav::-webkit-scrollbar { display:none; }
+    nav button {
+      padding: .55rem .92rem;
+      font-size: .82rem;
+      white-space: nowrap;
+      border-radius: 10px;
+    }
+    nav button.active {
+      color: #2948bd;
+      background: #fff;
+      box-shadow: 0 2px 7px rgba(29,45,83,.09);
+    }
+
+    main { max-width: 1080px; padding: 1.65rem 1.25rem 4rem; }
+    .dashboard-intro {
+      display:flex; align-items:center; justify-content:space-between;
+      gap:1rem; margin:0 0 1.15rem; padding:.15rem .1rem;
+    }
+    .dashboard-intro .eyebrow {
+      color:#5570c8; font-size:.66rem; font-weight:800;
+      letter-spacing:.14em; margin-bottom:.28rem;
+    }
+    .dashboard-intro h2 {
+      color:#172238; font-size:clamp(1.35rem,3vw,1.8rem);
+      line-height:1.15; letter-spacing:-.055em; font-weight:800;
+    }
+    .dashboard-intro p { color:#77839a; font-size:.84rem; margin-top:.35rem; }
+    .intro-action {
+      flex-shrink:0; border:0; border-radius:12px; padding:.78rem 1rem;
+      background:linear-gradient(135deg,#3657d6,#5274ed); color:#fff;
+      font:700 .82rem 'DM Sans',sans-serif; box-shadow:0 6px 16px rgba(54,87,214,.22);
+      cursor:pointer; transition:transform .18s,box-shadow .18s;
+    }
+    .intro-action span { font-size:1.05rem; margin-right:.2rem; }
+    .intro-action:active { transform:scale(.97); }
+
+    .periodo-banner {
+      background:linear-gradient(120deg,#202f59 0%,#304b91 58%,#287f83 130%);
+      border:0; border-radius:18px; padding:1.05rem 1.25rem;
+      box-shadow:0 10px 24px rgba(39,61,119,.17);
+    }
+    .periodo-banner .titulo { color:#fff; font-size:.94rem; }
+    .periodo-banner .rango { color:rgba(255,255,255,.72); margin-top:.12rem; }
+    .periodo-banner .badge-h {
+      color:#183d55; background:#fff; border:0; border-radius:12px;
+      font-size:1.12rem; padding:.48rem .85rem; box-shadow:none;
+    }
+
+    .stats { gap:.8rem; margin-bottom:1.1rem; }
+    .stat-card {
+      text-align:left; padding:1rem 1.05rem; border-radius:17px;
+      box-shadow:0 3px 14px rgba(25,39,72,.045);
+    }
+    .stat-card::before { height:3px; opacity:.9; }
+    .stat-card .value { font-size:1.85rem; letter-spacing:-.06em; }
+    .stat-card .label { font-size:.66rem; letter-spacing:.07em; line-height:1.35; }
+
+    .card, .chart-card {
+      border-radius:18px; border-color:#e6eaf2;
+      box-shadow:0 4px 18px rgba(25,39,72,.045);
+    }
+    .card { padding:1.35rem; }
+    .card h2 { font-size:1rem; margin-bottom:1rem; }
+    .chart-card { padding:1.05rem 1.2rem .9rem; }
+    .chart-card h3 { font-size:.88rem; }
+    .form-group label { font-size:.68rem; letter-spacing:.075em; color:#75819a; }
+    .form-group input, .form-group select, .form-group textarea {
+      border:1.5px solid #e2e7f0; background:#f9faff; border-radius:11px;
+      min-height:44px; padding:.7rem .85rem;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color:#7189e8; box-shadow:0 0 0 3px rgba(54,87,214,.11);
+    }
+    .btn { border-radius:11px; min-height:40px; }
+    .btn-primary {
+      background:linear-gradient(135deg,#3657d6,#5274ed);
+      box-shadow:0 5px 13px rgba(54,87,214,.19);
+    }
+    .btn-success { background:linear-gradient(135deg,#07866f,#16a58b); }
+    .btn-outline { border-color:#e1e6ef; color:#53617b; }
+    .btn-hora {
+      border-radius:11px; border-color:#d7def9; background:#f0f3ff;
+      min-height:43px; font-size:.9rem;
+    }
+    .btn-hora.media { background:#eaf8f3; border-color:#c5eadc; }
+    .btn-hora.menos { background:#fff4eb; border-color:#f5ddc8; }
+    .horas-display {
+      border-radius:11px; background:#f6f8ff; border-color:#dce3f5;
+      min-width:58px; max-width:72px;
+    }
+    .reg-item {
+      background:#fafbfe; border-color:#e9edf4; border-radius:12px;
+      padding:.78rem .85rem;
+    }
+    .reg-item.has-horas { border-left:3px solid #6079df; }
+    .reg-item.has-horas.alto { border-left-color:#16a58b; }
+    .lista-resumen { border-radius:11px; background:#f6f8fc; }
+    .cal-day { border-radius:11px; background:#f7f8fc; }
+    .cal-day.today { background:#fff; }
+    .cal-day.has-hours { background:#edf1ff; border-color:#cbd5fb; }
+    .cal-day.high { background:#e8f7f1; border-color:#bce8d8; }
+    .result-box { border-radius:16px; }
+    .toast { border-radius:13px; }
+
+    /* Modo rápido con jerarquía más clara y botones táctiles */
+    body.modo-rapido {
+      background:linear-gradient(160deg,#edf1fb,#f7f9fc 55%,#e8f4f1);
+    }
+    .rapido-card {
+      border:1px solid #e5eaf3; border-radius:24px;
+      box-shadow:0 16px 40px rgba(29,45,83,.10);
+      padding:1.5rem 1.15rem 1.35rem;
+    }
+    .rapido-total { color:#2948bd; font-size:3.35rem; letter-spacing:-.065em; }
+    .rapido-grid { gap:.72rem; }
+    .rapido-btn {
+      border-radius:17px; min-height:72px; font-size:1.65rem;
+      box-shadow:0 6px 15px rgba(54,87,214,.19);
+    }
+    .rapido-btn.full { font-size:.94rem; min-height:54px; border-radius:13px; }
+
+    @media (max-width:600px) {
+      header { padding:.8rem .85rem .7rem; }
+      header h1 { font-size:1.08rem; }
+      header h1 span.logo-icon { width:35px; height:35px; }
+      header p { font-size:.7rem; }
+      nav {
+        max-width:none; justify-content:flex-start; margin-top:.7rem;
+        border-radius:12px; padding:.22rem;
+      }
+      nav button { padding:.52rem .78rem; font-size:.78rem; }
+      main { padding:1.05rem .8rem 3rem; }
+      .dashboard-intro { align-items:flex-start; margin-bottom:.9rem; }
+      .dashboard-intro h2 { font-size:1.35rem; }
+      .dashboard-intro p { font-size:.76rem; max-width:210px; }
+      .intro-action { padding:.68rem .75rem; font-size:.74rem; margin-top:.45rem; }
+      .stats { gap:.6rem; }
+      .stat-card { padding:.85rem .8rem; border-radius:14px; }
+      .stat-card .value { font-size:1.55rem; }
+      .stat-card .label { font-size:.61rem; }
+      .periodo-banner { padding:.9rem 1rem; }
+      .card { padding:1.05rem .9rem; border-radius:16px; }
+      .chart-card { border-radius:16px; }
+      .rapido-card { padding:1.35rem .95rem; }
+    }
+    @media (max-width:360px) {
+      .intro-action { max-width:112px; line-height:1.25; }
+      .horas-btns { gap:.25rem; }
+      .btn-hora { font-size:.8rem; }
+    }
+
+  
+    .geo-map-card{margin:1rem 0;padding:1rem;border:1px solid var(--border);border-radius:18px;background:linear-gradient(145deg,#f8fafc,#eef2ff)}
+    .geo-map-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.65rem}
+    .geo-map-head strong{display:block;color:var(--text);font-size:.98rem}
+    .geo-map-head .note{margin:.2rem 0 0;font-size:.82rem}
+    .geo-map-pin{font-size:1.55rem}
+    #geo-map{display:block;width:100%;height:255px;border:0;border-radius:13px;background:#e2e8f0}
+    .geo-map-actions{display:flex;justify-content:flex-end;margin-top:.45rem;font-size:.82rem}
+    .geo-map-actions a{color:var(--primary);font-weight:700;text-decoration:none}
+    .geo-map-help{font-size:.78rem;color:var(--text-secondary);margin:.55rem 0 0}
+    .geo-permission-help{display:flex;flex-direction:column;gap:.3rem;padding:.9rem 1rem;margin:.8rem 0 1rem;border-radius:13px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:.83rem;line-height:1.45}
+    .geo-permission-help strong{font-size:.9rem}
+    #geo-security-status{font-weight:700}
+    @media(max-width:600px){#geo-map{height:225px}.geo-map-card{padding:.8rem}}
+
+  </style>
+
+
+</head>
+<body>
+  <header>
+    <h1><span class="logo-icon">⏱</span> Control de Horas Extras</h1>
+    <p>Registro · Calendario · PDF · Nómina</p>
+    <nav>
+      <button class="nav-btn active" data-panel="horas">Horas</button>
+      <button class="nav-btn" data-panel="rapido">Rápido</button>
+      <button class="nav-btn" data-panel="calendario">Calendario</button>
+      <button class="nav-btn" data-panel="pdf">PDF</button>
+      <button class="nav-btn" data-panel="nomina">Nómina</button>
+      <button class="nav-btn" data-panel="ubicacion">Ubicación</button>
+      <button class="nav-btn" data-panel="config">Ajustes</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- PANEL HORAS -->
+    <section id="panel-horas" class="panel active">
+      <div class="dashboard-intro">
+        <div>
+          <div class="eyebrow">TU CONTROL PERSONAL</div>
+          <h2>Tu jornada, bajo control.</h2>
+          <p id="dashboard-fecha">Organiza y consulta tus horas extra.</p>
+        </div>
+        <button type="button" class="intro-action" id="btn-ir-registro">
+          <span aria-hidden="true">＋</span> Registrar horas
+        </button>
+      </div>
+      <div class="periodo-banner" id="periodo-banner">
+        <div>
+          <div class="titulo">Periodo de horas extras</div>
+          <div class="rango" id="periodo-banner-rango">—</div>
+        </div>
+        <div class="badge-h" id="periodo-banner-horas">0 h</div>
+      </div>
+
+      <div class="stats" id="stats-horas">
+        <div class="stat-card">
+          <div class="value" id="stat-mes">0</div>
+          <div class="label">Horas del periodo</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="stat-semana">0</div>
+          <div class="label">Esta semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="stat-media">0</div>
+          <div class="label">Media / día activo</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="stat-dias">0</div>
+          <div class="label">Días con horas</div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3>Horas por día <span id="chart-subtitulo">periodo actual</span></h3>
+        <div class="bars" id="chart-bars"></div>
+      </div>
+
+      <div class="card">
+        <h2>➕ Añadir / Editar horas</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fecha">Fecha</label>
+            <input type="date" id="fecha" />
+          </div>
+          <div class="form-group" style="flex: 1 1 100%; min-width: 100%;">
+            <label>Horas (pulsa para sumar o restar)</label>
+            <div class="horas-btns">
+              <button type="button" class="btn-hora" data-add="1">+1</button>
+              <button type="button" class="btn-hora" data-add="2">+2</button>
+              <button type="button" class="btn-hora" data-add="3">+3</button>
+              <button type="button" class="btn-hora media" data-add="0.5">+½</button>
+              <button type="button" class="btn-hora menos" data-add="-1">−1</button>
+            </div>
+            <div class="horas-btns horas-btns-secondary">
+              <span class="horas-display" id="horas-display">0</span>
+              <button type="button" class="btn-hora reset" id="btn-reset-horas" title="Poner a cero">↺</button>
+              <input type="hidden" id="horas" value="0" />
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="concepto">Concepto (opcional)</label>
+            <input type="text" id="concepto" placeholder="Ej: Fin de semana, proyecto X..." />
+          </div>
+          <div class="form-group" id="grupo-guardar" style="flex: 0 0 auto; align-self: flex-end; display: none; gap: 0.4rem;">
+            <button type="button" class="btn btn-outline" id="btn-cancelar-edicion">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="btn-guardar">Guardar cambios</button>
+          </div>
+        </div>
+        <p class="note" id="nota-horas">Pulsa +1, +2… y se guarda solo en la fecha seleccionada. Para corregir un día, usa <strong>Editar</strong>.</p>
+      </div>
+
+      <div class="card">
+        <h2>📋 Registro de horas</h2>
+        <div class="form-row" style="margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label for="filtro-mes">Periodo (cierra el día 20)</label>
+            <input type="month" id="filtro-mes" />
+          </div>
+          <div class="form-group" style="flex: 0 0 auto; align-self: flex-end;">
+            <button class="btn btn-outline btn-sm" id="btn-limpiar-filtro">Ver todo</button>
+          </div>
+        </div>
+        <div id="lista-horas">
+          <div class="empty">No hay horas registradas todavía.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL RÁPIDO (iPhone / Apple Watch companion) -->
+    <section id="panel-rapido" class="panel">
+      <div class="rapido-card">
+        <div class="rapido-fecha" id="rapido-fecha">Hoy</div>
+        <div class="rapido-total" id="rapido-total">0 <span>h</span></div>
+        <div class="rapido-periodo" id="rapido-periodo">Periodo 20→20</div>
+        <div class="rapido-grid">
+          <button type="button" class="rapido-btn" data-add="1">+1</button>
+          <button type="button" class="rapido-btn" data-add="2">+2</button>
+          <button type="button" class="rapido-btn" data-add="3">+3</button>
+          <button type="button" class="rapido-btn media" data-add="0.5">+½</button>
+          <button type="button" class="rapido-btn menos" data-add="-1">−1</button>
+          <button type="button" class="rapido-btn reset" id="rapido-reset">Poner a 0</button>
+          <button type="button" class="rapido-btn full" id="rapido-ir-completo">Abrir app completa</button>
+        </div>
+        <p class="note" style="margin:0;text-align:center;">Se guarda solo en la fecha de hoy. Ideal desde el iPhone o como acceso rápido.</p>
+      </div>
+    </section>
+
+    <!-- PANEL CALENDARIO -->
+    <section id="panel-calendario" class="panel">
+      <div class="card">
+        <div class="cal-header">
+          <button type="button" class="cal-nav-btn" id="cal-prev" title="Mes anterior">‹</button>
+          <h3 id="cal-titulo">Noviembre 2026</h3>
+          <button type="button" class="cal-nav-btn" id="cal-next" title="Mes siguiente">›</button>
+        </div>
+        <div class="cal-grid" id="cal-grid">
+          <!-- se rellena con JS -->
+        </div>
+        <div class="cal-legend">
+          <span><i style="background:#eef2ff;border:1px solid #c7d2fe;"></i> Con horas</span>
+          <span><i style="background:#ecfdf5;border:1px solid #6ee7b7;"></i> ≥ 4 horas</span>
+          <span><i style="border:2px solid #4f46e5;background:#fff;"></i> Hoy</span>
+        </div>
+        <div class="cal-summary" id="cal-summary"></div>
+      </div>
+      <p class="note" style="margin-top:0.5rem;">Pulsa un día con horas para editarlo, o un día vacío para añadir horas en esa fecha.</p>
+    </section>
+
+    <!-- PANEL PDF -->
+    <section id="panel-pdf" class="panel">
+      <div class="card">
+        <h2>📄 Generar resumen en PDF</h2>
+        <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+          Elige el periodo y genera un PDF listo para compartir o imprimir.
+        </p>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Tipo de resumen</label>
+          <div class="pdf-options">
+            <label><input type="radio" name="tipo-pdf" value="semanal" checked /> Semanal</label>
+            <label><input type="radio" name="tipo-pdf" value="mensual" /> Mensual</label>
+            <label><input type="radio" name="tipo-pdf" value="anual" /> Anual</label>
+            <label><input type="radio" name="tipo-pdf" value="personalizado" /> Personalizado</label>
+          </div>
+        </div>
+
+        <div class="form-row" id="rango-fechas">
+          <div class="form-group">
+            <label for="pdf-desde">Desde</label>
+            <input type="date" id="pdf-desde" />
+          </div>
+          <div class="form-group">
+            <label for="pdf-hasta">Hasta</label>
+            <input type="date" id="pdf-hasta" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pdf-nombre">Tu nombre (aparece en el PDF)</label>
+            <input type="text" id="pdf-nombre" placeholder="Nombre y apellidos" />
+          </div>
+          <div class="form-group">
+            <label for="pdf-empresa">Empresa / Proyecto (opcional)</label>
+            <input type="text" id="pdf-empresa" placeholder="Nombre de la empresa" />
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-generar-pdf" style="margin-top: 0.5rem;">
+          👁 Generar previa del PDF
+        </button>
+        <p class="note">Primero verás una previa. Si te convence, eliges dónde guardarlo.</p>
+
+        <div class="pdf-preview-box" id="pdf-preview-box">
+          <div class="pdf-preview-header">
+            <strong>Previa del PDF</strong>
+            <div class="pdf-preview-actions">
+              <button type="button" class="btn btn-outline btn-sm" id="btn-cerrar-previa">Cerrar</button>
+              <button type="button" class="btn btn-success btn-sm" id="btn-guardar-pdf-final">💾 Guardar PDF…</button>
+            </div>
+          </div>
+          <iframe id="pdf-preview-frame" class="pdf-preview-frame" title="Previa del PDF"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL NÓMINA -->
+    <section id="panel-nomina" class="panel">
+      <div class="card">
+        <h2>💰 Nómina · Convenio Metal Pontevedra 2026</h2>
+        <p class="note" style="margin-bottom: 1rem;">
+          Tablas del convenio de empresas del metal sin convenio propio (BOP Pontevedra 08/07/2026).
+          Horas extras del <strong>día 20 al 20</strong>. Situación fiscal: casado/a con 3 hijos. Cálculo orientativo.
+        </p>
+
+        <div class="form-row">
+          <div class="form-group" style="flex: 2; min-width: 220px;">
+            <label for="categoria-convenio">Categoría (convenio metal Pontevedra)</label>
+            <select id="categoria-convenio">
+              <option value="5A" selected>Oficial 1ª / 2ª de taller — 1.860,37 €/mes · HE 23,93 €</option>
+              <option value="4A">Encargado / Oficial 1ª admin. — 1.996,98 € · HE 25,83 €</option>
+              <option value="5B">Analista 2ª / Chofer camión — 1.768,84 € · HE 22,65 €</option>
+              <option value="6A">Oficial 3ª / Chofer — 1.722,23 € · HE 22,00 €</option>
+              <option value="6B">Especialista / Almacenero — 1.679,33 € · HE 21,39 €</option>
+              <option value="6C">Auxiliar admin. / lab. — 1.617,26 € · HE 20,53 €</option>
+              <option value="7A">Peón / Portero — 1.608,77 € · HE 20,43 €</option>
+              <option value="3B">Maestro taller / Contramaestre — 2.196,30 € · HE 28,63 €</option>
+              <option value="2B">Jefe de taller — 2.490,80 € · HE 32,75 €</option>
+              <option value="custom">Personalizado (editar a mano)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sueldo-base">Sueldo base mensual (€)</label>
+            <input type="number" id="sueldo-base" min="0" step="0.01" value="1860.37" />
+          </div>
+          <div class="form-group">
+            <label for="precio-hora-extra">Precio hora extra (€)</label>
+            <input type="number" id="precio-hora-extra" min="0" step="0.01" value="23.93" />
+          </div>
+          <div class="form-group">
+            <label for="horas-extra-mes">Horas extras (20→20)</label>
+            <input type="number" id="horas-extra-mes" min="0" step="0.25" placeholder="Se calcula solo" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="plus-especiales">Plus trabajos especiales (€/h)</label>
+            <select id="plus-especiales">
+              <option value="0">Ninguno</option>
+              <option value="0.80">Un supuesto — 0,80 €/h</option>
+              <option value="1.24">Dos o más — 1,24 €/h</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="horas-especiales">Horas con plus especiales</label>
+            <input type="number" id="horas-especiales" min="0" step="0.25" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="plus-nocturnidad">Plus nocturnidad (€)</label>
+            <input type="number" id="plus-nocturnidad" min="0" step="0.01" value="0" placeholder="25% s. base si aplica" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="plus-transporte">Plus transporte / otros fijos</label>
+            <input type="number" id="plus-transporte" min="0" step="0.01" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="antiguedad">Antigüedad / CAC (€/mes)</label>
+            <input type="number" id="antiguedad" min="0" step="0.01" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="otros-pluses">Otros pluses</label>
+            <input type="number" id="otros-pluses" min="0" step="0.01" value="0" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pagas">Nº de pagas</label>
+            <select id="pagas">
+              <option value="12">12 pagas (prorrateadas)</option>
+              <option value="14" selected>14 pagas (convenio)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="tipo-contrato">Tipo de contrato</label>
+            <select id="tipo-contrato">
+              <option value="indefinido">Indefinido</option>
+              <option value="temporal">Temporal</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="situacion-familiar">Situación familiar</label>
+            <select id="situacion-familiar">
+              <option value="casado3" selected>Casado/a + 3 hijos (cónyuge ≤ 1.500 €)</option>
+              <option value="casado3-reparto">Casado/a + 3 hijos (reparto 50%)</option>
+              <option value="soltero3">Monoparental + 3 hijos</option>
+              <option value="soltero0">Soltero/a sin hijos</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="note" id="periodo-horas-txt" style="margin-bottom: 0.75rem;"></p>
+
+        <button class="btn btn-primary" id="btn-calcular-nomina">Calcular nómina neta</button>
+
+        <div id="resultado-nomina" style="display: none;">
+          <div class="result-box">
+            <h3>Resultado estimado del periodo</h3>
+            <div class="result-grid" id="resultado-grid"></div>
+            <p class="note">
+              Convenio metal Pontevedra 2026 · SS ≈ 6,50 % · IRPF retención 2026 (casado 3 hijos).
+              Orientativo; la retención real la fija tu empresa con el algoritmo de la AEAT.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL CONFIG -->
+    <!-- PANEL UBICACIÓN -->
+    <section id="panel-ubicacion" class="panel">
+      <div class="card">
+        <h2>📍 Cobertura por localización</h2>
+        <p class="note" style="margin-bottom:1rem;">
+          Solo cuenta <strong>horas extras</strong>: fuera de tu jornada <strong>7:00–15:00</strong> (margen 5 min al final → desde 15:05).
+          Hace falta <strong>más de 50 min</strong> de extra para sumar 1 hora; solo horas completas (51–110 min → 1 h, 111–170 → 2 h…).
+          Si llegas 5 min tarde dentro de la jornada, <strong>no</strong> cuenta como extra.
+          <strong>La pestaña debe permanecer abierta</strong> para medir.
+        </p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="geo-activo">Servicio de localización</label>
+            <select id="geo-activo">
+              <option value="0">Desactivado</option>
+              <option value="1">Activado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="geo-auto">Al salir de la zona</label>
+            <select id="geo-auto">
+              <option value="1">Sumar horas al registro del día</option>
+              <option value="0">Solo contar (no guardar solo)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="geo-nombre">Nombre de la zona</label>
+            <input type="text" id="geo-nombre" placeholder="Ej: Taller / Empresa" />
+          </div>
+          <div class="form-group">
+            <label for="geo-radio">Radio de cobertura (metros)</label>
+            <input type="number" id="geo-radio" min="30" max="2000" step="10" value="150" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="geo-lat">Latitud</label>
+            <input type="number" id="geo-lat" step="0.000001" placeholder="42.430000" />
+          </div>
+          <div class="form-group">
+            <label for="geo-lng">Longitud</label>
+            <input type="number" id="geo-lng" step="0.000001" placeholder="-8.640000" />
+          </div>
+        </div>
+
+        <div class="geo-map-card">
+          <div class="geo-map-head">
+            <div><strong>Verifica el punto en el mapa</strong><p class="note" id="geo-map-caption">Pulsa «Localizarme» para obtener tu posición.</p></div>
+            <span aria-hidden="true" class="geo-map-pin">📍</span>
+          </div>
+          <iframe id="geo-map" title="Mapa de la ubicación seleccionada" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade" src="about:blank"></iframe>
+          <div class="geo-map-actions"><a id="geo-open-map" href="https://www.openstreetmap.org" target="_blank" rel="noopener">Abrir mapa grande ↗</a></div>
+          <p class="geo-map-help">El marcador representa el centro de la zona. Comprueba que está en tu centro de trabajo antes de guardar.</p>
+        </div>
+        <div class="geo-permission-help" id="geo-permission-help">
+          <strong>Permiso de ubicación del iPhone</strong>
+          <span>Al tocar «Localizarme», Safari solicitará permiso. Pulsa «Permitir». Esta función necesita abrir la app desde una dirección HTTPS; un HTML abierto directamente desde Archivos no puede garantizar el acceso al GPS.</span>
+          <span id="geo-security-status">Comprobando si esta página puede usar la ubicación…</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+          <button type="button" class="btn btn-outline" id="btn-geo-aqui">📍 Localizarme y fijar centro</button>
+          <button type="button" class="btn btn-primary" id="btn-geo-guardar">Guardar zona</button>
+        </div>
+
+        <div class="periodo-banner" id="geo-status-box">
+          <div>
+            <div class="titulo" id="geo-status-titulo">Servicio desactivado</div>
+            <div class="rango" id="geo-status-detalle">Activa el servicio y define latitud, longitud y radio.</div>
+          </div>
+          <div class="badge-h" id="geo-status-badge">—</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="geo-inicio">Inicio jornada</label>
+            <input type="time" id="geo-inicio" value="07:00" />
+          </div>
+          <div class="form-group">
+            <label for="geo-fin">Fin jornada</label>
+            <input type="time" id="geo-fin" value="15:00" />
+          </div>
+          <div class="form-group">
+            <label for="geo-margen">Margen (min)</label>
+            <input type="number" id="geo-margen" min="0" max="30" value="5" />
+          </div>
+          <div class="form-group">
+            <label for="geo-umbral">Mín. min para 1 h extra</label>
+            <input type="number" id="geo-umbral" min="1" max="59" value="50" />
+          </div>
+        </div>
+        <div class="lista-resumen" style="margin-top:0.75rem;">
+          <span>Extra acumulada hoy: <strong id="geo-tiempo-hoy">0 min</strong></span>
+          <span>Horas extras (enteras): <strong id="geo-horas-enteras">0 h</strong></span>
+          <span>Distancia: <strong id="geo-distancia">—</strong></span>
+        </div>
+        <p class="note">Solo se suma tiempo en zona <em>y</em> fuera de jornada (antes de las 7:00 o desde 15:05 con margen 5). Al salir o al completar horas, se registran enteras.</p>
+      </div>
+    </section>
+
+    <section id="panel-config" class="panel">
+      <div class="card">
+        <h2>⚙️ Configuración y datos</h2>
+        <div class="periodo-banner" style="margin-bottom:1rem;">
+          <div>
+            <div class="titulo">iPhone y Apple Watch</div>
+            <div class="rango">En Safari (iPhone): Compartir → <strong>Añadir a pantalla de inicio</strong>. Usa la pestaña <strong>Rápido</strong> o abre con <code>?modo=rapido</code>. El Watch no ejecuta webs a pantalla completa; lo práctico es el iPhone como compañero o una app nativa watchOS.</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="config-nombre">Nombre por defecto (PDF)</label>
+            <input type="text" id="config-nombre" placeholder="Tu nombre" />
+          </div>
+          <div class="form-group">
+            <label for="config-empresa">Empresa por defecto</label>
+            <input type="text" id="config-empresa" placeholder="Empresa" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="config-precio-hora">Precio hora extra por defecto (€)</label>
+            <input type="number" id="config-precio-hora" min="0" step="0.01" placeholder="15.00" />
+          </div>
+          <div class="form-group">
+            <label for="config-sueldo">Sueldo base mensual por defecto (€)</label>
+            <input type="number" id="config-sueldo" min="0" step="0.01" placeholder="1800" />
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-guardar-config">Guardar configuración</button>
+      </div>
+
+      <div class="card">
+        <h2>🗑️ Datos</h2>
+        <p class="note" style="margin-bottom: 1rem;">Puedes exportar o borrar todos los registros de horas.</p>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <button class="btn btn-outline" id="btn-exportar">Exportar JSON</button>
+          <button class="btn btn-outline" id="btn-importar">Importar JSON</button>
+          <input type="file" id="input-import" accept=".json" style="display:none" />
+          <button class="btn btn-danger" id="btn-borrar-todo">Borrar todos los registros</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ========== ESTADO Y STORAGE ==========
+    const STORAGE_KEY = 'controlHorasExtras_v1';
+    const CONFIG_KEY = 'controlHorasConfig_v1';
+
+    let registros = [];
+    let config = {
+      nombre: '',
+      empresa: '',
+      precioHora: 23.93,
+      sueldoBase: 1860.37,
+      geo: {
+        activo: false,
+        autoRegistrar: true,
+        nombre: 'Trabajo',
+        lat: null,
+        lng: null,
+        radio: 150,
+        jornadaInicio: '07:00',
+        jornadaFin: '15:00',
+        margenMin: 5,
+        umbralMinHora: 50
+      }
+    };
+
+    const GEO_STATE_KEY = 'controlHorasGeoState_v1';
+    let geoWatchId = null;
+    let geoTickTimer = null;
+    let geoState = {
+      inside: false,
+      date: null,
+      lastTick: null,
+      pendingOtMs: 0,
+      horasYaRegistradas: 0,
+      lastLat: null,
+      lastLng: null,
+      lastAcc: null,
+      lastDist: null,
+      enFranjaExtra: false
+    };
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        registros = raw ? JSON.parse(raw) : [];
+      } catch { registros = []; }
+
+      try {
+        const rawC = localStorage.getItem(CONFIG_KEY);
+        if (rawC) {
+          const parsed = JSON.parse(rawC);
+          config = { ...config, ...parsed, geo: { ...config.geo, ...(parsed.geo || {}) } };
+        }
+      } catch {}
+
+      try {
+        const rawG = localStorage.getItem(GEO_STATE_KEY);
+        if (rawG) geoState = { ...geoState, ...JSON.parse(rawG) };
+      } catch {}
+    }
+
+    function saveGeoState() {
+      localStorage.setItem(GEO_STATE_KEY, JSON.stringify(geoState));
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+      if (document.getElementById('panel-calendario')?.classList.contains('active')) {
+        renderCalendario();
+      }
+    }
+
+    function saveConfig() {
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    }
+
+    // ========== UTILIDADES ==========
+    function hoy() {
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+
+    function formatFecha(iso) {
+      if (!iso) return '';
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    function formatNum(n, dec = 2) {
+      return Number(n).toLocaleString('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    }
+
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    function getInicioSemana(fecha = new Date()) {
+      const d = new Date(fecha);
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + diff);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function getFinSemana(fecha = new Date()) {
+      const d = new Date(getInicioSemana(fecha));
+      d.setDate(d.getDate() + 6);
+      return d.toISOString().slice(0, 10);
+    }
+
+    // ========== CALENDARIO ==========
+    let calYear = new Date().getFullYear();
+    let calMonth = new Date().getMonth(); // 0-11
+
+    const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+    function renderCalendario() {
+      const grid = document.getElementById('cal-grid');
+      const titulo = document.getElementById('cal-titulo');
+      const summary = document.getElementById('cal-summary');
+      if (!grid) return;
+
+      titulo.textContent = MESES[calMonth] + ' ' + calYear;
+
+      const first = new Date(calYear, calMonth, 1);
+      // Lunes = 0 ... Domingo = 6
+      let startDow = first.getDay() - 1;
+      if (startDow < 0) startDow = 6;
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const hoyStr = hoy();
+      const prefix = calYear + '-' + String(calMonth + 1).padStart(2, '0');
+
+      const map = {};
+      registros.forEach(r => {
+        if (r.fecha.startsWith(prefix)) map[r.fecha] = (map[r.fecha] || 0) + r.horas;
+      });
+
+      let html = DIAS_SEM.map(d => `<div class="cal-weekday">${d}</div>`).join('');
+
+      for (let i = 0; i < startDow; i++) {
+        html += '<div class="cal-day empty"></div>';
+      }
+
+      let totalMes = 0;
+      let diasCon = 0;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const fecha = prefix + '-' + String(day).padStart(2, '0');
+        const horas = map[fecha] || 0;
+        totalMes += horas;
+        if (horas > 0) diasCon++;
+
+        let cls = 'cal-day';
+        if (fecha === hoyStr) cls += ' today';
+        if (horas > 0) cls += ' has-hours';
+        if (horas >= 4) cls += ' high';
+
+        const horasTxt = horas > 0 ? `<span class="day-hours">${formatNum(horas, horas % 1 === 0 ? 0 : 1)}h</span>` : '';
+        html += `<button type="button" class="${cls}" data-fecha="${fecha}" title="${horas > 0 ? horas + ' h' : 'Añadir horas'}">
+          <span class="day-num">${day}</span>${horasTxt}
+        </button>`;
+      }
+
+      grid.innerHTML = html;
+
+      summary.innerHTML = `
+        <span>Total del mes: <strong>${formatNum(totalMes, 1)} h</strong></span>
+        <span>Días con horas: <strong>${diasCon}</strong></span>
+        <span>Media/día (con horas): <strong>${diasCon ? formatNum(totalMes / diasCon, 1) : 0} h</strong></span>
+      `;
+
+      grid.querySelectorAll('.cal-day[data-fecha]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const fecha = btn.dataset.fecha;
+          const r = registros.find(x => x.fecha === fecha);
+          // Ir a pestaña Horas y precargar
+          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+          document.querySelector('.nav-btn[data-panel="horas"]').classList.add('active');
+          document.getElementById('panel-horas').classList.add('active');
+          document.getElementById('fecha').value = fecha;
+          if (r) {
+            setHoras(r.horas);
+            document.getElementById('concepto').value = r.concepto || '';
+            setModoEdicion(true);
+            toast('Editando ' + formatFecha(fecha));
+          } else {
+            setHoras(0);
+            document.getElementById('concepto').value = '';
+            setModoEdicion(false);
+            toast('Añadir horas el ' + formatFecha(fecha));
+          }
+        });
+      });
+    }
+
+    document.getElementById('cal-prev').addEventListener('click', () => {
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      renderCalendario();
+    });
+
+    document.getElementById('cal-next').addEventListener('click', () => {
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderCalendario();
+    });
+
+    // ========== NAVEGACIÓN ==========
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+
+        if (btn.dataset.panel === 'nomina') {
+          rellenarHorasPeriodo20();
+        }
+        if (btn.dataset.panel === 'pdf') {
+          actualizarRangoPDF();
+        }
+        if (btn.dataset.panel === 'config') {
+          document.getElementById('config-nombre').value = config.nombre || '';
+          document.getElementById('config-empresa').value = config.empresa || '';
+          document.getElementById('config-precio-hora').value = config.precioHora || '';
+          document.getElementById('config-sueldo').value = config.sueldoBase || '';
+        }
+        if (btn.dataset.panel === 'calendario') {
+          renderCalendario();
+        }
+      });
+    });
+
+    // ========== HORAS ==========
+    function nombreDia(fechaStr) {
+      const d = new Date(fechaStr + 'T12:00:00');
+      return d.toLocaleDateString('es-ES', { weekday: 'short' });
+    }
+
+    function renderChartPeriodo(desde, hasta) {
+      const cont = document.getElementById('chart-bars');
+      const sub = document.getElementById('chart-subtitulo');
+      if (!cont) return;
+
+      // Agrupar horas por día en el periodo
+      const map = {};
+      registros.forEach(r => {
+        if (r.fecha >= desde && r.fecha <= hasta) {
+          map[r.fecha] = (map[r.fecha] || 0) + r.horas;
+        }
+      });
+
+      const dias = [];
+      const d0 = new Date(desde + 'T12:00:00');
+      const d1 = new Date(hasta + 'T12:00:00');
+      for (let d = new Date(d0); d <= d1; d.setDate(d.getDate() + 1)) {
+        const pad = n => String(n).padStart(2, '0');
+        const key = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        dias.push({ fecha: key, horas: map[key] || 0 });
+      }
+
+      // Solo mostrar días con horas + ejes más legibles: si hay muchos, solo los que tienen horas
+      let mostrar = dias.filter(x => x.horas > 0);
+      if (mostrar.length === 0) {
+        cont.innerHTML = '<div class="empty" style="padding:1.5rem;width:100%;">Sin horas en este periodo</div>';
+        if (sub) sub.textContent = formatFecha(desde) + ' → ' + formatFecha(hasta);
+        return;
+      }
+      // Si hay pocos días con horas, ok; si hay más de 16, limitar a los últimos 16
+      if (mostrar.length > 16) mostrar = mostrar.slice(-16);
+
+      const max = Math.max(...mostrar.map(x => x.horas), 1);
+      cont.innerHTML = mostrar.map(x => {
+        const h = Math.max(4, Math.round((x.horas / max) * 90));
+        const alto = x.horas >= 4 ? ' alto' : '';
+        const dia = nombreDia(x.fecha);
+        const num = x.fecha.slice(8);
+        return `<div class="bar-col" title="${formatFecha(x.fecha)}: ${formatNum(x.horas, 1)} h">
+          <div class="bar-val">${formatNum(x.horas, x.horas % 1 ? 1 : 0)}</div>
+          <div class="bar${alto}" style="height:${h}px"></div>
+          <div class="bar-label">${dia} ${num}</div>
+        </div>`;
+      }).join('');
+
+      if (sub) sub.textContent = formatFecha(desde) + ' → ' + formatFecha(hasta);
+    }
+
+    function actualizarStats() {
+      const ahora = new Date();
+      const iniSem = getInicioSemana(ahora);
+      const finSem = getFinSemana(ahora);
+      const { desde, hasta } = getPeriodo20();
+
+      const delPeriodo = registros.filter(r => r.fecha >= desde && r.fecha <= hasta);
+      const horasPeriodo = delPeriodo.reduce((s, r) => s + r.horas, 0);
+      const horasSem = registros
+        .filter(r => r.fecha >= iniSem && r.fecha <= finSem)
+        .reduce((s, r) => s + r.horas, 0);
+      const dias = new Set(delPeriodo.map(r => r.fecha)).size;
+      const media = dias > 0 ? horasPeriodo / dias : 0;
+
+      document.getElementById('stat-mes').textContent = formatNum(horasPeriodo, 1);
+      document.getElementById('stat-semana').textContent = formatNum(horasSem, 1);
+      const mediaEl = document.getElementById('stat-media');
+      if (mediaEl) mediaEl.textContent = formatNum(media, 1);
+      document.getElementById('stat-dias').textContent = dias;
+
+      const bannerRango = document.getElementById('periodo-banner-rango');
+      const bannerHoras = document.getElementById('periodo-banner-horas');
+      if (bannerRango) bannerRango.textContent = formatFecha(desde) + '  →  ' + formatFecha(hasta);
+      if (bannerHoras) bannerHoras.textContent = formatNum(horasPeriodo, 1) + ' h';
+
+      renderChartPeriodo(desde, hasta);
+    }
+
+    /** Periodo 21 del mes anterior → 20 del mes indicado (YYYY-MM) */
+    function periodoDeMesCierre(ym) {
+      if (!ym) return getPeriodo20();
+      const [y, m] = ym.split('-').map(Number);
+      // cierre el día 20 del mes ym
+      const fin = new Date(y, m - 1, 20);
+      const ini = new Date(y, m - 2, 21); // día 21 del mes anterior
+      const pad = n => String(n).padStart(2, '0');
+      const toYMD = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      return { desde: toYMD(ini), hasta: toYMD(fin) };
+    }
+
+    function renderLista() {
+      const filtro = document.getElementById('filtro-mes').value;
+      let lista = [...registros].sort((a, b) => b.fecha.localeCompare(a.fecha));
+      let rangoTxt = '';
+      if (filtro) {
+        const { desde, hasta } = periodoDeMesCierre(filtro);
+        lista = lista.filter(r => r.fecha >= desde && r.fecha <= hasta);
+        rangoTxt = ' del ' + formatFecha(desde) + ' al ' + formatFecha(hasta);
+      }
+
+      const cont = document.getElementById('lista-horas');
+      if (lista.length === 0) {
+        cont.innerHTML = '<div class="empty">No hay horas registradas' + (filtro ? rangoTxt : '') + '.</div>';
+        return;
+      }
+
+      const totalLista = lista.reduce((s, r) => s + r.horas, 0);
+      const diasLista = new Set(lista.map(r => r.fecha)).size;
+      let html = `<div class="lista-resumen">
+        <span>Mostrando <strong>${lista.length}</strong> registro${lista.length === 1 ? '' : 's'} · <strong>${diasLista}</strong> día${diasLista === 1 ? '' : 's'}</span>
+        <span>Total: <strong>${formatNum(totalLista, 1)} h</strong></span>
+      </div>`;
+      html += '<div class="reg-list">';
+      lista.forEach(r => {
+        const concepto = (r.concepto || 'Sin concepto').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const cls = 'reg-item has-horas' + (r.horas >= 4 ? ' alto' : '');
+        html += `<div class="${cls}" data-fecha="${r.fecha}">
+          <div class="reg-fecha-wrap">
+            <span class="reg-fecha">${formatFecha(r.fecha)}</span>
+            <span class="reg-dia">${nombreDia(r.fecha)}</span>
+          </div>
+          <span class="reg-horas">${formatNum(r.horas, r.horas % 1 === 0 ? 0 : 1)} h</span>
+          <span class="reg-concepto">${concepto}</span>
+          <div class="reg-acciones">
+            <button type="button" class="btn btn-outline btn-sm btn-editar" data-fecha="${r.fecha}">Editar</button>
+            <button type="button" class="btn btn-danger btn-sm btn-borrar" data-fecha="${r.fecha}">Eliminar</button>
+          </div>
+        </div>`;
+      });
+      html += '</div>';
+      cont.innerHTML = html;
+    }
+
+    function setHoras(val) {
+      const n = Math.max(0, Math.round(val * 100) / 100);
+      document.getElementById('horas').value = n;
+      document.getElementById('horas-display').textContent = formatNum(n, n % 1 === 0 ? 0 : 1);
+    }
+
+    function getHoras() {
+      return parseFloat(document.getElementById('horas').value) || 0;
+    }
+
+    let modoEdicion = false;
+
+    function setModoEdicion(activo) {
+      modoEdicion = activo;
+      const grupo = document.getElementById('grupo-guardar');
+      const nota = document.getElementById('nota-horas');
+      if (grupo) grupo.style.display = activo ? 'flex' : 'none';
+      if (nota) {
+        nota.innerHTML = activo
+          ? 'Modo <strong>edición</strong>: ajusta las horas y pulsa <strong>Guardar cambios</strong>.'
+          : 'Pulsa +1, +2… y se guarda solo en la fecha seleccionada. Para corregir un día, usa <strong>Editar</strong>.';
+      }
+    }
+
+    function guardarHorasAuto() {
+      if (modoEdicion) return; // en edición no guarda hasta pulsar Guardar
+      const fecha = document.getElementById('fecha').value;
+      if (!fecha) { toast('Selecciona una fecha'); return; }
+      const horas = getHoras();
+      const concepto = document.getElementById('concepto').value.trim();
+      const idx = registros.findIndex(r => r.fecha === fecha);
+
+      if (horas <= 0) {
+        if (idx >= 0) {
+          registros.splice(idx, 1);
+          saveData();
+          actualizarStats();
+          renderLista();
+          toast('Eliminado ' + formatFecha(fecha));
+        }
+        return;
+      }
+
+      if (idx >= 0) {
+        registros[idx] = { fecha, horas, concepto };
+      } else {
+        registros.push({ fecha, horas, concepto });
+      }
+      saveData();
+      actualizarStats();
+      renderLista();
+      toast(formatFecha(fecha) + ': ' + formatNum(horas, horas % 1 === 0 ? 0 : 1) + ' h');
+    }
+
+    document.querySelectorAll('.btn-hora[data-add]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const add = parseFloat(btn.dataset.add);
+        setHoras(getHoras() + add);
+        if (!modoEdicion) guardarHorasAuto();
+      });
+    });
+
+    document.getElementById('btn-reset-horas').addEventListener('click', () => {
+      setHoras(0);
+      if (!modoEdicion) guardarHorasAuto();
+    });
+
+    // Al cambiar de fecha fuera de edición, cargar horas de ese día si existen
+    document.getElementById('fecha').addEventListener('change', () => {
+      if (modoEdicion) return;
+      const fecha = document.getElementById('fecha').value;
+      const r = registros.find(x => x.fecha === fecha);
+      if (r) {
+        setHoras(r.horas);
+        document.getElementById('concepto').value = r.concepto || '';
+      } else {
+        setHoras(0);
+        document.getElementById('concepto').value = '';
+      }
+    });
+
+    function editarRegistro(fecha) {
+      const r = registros.find(x => x.fecha === fecha);
+      if (!r) return;
+      document.getElementById('fecha').value = r.fecha;
+      setHoras(r.horas);
+      document.getElementById('concepto').value = r.concepto || '';
+      setModoEdicion(true);
+      document.getElementById('fecha').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      toast('Editando ' + formatFecha(fecha));
+    }
+
+    function borrarRegistro(fecha) {
+      registros = registros.filter(r => r.fecha !== fecha);
+      saveData();
+      actualizarStats();
+      renderLista();
+      if (modoEdicion && document.getElementById('fecha').value === fecha) {
+        setModoEdicion(false);
+        setHoras(0);
+        document.getElementById('concepto').value = '';
+      }
+      toast('Eliminado ' + formatFecha(fecha));
+    }
+
+    document.getElementById('lista-horas').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-fecha]');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const fecha = btn.getAttribute('data-fecha');
+      if (!fecha) return;
+      if (btn.classList.contains('btn-editar')) editarRegistro(fecha);
+      else if (btn.classList.contains('btn-borrar')) borrarRegistro(fecha);
+    });
+
+    document.getElementById('btn-guardar').addEventListener('click', () => {
+      if (!modoEdicion) return;
+      const fecha = document.getElementById('fecha').value;
+      const horas = getHoras();
+      const concepto = document.getElementById('concepto').value.trim();
+      if (!fecha) { toast('Selecciona una fecha'); return; }
+
+      const idx = registros.findIndex(r => r.fecha === fecha);
+      if (horas <= 0) {
+        if (idx >= 0) registros.splice(idx, 1);
+        toast('Registro eliminado');
+      } else if (idx >= 0) {
+        registros[idx] = { fecha, horas, concepto };
+        toast('Cambios guardados');
+      } else {
+        registros.push({ fecha, horas, concepto });
+        toast('Horas guardadas');
+      }
+      saveData();
+      actualizarStats();
+      renderLista();
+      setModoEdicion(false);
+      setHoras(0);
+      document.getElementById('concepto').value = '';
+      document.getElementById('fecha').value = hoy();
+    });
+
+    document.getElementById('btn-cancelar-edicion').addEventListener('click', () => {
+      setModoEdicion(false);
+      setHoras(0);
+      document.getElementById('concepto').value = '';
+      document.getElementById('fecha').value = hoy();
+      toast('Edición cancelada');
+    });
+
+    document.getElementById('filtro-mes').addEventListener('change', renderLista);
+    document.getElementById('btn-limpiar-filtro').addEventListener('click', () => {
+      document.getElementById('filtro-mes').value = '';
+      renderLista();
+    });
+
+    // ========== PDF ==========
+    function actualizarRangoPDF() {
+      const tipo = document.querySelector('input[name="tipo-pdf"]:checked').value;
+      const hoyStr = hoy();
+      const d = new Date();
+
+      if (tipo === 'semanal') {
+        document.getElementById('pdf-desde').value = getInicioSemana(d);
+        document.getElementById('pdf-hasta').value = getFinSemana(d);
+      } else if (tipo === 'mensual') {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        document.getElementById('pdf-desde').value = `${y}-${m}-01`;
+        const last = new Date(y, d.getMonth() + 1, 0);
+        document.getElementById('pdf-hasta').value = last.toISOString().slice(0, 10);
+      } else if (tipo === 'anual') {
+        const y = d.getFullYear();
+        document.getElementById('pdf-desde').value = `${y}-01-01`;
+        document.getElementById('pdf-hasta').value = `${y}-12-31`;
+      }
+      // personalizado: no tocar
+    }
+
+    document.querySelectorAll('input[name="tipo-pdf"]').forEach(r => {
+      r.addEventListener('change', actualizarRangoPDF);
+    });
+
+    let pdfPendiente = null; // { doc, nombreArchivo, url }
+
+    function cerrarPreviaPdf() {
+      const box = document.getElementById('pdf-preview-box');
+      const frame = document.getElementById('pdf-preview-frame');
+      if (pdfPendiente && pdfPendiente.url) {
+        URL.revokeObjectURL(pdfPendiente.url);
+      }
+      pdfPendiente = null;
+      if (frame) frame.src = '';
+      if (box) box.classList.remove('visible');
+    }
+
+    async function guardarPdfElegirUbicacion(doc, nombreArchivo) {
+      const blob = doc.output('blob');
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: nombreArchivo,
+            types: [{
+              description: 'Documento PDF',
+              accept: { 'application/pdf': ['.pdf'] }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          toast('PDF guardado');
+          return;
+        } catch (err) {
+          if (err && (err.name === 'AbortError' || err.name === 'NotAllowedError')) {
+            toast('Guardado cancelado');
+            return;
+          }
+        }
+      }
+      doc.save(nombreArchivo);
+      toast('PDF descargado');
+    }
+
+    function construirPdf() {
+      const desde = document.getElementById('pdf-desde').value;
+      const hasta = document.getElementById('pdf-hasta').value;
+      const nombre = document.getElementById('pdf-nombre').value || config.nombre || 'Trabajador';
+      const empresa = document.getElementById('pdf-empresa').value || config.empresa || '';
+
+      if (!desde || !hasta) {
+        toast('Indica el rango de fechas');
+        return null;
+      }
+
+      const lista = registros
+        .filter(r => r.fecha >= desde && r.fecha <= hasta)
+        .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+      const totalHoras = lista.reduce((s, r) => s + r.horas, 0);
+      const tipo = document.querySelector('input[name="tipo-pdf"]:checked').value;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFillColor(37, 99, 235);
+      doc.rect(0, 0, 210, 32, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Resumen de Horas Extras', 14, 16);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(tipo.charAt(0).toUpperCase() + tipo.slice(1) + ' · ' + formatFecha(desde) + ' — ' + formatFecha(hasta), 14, 25);
+
+      doc.setTextColor(30, 30, 30);
+      doc.setFontSize(11);
+      let y = 42;
+      doc.text('Trabajador: ' + nombre, 14, y);
+      if (empresa) {
+        y += 7;
+        doc.text('Empresa / Proyecto: ' + empresa, 14, y);
+      }
+      y += 7;
+      doc.text('Fecha de generación: ' + formatFecha(hoy()), 14, y);
+      y += 12;
+
+      const body = lista.map(r => [
+        formatFecha(r.fecha),
+        formatNum(r.horas, 2),
+        r.concepto || '—'
+      ]);
+
+      doc.autoTable({
+        startY: y,
+        head: [['Fecha', 'Horas', 'Concepto']],
+        body: body.length ? body : [['—', '0', 'Sin registros']],
+        theme: 'striped',
+        headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+        styles: { fontSize: 10 },
+        columnStyles: {
+          0: { cellWidth: 35 },
+          1: { cellWidth: 25, halign: 'right' },
+          2: { cellWidth: 'auto' }
+        }
+      });
+
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Total de horas: ' + formatNum(totalHoras, 2) + ' h', 14, finalY);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text('Documento generado automáticamente. Verificar con los registros oficiales de la empresa.', 14, finalY + 8);
+
+      return {
+        doc,
+        nombreArchivo: `horas-extras_${desde}_${hasta}.pdf`
+      };
+    }
+
+    document.getElementById('btn-generar-pdf').addEventListener('click', () => {
+      const result = construirPdf();
+      if (!result) return;
+
+      // Liberar previa anterior
+      if (pdfPendiente && pdfPendiente.url) URL.revokeObjectURL(pdfPendiente.url);
+
+      const blob = result.doc.output('blob');
+      const url = URL.createObjectURL(blob);
+      pdfPendiente = { doc: result.doc, nombreArchivo: result.nombreArchivo, url };
+
+      const frame = document.getElementById('pdf-preview-frame');
+      const box = document.getElementById('pdf-preview-box');
+      frame.src = url;
+      box.classList.add('visible');
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      toast('Previa lista — revisa y guarda si está bien');
+    });
+
+    document.getElementById('btn-guardar-pdf-final').addEventListener('click', async () => {
+      if (!pdfPendiente) {
+        toast('Genera primero la previa');
+        return;
+      }
+      await guardarPdfElegirUbicacion(pdfPendiente.doc, pdfPendiente.nombreArchivo);
+    });
+
+    document.getElementById('btn-cerrar-previa').addEventListener('click', () => {
+      cerrarPreviaPdf();
+    });
+
+    // ========== NÓMINA ==========
+    // Convenio Metal Pontevedra 2026 (Anexo I BOP 08/07/2026)
+    const CONVENIO_METAL = {
+      '5A': { nombre: 'Oficial 1ª/2ª taller', base: 1860.37, he: 23.93, anual: 26045.19 },
+      '4A': { nombre: 'Encargado / Of. 1ª admin.', base: 1996.98, he: 25.83, anual: 27957.79 },
+      '5B': { nombre: 'Analista 2ª / Chofer camión', base: 1768.84, he: 22.65, anual: 24763.81 },
+      '6A': { nombre: 'Oficial 3ª / Chofer', base: 1722.23, he: 22.00, anual: 24111.27 },
+      '6B': { nombre: 'Especialista / Almacenero', base: 1679.33, he: 21.39, anual: 23510.66 },
+      '6C': { nombre: 'Auxiliar admin. / lab.', base: 1617.26, he: 20.53, anual: 22641.71 },
+      '7A': { nombre: 'Peón / Portero', base: 1608.77, he: 20.43, anual: 22522.75 },
+      '3B': { nombre: 'Maestro taller', base: 2196.30, he: 28.63, anual: 30748.27 },
+      '2B': { nombre: 'Jefe de taller', base: 2490.80, he: 32.75, anual: 34871.14 }
+    };
+
+    function getPeriodo20() {
+      const hoyD = new Date();
+      let fin = new Date(hoyD.getFullYear(), hoyD.getMonth(), 20);
+      if (hoyD.getDate() > 20) {
+        fin = new Date(hoyD.getFullYear(), hoyD.getMonth() + 1, 20);
+      }
+      const ini = new Date(fin.getFullYear(), fin.getMonth() - 1, 21);
+      const pad = n => String(n).padStart(2, '0');
+      const toYMD = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      return { desde: toYMD(ini), hasta: toYMD(fin) };
+    }
+
+    function rellenarHorasPeriodo20() {
+      const { desde, hasta } = getPeriodo20();
+      const horas = registros
+        .filter(r => r.fecha >= desde && r.fecha <= hasta)
+        .reduce((s, r) => s + r.horas, 0);
+      document.getElementById('horas-extra-mes').value = horas || 0;
+      const txt = document.getElementById('periodo-horas-txt');
+      if (txt) {
+        txt.innerHTML = `Periodo de horas extras: <strong>${formatFecha(desde)}</strong> → <strong>${formatFecha(hasta)}</strong> · Registradas: <strong>${formatNum(horas, 2)} h</strong>`;
+      }
+    }
+
+    document.getElementById('categoria-convenio').addEventListener('change', () => {
+      const key = document.getElementById('categoria-convenio').value;
+      if (key !== 'custom' && CONVENIO_METAL[key]) {
+        document.getElementById('sueldo-base').value = CONVENIO_METAL[key].base;
+        document.getElementById('precio-hora-extra').value = CONVENIO_METAL[key].he;
+      }
+    });
+
+    // Escala de retención IRPF 2026 (combinada de referencia)
+    const ESCALA_IRPF = [
+      { hasta: 12450, tipo: 0.19 },
+      { hasta: 20200, tipo: 0.24 },
+      { hasta: 35200, tipo: 0.30 },
+      { hasta: 60000, tipo: 0.37 },
+      { hasta: 300000, tipo: 0.45 },
+      { hasta: Infinity, tipo: 0.47 }
+    ];
+
+    function cuotaEscala(base) {
+      let restante = Math.max(0, base);
+      let cuota = 0;
+      let prev = 0;
+      for (const tramo of ESCALA_IRPF) {
+        const tramoBase = Math.min(restante, tramo.hasta - prev);
+        if (tramoBase <= 0) break;
+        cuota += tramoBase * tramo.tipo;
+        restante -= tramoBase;
+        prev = tramo.hasta;
+      }
+      return cuota;
+    }
+
+    function calcularMinimoFamiliar(situacion) {
+      // Mínimo personal 5.550 €
+      // Hijos: 1º 2.400, 2º 2.700, 3º 4.000
+      const personal = 5550;
+      const hijos3 = 2400 + 2700 + 4000; // 9.100
+
+      if (situacion === 'casado3') {
+        // Cónyuge sin rentas o ≤ 1.500 → se computan enteros (simplificado)
+        return personal + hijos3;
+      }
+      if (situacion === 'casado3-reparto') {
+        // Reparto 50 % de los mínimos de hijos
+        return personal + hijos3 / 2;
+      }
+      if (situacion === 'soltero3') {
+        // Monoparental: enteros
+        return personal + hijos3;
+      }
+      // soltero0
+      return personal;
+    }
+
+    document.getElementById('btn-calcular-nomina').addEventListener('click', () => {
+      rellenarHorasPeriodo20();
+      const sueldoBase = parseFloat(document.getElementById('sueldo-base').value) || 0;
+      const precioHora = parseFloat(document.getElementById('precio-hora-extra').value) || 0;
+      const horasExtra = parseFloat(document.getElementById('horas-extra-mes').value) || 0;
+      const plusEspH = parseFloat(document.getElementById('plus-especiales').value) || 0;
+      const horasEsp = parseFloat(document.getElementById('horas-especiales').value) || 0;
+      const plusNoct = parseFloat(document.getElementById('plus-nocturnidad').value) || 0;
+      const plusTrans = parseFloat(document.getElementById('plus-transporte').value) || 0;
+      const antiguedad = parseFloat(document.getElementById('antiguedad').value) || 0;
+      const otros = parseFloat(document.getElementById('otros-pluses').value) || 0;
+      const nPagas = parseInt(document.getElementById('pagas').value) || 14;
+      const contrato = document.getElementById('tipo-contrato').value;
+      const situacion = document.getElementById('situacion-familiar').value;
+
+      const importeExtras = horasExtra * precioHora;
+      const importeEsp = horasEsp * plusEspH;
+      const plusesFijos = plusTrans + plusNoct + antiguedad + otros;
+      const brutoMensual = sueldoBase + importeExtras + importeEsp + plusesFijos;
+
+      // Bruto anual: base × pagas + extras/pluses variables × 12 (aprox.)
+      const brutoAnual = sueldoBase * nPagas + (importeExtras + importeEsp + plusesFijos) * 12;
+
+      const tipoSS = contrato === 'temporal' ? 0.0655 : 0.0650;
+      const ssMensual = brutoMensual * tipoSS;
+      const ssAnual = brutoAnual * tipoSS;
+
+      let rendimientoNeto = brutoAnual - ssAnual - 2000;
+      if (rendimientoNeto <= 11250) {
+        rendimientoNeto -= 7302;
+      } else if (rendimientoNeto < 19747.5) {
+        const factor = (19747.5 - rendimientoNeto) / (19747.5 - 11250);
+        rendimientoNeto -= 7302 * factor;
+      }
+      if (situacion.includes('3')) rendimientoNeto -= 600;
+      rendimientoNeto = Math.max(0, rendimientoNeto);
+
+      const minimo = calcularMinimoFamiliar(situacion);
+      const cuotaBase = cuotaEscala(rendimientoNeto);
+      const cuotaMinimo = cuotaEscala(minimo);
+      let cuotaIRPF = Math.max(0, cuotaBase - cuotaMinimo);
+
+      const limiteExento = situacion === 'casado3' ? 19262 :
+                           situacion === 'soltero3' ? 18694 :
+                           situacion === 'casado3-reparto' ? 16867 : 15876;
+      if (brutoAnual <= limiteExento) cuotaIRPF = 0;
+
+      let tipoRetencion = brutoAnual > 0 ? (cuotaIRPF / brutoAnual) : 0;
+      tipoRetencion = Math.floor(tipoRetencion * 10000) / 10000;
+
+      const irpfMensual = brutoMensual * tipoRetencion;
+      const netoMensual = brutoMensual - ssMensual - irpfMensual;
+
+      const grid = document.getElementById('resultado-grid');
+      grid.innerHTML = `
+        <div class="label">Sueldo base convenio</div><div class="value">${formatNum(sueldoBase)} €</div>
+        <div class="label">Horas extras (${formatNum(horasExtra, 2)} h × ${formatNum(precioHora)} €)</div><div class="value">${formatNum(importeExtras)} €</div>
+        <div class="label">Plus trabajos especiales</div><div class="value">${formatNum(importeEsp)} €</div>
+        <div class="label">Nocturnidad + transporte + antigüedad + otros</div><div class="value">${formatNum(plusesFijos)} €</div>
+        <div class="label"><strong>Bruto del periodo</strong></div><div class="value"><strong>${formatNum(brutoMensual)} €</strong></div>
+        <div class="label">Seguridad Social (${(tipoSS * 100).toFixed(2)} %)</div><div class="value">− ${formatNum(ssMensual)} €</div>
+        <div class="label">IRPF retención (${(tipoRetencion * 100).toFixed(2)} %)</div><div class="value">− ${formatNum(irpfMensual)} €</div>
+        <div class="label total">Neto estimado a cobrar</div><div class="value total">${formatNum(netoMensual)} €</div>
+      `;
+      document.getElementById('resultado-nomina').style.display = 'block';
+      toast('Nómina calculada');
+    });
+
+    // ========== GEOLOCALIZACIÓN ==========
+    function haversineM(lat1, lng1, lat2, lng2) {
+      const R = 6371000;
+      const toRad = x => x * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    function parseHoraMin(str) {
+      const [h, m] = (str || '00:00').split(':').map(Number);
+      return (h || 0) * 60 + (m || 0);
+    }
+
+    function minutosDesdeMedianoche(d = new Date()) {
+      return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
+    }
+
+    /** true si el instante es hora extra (fuera de jornada + margen) */
+    function esFranjaHoraExtra(d = new Date()) {
+      const g = config.geo || {};
+      const inicio = parseHoraMin(g.jornadaInicio || '07:00');
+      const fin = parseHoraMin(g.jornadaFin || '15:00');
+      const margen = g.margenMin != null ? g.margenMin : 5;
+      // Jornada normal: [inicio, fin + margen). Antes de inicio = extra (llegar pronto).
+      // Después de fin+margen = extra. Entre inicio y fin+margen = jornada (llegar 5 min tarde no es extra).
+      const ahora = minutosDesdeMedianoche(d);
+      return ahora < inicio || ahora >= (fin + margen);
+    }
+
+    /**
+     * Solo horas completas. Más de umbral (50) min → 1 h; luego cada 60 min otra.
+     * 0–50 → 0 | 51–110 → 1 | 111–170 → 2 ...
+     */
+    function minutosToHorasExtraEnteras(minutos) {
+      const umbral = (config.geo && config.geo.umbralMinHora != null) ? config.geo.umbralMinHora : 50;
+      if (minutos <= umbral) return 0;
+      return Math.floor((minutos - umbral - 1) / 60) + 1;
+    }
+
+    function geoOtMsHoy() {
+      asegurarDiaGeo();
+      let total = geoState.pendingOtMs || 0;
+      // el tick ya va metiendo en pending; no sumar enterAt genérico
+      return total;
+    }
+
+    function asegurarDiaGeo() {
+      const today = hoy();
+      if (geoState.date !== today) {
+        if (geoState.date && ((geoState.pendingOtMs || 0) > 0 || geoState.inside)) {
+          flushGeoHoras(geoState.date);
+        }
+        geoState.date = today;
+        geoState.pendingOtMs = 0;
+        geoState.horasYaRegistradas = 0;
+        geoState.lastTick = Date.now();
+        saveGeoState();
+      }
+    }
+
+    function tickGeoTiempo() {
+      asegurarDiaGeo();
+      const now = Date.now();
+      if (!geoState.lastTick) geoState.lastTick = now;
+      const delta = Math.max(0, now - geoState.lastTick);
+      geoState.lastTick = now;
+      // Solo acumula si estás en zona Y en franja de extra
+      if (geoState.inside && esFranjaHoraExtra(new Date(now))) {
+        geoState.pendingOtMs = (geoState.pendingOtMs || 0) + delta;
+        geoState.enFranjaExtra = true;
+      } else {
+        geoState.enFranjaExtra = geoState.inside && esFranjaHoraExtra();
+      }
+      saveGeoState();
+      // Si ya hay horas enteras nuevas, registrarlas en caliente
+      sincronizarHorasExtraRegistro(hoy());
+      actualizarUIGeo();
+    }
+
+    function sumarHorasRegistro(fecha, horasAdd, concepto) {
+      if (horasAdd <= 0) return;
+      const idx = registros.findIndex(r => r.fecha === fecha);
+      if (idx >= 0) {
+        registros[idx].horas = Math.round((registros[idx].horas + horasAdd) * 100) / 100;
+        if (!registros[idx].concepto) registros[idx].concepto = concepto;
+      } else {
+        registros.push({ fecha, horas: horasAdd, concepto });
+      }
+      saveData();
+      actualizarStats();
+      renderLista();
+      if (typeof actualizarVistaRapido === 'function') actualizarVistaRapido();
+    }
+
+    function sincronizarHorasExtraRegistro(fecha) {
+      const g = config.geo || {};
+      if (!g.autoRegistrar) return 0;
+      const min = (geoState.pendingOtMs || 0) / 60000;
+      const horasEnteras = minutosToHorasExtraEnteras(min);
+      const ya = geoState.horasYaRegistradas || 0;
+      const delta = horasEnteras - ya;
+      if (delta > 0) {
+        const concepto = 'Extra auto: ' + (g.nombre || 'zona');
+        sumarHorasRegistro(fecha, delta, concepto);
+        geoState.horasYaRegistradas = horasEnteras;
+        saveGeoState();
+        toast('+' + delta + ' h extra (localización)');
+      }
+      return delta;
+    }
+
+    function flushGeoHoras(fechaForce) {
+      tickGeoTiempo();
+      const fecha = fechaForce || hoy();
+      sincronizarHorasExtraRegistro(fecha);
+      return geoState.horasYaRegistradas || 0;
+    }
+
+    function actualizarUIGeo() {
+      const titulo = document.getElementById('geo-status-titulo');
+      const detalle = document.getElementById('geo-status-detalle');
+      const badge = document.getElementById('geo-status-badge');
+      const tiempo = document.getElementById('geo-tiempo-hoy');
+      const horasEl = document.getElementById('geo-horas-enteras');
+      const distEl = document.getElementById('geo-distancia');
+      if (!titulo) return;
+
+      const g = config.geo || {};
+      const min = (geoOtMsHoy() || 0) / 60000;
+      const horasEnteras = minutosToHorasExtraEnteras(min);
+      if (tiempo) tiempo.textContent = Math.floor(min) + ' min';
+      if (horasEl) horasEl.textContent = horasEnteras + ' h';
+
+      if (distEl) {
+        if (geoState.lastDist != null) distEl.textContent = Math.round(geoState.lastDist) + ' m';
+        else distEl.textContent = '—';
+      }
+
+      if (!g.activo) {
+        titulo.textContent = 'Servicio desactivado';
+        detalle.textContent = 'Actívalo y guarda la zona para medir solo horas extras.';
+        if (badge) badge.textContent = 'OFF';
+        return;
+      }
+      if (g.lat == null || g.lng == null) {
+        titulo.textContent = 'Zona no configurada';
+        detalle.textContent = 'Pulsa «Usar mi ubicación actual» o escribe lat/lng.';
+        if (badge) badge.textContent = '—';
+        return;
+      }
+
+      const enExtra = esFranjaHoraExtra();
+      if (geoState.inside && enExtra) {
+        titulo.textContent = 'En zona · contando EXTRA';
+        detalle.textContent = (g.nombre || 'Zona') + ' · fuera de jornada ' + (g.jornadaInicio || '07:00') + '–' + (g.jornadaFin || '15:00');
+        if (badge) badge.textContent = 'EXTRA';
+      } else if (geoState.inside && !enExtra) {
+        titulo.textContent = 'En zona · jornada normal';
+        detalle.textContent = 'Dentro de ' + (g.jornadaInicio || '07:00') + '–' + (g.jornadaFin || '15:00') + ' (+margen). No suma extra.';
+        if (badge) badge.textContent = 'JORNADA';
+      } else {
+        titulo.textContent = 'Fuera de la zona';
+        detalle.textContent = (g.nombre || 'Zona') + ' · radio ' + (g.radio || 150) + ' m';
+        if (badge) badge.textContent = 'OUT';
+      }
+    }
+
+    function onGeoPosition(pos) {
+      tickGeoTiempo();
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      geoState.lastLat = lat;
+      geoState.lastLng = lng;
+      geoState.lastAcc = pos.coords.accuracy;
+
+      const g = config.geo;
+      if (!g.activo || g.lat == null || g.lng == null) {
+        actualizarUIGeo();
+        return;
+      }
+
+      const dist = haversineM(lat, lng, g.lat, g.lng);
+      geoState.lastDist = dist;
+      const inside = dist <= (g.radio || 150);
+
+      if (inside && !geoState.inside) {
+        geoState.inside = true;
+        geoState.lastTick = Date.now();
+        saveGeoState();
+        toast('Entraste en ' + (g.nombre || 'la zona'));
+      } else if (!inside && geoState.inside) {
+        tickGeoTiempo();
+        geoState.inside = false;
+        saveGeoState();
+        flushGeoHoras();
+        toast('Saliste de la zona');
+      }
+
+      saveGeoState();
+      actualizarUIGeo();
+    }
+
+    function actualizarMapaGeo(lat, lng, accuracy) {
+      const map = document.getElementById('geo-map');
+      const caption = document.getElementById('geo-map-caption');
+      const open = document.getElementById('geo-open-map');
+      if (!map || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      const delta = 0.0025;
+      const bbox = [lng-delta, lat-delta, lng+delta, lat+delta].map(v => v.toFixed(6)).join('%2C');
+      const src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + lat.toFixed(6) + '%2C' + lng.toFixed(6);
+      if (map.src !== src) map.src = src;
+      if (open) open.href = 'https://www.openstreetmap.org/?mlat=' + lat + '&mlon=' + lng + '#map=18/' + lat + '/' + lng;
+      if (caption) caption.textContent = lat.toFixed(6) + ', ' + lng.toFixed(6) +
+        (Number.isFinite(accuracy) ? ' · precisión GPS ±' + Math.round(accuracy) + ' m' : ' · centro guardado');
+    }
+
+    function geoEntornoSeguro() {
+      // Safari/iOS exige una web servida por HTTPS para geolocalización fiable.
+      return !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    }
+
+    function explicarErrorGeo(err) {
+      if (!geoEntornoSeguro()) return 'El GPS necesita que la aplicación esté publicada en una dirección HTTPS. Un archivo abierto desde Archivos o una página HTTP normal no es suficiente en Safari.';
+      if (!navigator.geolocation) return 'Este navegador no ofrece geolocalización. Prueba con Safari actualizado.';
+      if (err && err.code === 1) return 'Permiso denegado. En el iPhone entra en Ajustes → Privacidad y seguridad → Localización, activa Localización y permite el acceso a Safari. Después recarga la app.';
+      if (err && err.code === 2) return 'El iPhone no ha podido determinar tu posición. Activa Localización, sal al exterior y vuelve a intentarlo.';
+      if (err && err.code === 3) return 'El GPS ha tardado demasiado. Comprueba la cobertura, espera unos segundos y vuelve a intentarlo.';
+      return (err && err.message) ? err.message : 'No se ha podido obtener la ubicación. Comprueba los permisos y vuelve a intentarlo.';
+    }
+
+    function onGeoError(err) {
+      const detalle = document.getElementById('geo-status-detalle');
+      const titulo = document.getElementById('geo-status-titulo');
+      if (titulo) titulo.textContent = 'Ubicación no disponible';
+      if (detalle) detalle.textContent = explicarErrorGeo(err);
+      const sec = document.getElementById('geo-security-status');
+      if (sec) sec.textContent = window.isSecureContext ? 'Conexión segura detectada. Revisa el permiso de Safari si sigue fallando.' : 'Esta página no está en HTTPS: el GPS está bloqueado por iOS.';
+      toast('No se pudo obtener la ubicación');
+    }
+
+    function stopGeoWatch() {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
+        window.webkit.messageHandlers.location.postMessage('stop');
+      }
+      if (geoWatchId != null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(geoWatchId);
+        geoWatchId = null;
+      }
+      if (geoTickTimer) { clearInterval(geoTickTimer); geoTickTimer = null; }
+    }
+
+    function startGeoWatch() {
+      stopGeoWatch();
+      if (!config.geo.activo) { actualizarUIGeo(); return; }
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
+        window.webkit.messageHandlers.location.postMessage('watch');
+        actualizarUIGeo();
+        return;
+      }
+      if (!geoEntornoSeguro() || !navigator.geolocation) { onGeoError({code:0}); return; }
+      // El permiso del sistema se solicita mediante la acción explícita del usuario.
+      geoWatchId = navigator.geolocation.watchPosition(onGeoPosition, onGeoError, {
+        enableHighAccuracy:true, maximumAge:5000, timeout:30000
+      });
+      geoTickTimer = setInterval(() => {
+        tickGeoTiempo();
+        if (config.geo.activo && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(onGeoPosition, onGeoError, {
+            enableHighAccuracy:true, maximumAge:5000, timeout:25000
+          });
+        }
+      }, 20000);
+      actualizarUIGeo();
+    }
+
+    function rellenarFormGeo() {
+      const g = config.geo || {};
+      const el = id => document.getElementById(id);
+      if (el('geo-activo')) el('geo-activo').value = g.activo ? '1' : '0';
+      if (el('geo-auto')) el('geo-auto').value = g.autoRegistrar !== false ? '1' : '0';
+      if (el('geo-nombre')) el('geo-nombre').value = g.nombre || 'Trabajo';
+      if (el('geo-radio')) el('geo-radio').value = g.radio || 150;
+      if (el('geo-lat')) el('geo-lat').value = g.lat != null ? g.lat : '';
+      if (el('geo-lng')) el('geo-lng').value = g.lng != null ? g.lng : '';
+      if (el('geo-inicio')) el('geo-inicio').value = g.jornadaInicio || '07:00';
+      if (el('geo-fin')) el('geo-fin').value = g.jornadaFin || '15:00';
+      if (el('geo-margen')) el('geo-margen').value = g.margenMin != null ? g.margenMin : 5;
+      if (el('geo-umbral')) el('geo-umbral').value = g.umbralMinHora != null ? g.umbralMinHora : 50;
+      if (g.lat != null && g.lng != null) actualizarMapaGeo(Number(g.lat), Number(g.lng));
+      const sec = el('geo-security-status');
+      if (sec) sec.textContent = (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) ? '✓ GPS nativo de iOS disponible: el iPhone solicitará permiso de ubicación.' : (geoEntornoSeguro() ? '✓ Dirección HTTPS segura: Safari puede solicitar el permiso GPS.' : '⚠ Archivo local/HTTP: publica esta app en HTTPS para usar el GPS.');
+      actualizarUIGeo();
+    }
+
+    window.nativeLocationReceived = function(lat, lng, accuracy) {
+      const titulo = document.getElementById('geo-status-titulo');
+      const detalle = document.getElementById('geo-status-detalle');
+      document.getElementById('geo-lat').value = Number(lat).toFixed(6);
+      document.getElementById('geo-lng').value = Number(lng).toFixed(6);
+      actualizarMapaGeo(Number(lat), Number(lng), Number(accuracy));
+      if (titulo) titulo.textContent = 'Posición encontrada · confirma el mapa';
+      if (detalle) detalle.textContent = 'Si el marcador está en tu centro de trabajo, pulsa «Guardar zona». Si no, vuelve a localizarte.';
+      toast('GPS localizado · precisión ±' + Math.round(Number(accuracy)) + ' m');
+    };
+    window.nativeLocationError = function(code) { onGeoError({code:Number(code)}); };
+
+    document.getElementById('btn-geo-aqui').addEventListener('click', () => {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
+        const titulo = document.getElementById('geo-status-titulo');
+        const detalle = document.getElementById('geo-status-detalle');
+        if (titulo) titulo.textContent = 'Solicitando permiso GPS de iOS…';
+        if (detalle) detalle.textContent = 'El iPhone mostrará el aviso del sistema. Selecciona «Permitir mientras se usa la app».';
+        window.webkit.messageHandlers.location.postMessage('once');
+        return;
+      }
+      if (!geoEntornoSeguro()) {
+        onGeoError({code:0});
+        toast('Abre la aplicación desde su dirección HTTPS');
+        return;
+      }
+      if (!navigator.geolocation) { onGeoError({code:0}); return; }
+      const titulo = document.getElementById('geo-status-titulo');
+      const detalle = document.getElementById('geo-status-detalle');
+      if (titulo) titulo.textContent = 'Buscando tu posición…';
+      if (detalle) detalle.textContent = 'Si Safari pregunta, pulsa «Permitir». Esperando una lectura GPS precisa.';
+      toast('Solicitando ubicación al iPhone…');
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        document.getElementById('geo-lat').value = lat.toFixed(6);
+        document.getElementById('geo-lng').value = lng.toFixed(6);
+        actualizarMapaGeo(lat, lng, pos.coords.accuracy);
+        if (titulo) titulo.textContent = 'Posición encontrada · confirma el mapa';
+        if (detalle) detalle.textContent = 'Si el marcador está en tu centro de trabajo, pulsa «Guardar zona». Si no, vuelve a localizarte.';
+        toast('GPS localizado · precisión ±' + Math.round(pos.coords.accuracy) + ' m');
+      }, onGeoError, {enableHighAccuracy:true, maximumAge:0, timeout:35000});
+    });
+
+    document.getElementById('btn-geo-guardar').addEventListener('click', () => {
+      config.geo = config.geo || {};
+      config.geo.activo = document.getElementById('geo-activo').value === '1';
+      config.geo.autoRegistrar = document.getElementById('geo-auto').value === '1';
+      config.geo.nombre = document.getElementById('geo-nombre').value.trim() || 'Trabajo';
+      config.geo.radio = parseInt(document.getElementById('geo-radio').value, 10) || 150;
+      config.geo.jornadaInicio = document.getElementById('geo-inicio').value || '07:00';
+      config.geo.jornadaFin = document.getElementById('geo-fin').value || '15:00';
+      config.geo.margenMin = parseInt(document.getElementById('geo-margen').value, 10);
+      if (!Number.isFinite(config.geo.margenMin)) config.geo.margenMin = 5;
+      config.geo.umbralMinHora = parseInt(document.getElementById('geo-umbral').value, 10);
+      if (!Number.isFinite(config.geo.umbralMinHora)) config.geo.umbralMinHora = 50;
+      const lat = parseFloat(document.getElementById('geo-lat').value);
+      const lng = parseFloat(document.getElementById('geo-lng').value);
+      config.geo.lat = Number.isFinite(lat) ? lat : null;
+      config.geo.lng = Number.isFinite(lng) ? lng : null;
+      if (config.geo.lat != null && config.geo.lng != null) actualizarMapaGeo(config.geo.lat, config.geo.lng);
+      if (config.geo.activo && (config.geo.lat == null || config.geo.lng == null)) {
+        toast('Primero fija el centro de la zona en el mapa');
+        return;
+      }
+      saveConfig();
+      if (config.geo.activo) startGeoWatch();
+      else {
+        if (geoState.inside) {
+          tickGeoTiempo();
+          geoState.inside = false;
+          flushGeoHoras();
+        }
+        stopGeoWatch();
+      }
+      actualizarUIGeo();
+      toast(config.geo.activo ? 'Zona guardada · servicio ON' : 'Zona guardada · servicio OFF');
+    });
+
+    // Al mostrar pestaña ubicación
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.panel === 'ubicacion') rellenarFormGeo();
+      });
+    });
+
+    // ========== CONFIG ==========
+    document.getElementById('btn-guardar-config').addEventListener('click', () => {
+      config.nombre = document.getElementById('config-nombre').value.trim();
+      config.empresa = document.getElementById('config-empresa').value.trim();
+      config.precioHora = parseFloat(document.getElementById('config-precio-hora').value) || 15;
+      config.sueldoBase = parseFloat(document.getElementById('config-sueldo').value) || 1800;
+      saveConfig();
+      document.getElementById('pdf-nombre').value = config.nombre;
+      document.getElementById('pdf-empresa').value = config.empresa;
+      toast('Configuración guardada');
+    });
+
+    document.getElementById('btn-exportar').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify({ registros, config }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'backup-horas-extras.json';
+      a.click();
+      toast('Exportado');
+    });
+
+    document.getElementById('btn-importar').addEventListener('click', () => {
+      document.getElementById('input-import').click();
+    });
+
+    document.getElementById('input-import').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (data.registros) registros = data.registros;
+          if (data.config) config = { ...config, ...data.config };
+          saveData();
+          saveConfig();
+          actualizarStats();
+          renderLista();
+          toast('Datos importados');
+        } catch {
+          toast('Error al importar el archivo');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('btn-borrar-todo').addEventListener('click', () => {
+      if (!confirm('¿Seguro que quieres borrar TODOS los registros de horas? Esta acción no se puede deshacer.')) return;
+      registros = [];
+      saveData();
+      actualizarStats();
+      renderLista();
+      toast('Todos los registros borrados');
+    });
+
+    // ========== INIT ==========
+    loadData();
+    document.getElementById('fecha').value = hoy();
+    (function() {
+      const { hasta } = getPeriodo20();
+      document.getElementById('filtro-mes').value = hasta.slice(0, 7);
+    })();
+    document.getElementById('pdf-nombre').value = config.nombre || '';
+    document.getElementById('pdf-empresa').value = config.empresa || '';
+    actualizarRangoPDF();
+    actualizarStats();
+    renderLista();
+  
+    // ========== MODO RÁPIDO / PWA ==========
+    function actualizarVistaRapido() {
+      const fecha = hoy();
+      const r = registros.find(x => x.fecha === fecha);
+      const horas = r ? r.horas : 0;
+      const elTotal = document.getElementById('rapido-total');
+      const elFecha = document.getElementById('rapido-fecha');
+      const elPer = document.getElementById('rapido-periodo');
+      if (elTotal) elTotal.innerHTML = formatNum(horas, horas % 1 ? 1 : 0) + ' <span>h hoy</span>';
+      if (elFecha) {
+        const d = new Date(fecha + 'T12:00:00');
+        elFecha.textContent = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+      }
+      if (elPer) {
+        const { desde, hasta } = getPeriodo20();
+        const delP = registros.filter(x => x.fecha >= desde && x.fecha <= hasta).reduce((s, x) => s + x.horas, 0);
+        elPer.textContent = 'Periodo ' + formatFecha(desde) + ' → ' + formatFecha(hasta) + ' · ' + formatNum(delP, 1) + ' h';
+      }
+    }
+
+    function guardarHorasHoy(deltaOrAbs, isAbs) {
+      const fecha = hoy();
+      let horas = 0;
+      const idx = registros.findIndex(x => x.fecha === fecha);
+      const actual = idx >= 0 ? registros[idx].horas : 0;
+      if (isAbs) horas = Math.max(0, deltaOrAbs);
+      else horas = Math.max(0, Math.round((actual + deltaOrAbs) * 100) / 100);
+
+      if (horas <= 0) {
+        if (idx >= 0) registros.splice(idx, 1);
+      } else if (idx >= 0) {
+        registros[idx].horas = horas;
+      } else {
+        registros.push({ fecha, horas, concepto: '' });
+      }
+      saveData();
+      actualizarStats();
+      renderLista();
+      actualizarVistaRapido();
+      toast(horas > 0 ? ('Hoy: ' + formatNum(horas, horas % 1 ? 1 : 0) + ' h') : 'Hoy en 0 h');
+    }
+
+    document.querySelectorAll('.rapido-btn[data-add]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        guardarHorasHoy(parseFloat(btn.dataset.add), false);
+      });
+    });
+
+    const rapidoReset = document.getElementById('rapido-reset');
+    if (rapidoReset) rapidoReset.addEventListener('click', () => guardarHorasHoy(0, true));
+
+    const rapidoFull = document.getElementById('rapido-ir-completo');
+    if (rapidoFull) {
+      rapidoFull.addEventListener('click', () => {
+        document.body.classList.remove('modo-rapido');
+        history.replaceState(null, '', location.pathname + location.hash);
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelector('.nav-btn[data-panel="horas"]').classList.add('active');
+        document.getElementById('panel-horas').classList.add('active');
+      });
+    }
+
+    // Activar modo rápido por URL o pestaña
+    const params = new URLSearchParams(location.search);
+    if (params.get('modo') === 'rapido') {
+      document.body.classList.add('modo-rapido');
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-rapido').classList.add('active');
+    }
+
+    // Cuando se abre pestaña Rápido, refrescar
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.panel === 'rapido') actualizarVistaRapido();
+      });
+    });
+
+    actualizarVistaRapido();
+    rellenarFormGeo();
+    if (config.geo && config.geo.activo) startGeoWatch();
+
+    // Registrar service worker (PWA / offline en iPhone)
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register('./sw.js').catch(err => console.warn('PWA: no se pudo registrar el modo offline', err));
+    }
+
+  </script>
+
+  <script>
+    // Detalles de experiencia: fecha del panel y acceso directo al registro.
+    (function () {
+      const fecha = document.getElementById('dashboard-fecha');
+      if (fecha) {
+        const ahora = new Date();
+        const texto = ahora.toLocaleDateString('es-ES', {
+          weekday: 'long', day: 'numeric', month: 'long'
+        });
+        fecha.textContent = texto.charAt(0).toUpperCase() + texto.slice(1) +
+          ' · Consulta y organiza tus horas extra.';
+      }
+      const ir = document.getElementById('btn-ir-registro');
+      if (ir) ir.addEventListener('click', function () {
+        const destino = document.querySelector('#panel-horas .card');
+        const fechaInput = document.getElementById('fecha');
+        if (fechaInput && typeof fechaInput.value === 'string') {
+          const d = new Date();
+          fechaInput.value = [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'),
+            String(d.getDate()).padStart(2,'0')].join('-');
+        }
+        if (destino) destino.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1;
+ classes = {};
+ objectVersion = 56;
+ objects = {
+  A10000000000000000000001 /* ControlHorarioApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlHorarioApp.swift; sourceTree = "<group>"; };
+  A10000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+  A10000000000000000000003 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+  A10000000000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+  A10000000000000000000005 /* ControlHorario.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ControlHorario.app; sourceTree = BUILT_PRODUCTS_DIR; };
+  B10000000000000000000001 /* ControlHorarioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001; };
+  B10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002; };
+  B10000000000000000000003 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003; };
+  C10000000000000000000001 = {isa = PBXGroup; children = (C10000000000000000000002, C10000000000000000000003, C10000000000000000000004,); sourceTree = "<group>"; };
+  C10000000000000000000002 /* ControlHorario */ = {isa = PBXGroup; path = ControlHorario; sourceTree = "<group>"; children = (A10000000000000000000001, A10000000000000000000002, C10000000000000000000005, A10000000000000000000004,); };
+  C10000000000000000000003 /* Products */ = {isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (A10000000000000000000005,); };
+  C10000000000000000000004 /* Frameworks */ = {isa = PBXGroup; name = Frameworks; sourceTree = "<group>"; children = (); };
+  C10000000000000000000005 /* Resources */ = {isa = PBXGroup; path = Resources; sourceTree = "<group>"; children = (A10000000000000000000003,); };
+  D10000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B10000000000000000000001, B10000000000000000000002,); runOnlyForDeploymentPostprocessing = 0; };
+  D10000000000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (B10000000000000000000003,); runOnlyForDeploymentPostprocessing = 0; };
+  D10000000000000000000003 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+  E10000000000000000000001 /* ControlHorario */ = {isa = PBXNativeTarget; buildConfigurationList = F10000000000000000000002; buildPhases = (D10000000000000000000001, D10000000000000000000003, D10000000000000000000002,); buildRules = (); dependencies = (); name = ControlHorario; productName = ControlHorario; productReference = A10000000000000000000005; productType = "com.apple.product-type.application"; };
+  E10000000000000000000002 /* Project */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 1600; TargetAttributes = {E10000000000000000000001 = {CreatedOnToolsVersion = 16.0; }; }; }; buildConfigurationList = F10000000000000000000001; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base,); mainGroup = C10000000000000000000001; productRefGroup = C10000000000000000000003; projectDirPath = ""; projectRoot = ""; targets = (E10000000000000000000001,); };
+  F10000000000000000000001 /* Project config list */ = {isa = XCConfigurationList; buildConfigurations = (F10000000000000000000003, F10000000000000000000004,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  F10000000000000000000002 /* Target config list */ = {isa = XCConfigurationList; buildConfigurations = (F10000000000000000000005, F10000000000000000000006,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  F10000000000000000000003 /* Debug project */ = {isa = XCBuildConfiguration; buildSettings = {IPHONEOS_DEPLOYMENT_TARGET = 16.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Debug; };
+  F10000000000000000000004 /* Release project */ = {isa = XCBuildConfiguration; buildSettings = {IPHONEOS_DEPLOYMENT_TARGET = 16.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Release; };
+  F10000000000000000000005 /* Debug target */ = {isa = XCBuildConfiguration; buildSettings = {GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = ControlHorario/Info.plist; PRODUCT_BUNDLE_IDENTIFIER = es.controlhorario.app; PRODUCT_NAME = "$(TARGET_NAME)"; TARGETED_DEVICE_FAMILY = "1,2"; SWIFT_EMIT_LOC_STRINGS = YES; CODE_SIGN_STYLE = Automatic; }; name = Debug; };
+  F10000000000000000000006 /* Release target */ = {isa = XCBuildConfiguration; buildSettings = {GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = ControlHorario/Info.plist; PRODUCT_BUNDLE_IDENTIFIER = es.controlhorario.app; PRODUCT_NAME = "$(TARGET_NAME)"; TARGETED_DEVICE_FAMILY = "1,2"; SWIFT_EMIT_LOC_STRINGS = YES; CODE_SIGN_STYLE = Automatic; }; name = Release; };
+ };
+ rootObject = E10000000000000000000002;
+}
