@@ -1,0 +1,32 @@
+name: Compilar aplicación iOS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@v4
+
+      - name: Compilar aplicación
+        run: |
+          xcodebuild \
+            -project ControlHorarioNativo/ControlHorario.xcodeproj \
+            -scheme ControlHorario \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Guardar aplicación compilada
+        uses: actions/upload-artifact@v4
+        with:
+          name: ControlHorario-iOS
+          path: build/Build/Products/Debug-iphonesimulator/ControlHorario.app
