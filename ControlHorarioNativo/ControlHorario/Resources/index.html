@@ -1604,6 +1604,7 @@
         <div>
           <div class="titulo">Periodo de horas extras</div>
           <div class="rango" id="periodo-banner-rango">—</div>
+          <small style="display:block;margin-top:3px;color:var(--text-secondary);font-size:0.72rem;">Pulsa aquí para generar y compartir el PDF</small>
         </div>
         <div class="badge-h" id="periodo-banner-horas">0 h</div>
       </div>
@@ -2749,14 +2750,23 @@
         }
       });
 
-      const finalY = doc.lastAutoTable.finalY + 10;
+      let finalY = doc.lastAutoTable.finalY + 10;
+      if (finalY > 255) {
+        doc.addPage();
+        finalY = 20;
+      }
+      const diasConHoras = lista.filter(r => r.horas > 0).length;
+      const mediaDiaria = diasConHoras ? totalHoras / diasConHoras : 0;
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.text('Total de horas: ' + formatNum(totalHoras, 2) + ' h', 14, finalY);
       doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Días con horas: ' + diasConHoras, 14, finalY + 8);
+      doc.text('Media por día trabajado: ' + formatNum(mediaDiaria, 2) + ' h', 14, finalY + 15);
       doc.setFontSize(9);
       doc.setTextColor(100);
-      doc.text('Documento generado automáticamente. Verificar con los registros oficiales de la empresa.', 14, finalY + 8);
+      doc.text('Documento generado automáticamente. Verificar con los registros oficiales de la empresa.', 14, finalY + 24);
 
       return {
         doc,
