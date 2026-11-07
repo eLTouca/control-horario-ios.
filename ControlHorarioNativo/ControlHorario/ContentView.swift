@@ -124,6 +124,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
 final class NativeLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var mode: Mode = .single
+    private var requestedAlways = false
     @Published var showPermissionHelp = false
     var onUpdate: ((Double, Double, Double) -> Void)?
     var onError: ((Int) -> Void)?
@@ -134,6 +135,8 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.distanceFilter = 5
+        manager.activityType = .other
+        manager.pausesLocationUpdatesAutomatically = false
     }
 
     func requestSingleLocation() {
@@ -143,18 +146,36 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
 
     func startWatching() {
         mode = .watching
+        manager.allowsBackgroundLocationUpdates = true
+        manager.pausesLocationUpdatesAutomatically = false
         requestPermissionAndStart()
     }
 
-    func stopWatching() { manager.stopUpdatingLocation() }
+    func stopWatching() {
+        mode = .single
+        manager.stopUpdatingLocation()
+        manager.allowsBackgroundLocationUpdates = false
+    }
 
     private func requestPermissionAndStart() {
         guard CLLocationManager.locationServicesEnabled() else { onError?(2); return }
         switch manager.authorizationStatus {
         case .notDetermined:
-            manager.requestWhenInUseAuthorization()
-        case .authorizedAlways, .authorizedWhenInUse:
+            if mode == .watching {
+                requestedAlways = true
+                manager.requestAlwaysAuthorization()
+            } else {
+                manager.requestWhenInUseAuthorization()
+            }
+        case .authorizedAlways:
             manager.startUpdatingLocation()
+        case .authorizedWhenInUse:
+            if mode == .watching {
+                requestedAlways = true
+                manager.requestAlwaysAuthorization()
+            } else {
+                manager.startUpdatingLocation()
+            }
         case .denied, .restricted:
             showPermissionHelp = true
             onError?(1)
@@ -165,8 +186,21 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
-        case .authorizedAlways, .authorizedWhenInUse:
-            manager.startUpdatingLocation()
+        case .authorizedAlways:
+            DispatchQueue.main.async { self.showPermissionHelp = false }
+            if mode == .watching {
+                manager.allowsBackgroundLocationUpdates = true
+                manager.startUpdatingLocation()
+            } else {
+                manager.startUpdatingLocation()
+            }
+        case .authorizedWhenInUse:
+            if mode == .watching && !requestedAlways {
+                requestedAlways = true
+                manager.requestAlwaysAuthorization()
+            } else if mode == .single {
+                manager.startUpdatingLocation()
+            }
             DispatchQueue.main.async { self.showPermissionHelp = false }
         case .denied, .restricted:
             DispatchQueue.main.async {
