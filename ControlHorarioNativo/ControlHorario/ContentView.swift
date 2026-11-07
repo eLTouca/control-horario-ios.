@@ -49,7 +49,6 @@ struct ControlHorarioWebView: UIViewRepresentable {
         web.isOpaque = false
         web.backgroundColor = UIColor.systemBackground
         context.coordinator.webView = web
-        web.uiDelegate = context.coordinator
         locationManager.onUpdate = { [weak web] lat, lon, accuracy in
             let js = "window.nativeLocationReceived && window.nativeLocationReceived(\(lat),\(lon),\(accuracy));"
             DispatchQueue.main.async { web?.evaluateJavaScript(js) }
@@ -66,20 +65,11 @@ struct ControlHorarioWebView: UIViewRepresentable {
 
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 
-    final class Coordinator: NSObject, WKScriptMessageHandler, WKUIDelegate {
+    final class Coordinator: NSObject, WKScriptMessageHandler {
         let locationManager: NativeLocationManager
         weak var webView: WKWebView?
         init(locationManager: NativeLocationManager) { self.locationManager = locationManager }
 
-        // WKWebView no abre automáticamente enlaces con target="_blank".
-        // Abrimos esos enlaces externos en Safari.
-        func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
-                     for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-            guard navigationAction.targetFrame == nil,
-                  let url = navigationAction.request.url else { return nil }
-            UIApplication.shared.open(url)
-            return nil
-        }
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             guard let command = message.body as? String else { return }
             switch command {
