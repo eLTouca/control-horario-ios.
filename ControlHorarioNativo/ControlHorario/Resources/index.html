@@ -2787,7 +2787,7 @@
 
       const frame = document.getElementById('pdf-preview-frame');
       const box = document.getElementById('pdf-preview-box');
-      frame.src = url;
+      frame.src = url + '#zoom=page-width';
       box.classList.add('visible');
       box.scrollIntoView({ behavior: 'smooth', block: 'start' });
       toast('Previa lista — revisa y guarda si está bien');
@@ -2813,7 +2813,7 @@
       if (pdfPendiente && pdfPendiente.url) URL.revokeObjectURL(pdfPendiente.url);
       const url = URL.createObjectURL(result.doc.output('blob'));
       pdfPendiente = { doc: result.doc, nombreArchivo: result.nombreArchivo, url };
-      document.getElementById('pdf-preview-frame').src = url;
+      document.getElementById('pdf-preview-frame').src = url + '#zoom=page-width';
       document.getElementById('pdf-preview-box').classList.add('visible');
       toast('Resumen del periodo listo. Pulsa Compartir para enviarlo.');
     }
