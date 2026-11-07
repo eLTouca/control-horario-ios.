@@ -174,6 +174,40 @@
     }
 
 
+    /* Diseño compacto y uniforme de la pestaña de localización */
+    #panel-ubicacion .card { padding: 1rem; margin-bottom: 0.75rem; }
+    #panel-ubicacion .card h2 { margin-bottom: 0.75rem; }
+    .geo-intro {
+      padding: 0.8rem 0.9rem; margin-bottom: 0.85rem;
+      border-radius: 12px; background: var(--surface, #f3f5f9);
+      border: 1px solid var(--border); font-size: 0.84rem; line-height: 1.4;
+    }
+    .geo-intro p { margin: 0.3rem 0; }
+    .geo-intro small { color: var(--text-secondary); font-size: 0.72rem; }
+    .geo-example { font-weight: 650; color: var(--primary); }
+    .geo-config-grid {
+      display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 0.6rem 0.7rem; margin: 0.65rem 0;
+    }
+    #panel-ubicacion .form-group { min-width: 0; }
+    #panel-ubicacion .form-group label {
+      font-size: 0.64rem; margin-bottom: 0.22rem; letter-spacing: 0.025em;
+    }
+    #panel-ubicacion .form-group input,
+    #panel-ubicacion .form-group select {
+      min-height: 40px; padding: 0.48rem 0.58rem; font-size: 0.88rem;
+    }
+    .geo-action-row { display:grid; grid-template-columns: 1fr 1fr; gap:0.55rem; margin:0.65rem 0; }
+    .geo-action-row .btn { width:100%; min-height:42px; padding:0.55rem 0.4rem; font-size:0.8rem; }
+    #panel-ubicacion .periodo-banner { padding:0.7rem 0.8rem; margin:0.65rem 0; }
+    #panel-ubicacion .lista-resumen { gap:0.4rem; margin-top:0.6rem !important; }
+    #panel-ubicacion .lista-resumen span { padding:0.55rem 0.65rem; font-size:0.78rem; }
+    #panel-ubicacion .geo-map-card { margin:0.65rem 0; }
+    @media (max-width:360px) {
+      .geo-config-grid { gap:0.5rem; }
+      .geo-action-row .btn { font-size:0.73rem; }
+    }
+
     .geo-horario-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1827,14 +1861,15 @@
     <section id="panel-ubicacion" class="panel">
       <div class="card">
         <h2>📍 Cobertura por localización</h2>
-        <p class="note" style="margin-bottom:1rem;">
-          Solo cuenta <strong>horas extras</strong>: fuera de tu jornada <strong>7:00–15:00</strong> (margen 5 min al final → desde 15:05).
-          Hace falta <strong>más de 50 min</strong> de extra para sumar 1 hora; solo horas completas (51–110 min → 1 h, 111–170 → 2 h…).
-          Si llegas 5 min tarde dentro de la jornada, <strong>no</strong> cuenta como extra.
-          <strong>La pestaña debe permanecer abierta</strong> para medir.
-        </p>
+        <div class="geo-intro">
+          <strong>Cómo se calculan tus horas extra</strong>
+          <p>Antes de tu entrada se acumula todo el tiempo que estés dentro de la zona. Al terminar la jornada, cuenta desde el minuto exacto de salida.</p>
+          <p>La primera hora se concede al alcanzar el mínimo configurado. El margen se añade al tiempo acumulado para compensar pequeñas diferencias.</p>
+          <p class="geo-example" id="geo-regla-preview">Ejemplo: con mínimo de 50 min y margen de 5 min, 45 min reales ya alcanzan 1 hora extra.</p>
+          <small>La medición requiere que la app permanezca abierta y tenga permiso de ubicación.</small>
+        </div>
 
-        <div class="form-row">
+        <div class="geo-config-grid">
           <div class="form-group">
             <label for="geo-activo">Servicio de localización</label>
             <select id="geo-activo">
@@ -1892,7 +1927,7 @@
           <span>Al tocar «Localizarme», Safari solicitará permiso. Pulsa «Permitir». Esta función necesita abrir la app desde una dirección HTTPS; un HTML abierto directamente desde Archivos no puede garantizar el acceso al GPS.</span>
           <span id="geo-security-status">Comprobando si esta página puede usar la ubicación…</span>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+        <div class="geo-action-row">
           <button type="button" class="btn btn-outline" id="btn-geo-aqui">📍 Localizarme y fijar centro</button>
           <button type="button" class="btn btn-primary" id="btn-geo-guardar">Guardar zona</button>
         </div>
@@ -1905,7 +1940,7 @@
           <div class="badge-h" id="geo-status-badge">—</div>
         </div>
 
-        <div class="geo-horario-grid">
+        <div class="geo-config-grid geo-horario-grid">
           <div class="form-group">
             <label for="geo-inicio">Inicio jornada</label>
             <input type="time" id="geo-inicio" value="07:00" />
@@ -1928,7 +1963,7 @@
           <span>Horas extras (enteras): <strong id="geo-horas-enteras">0 h</strong></span>
           <span>Distancia: <strong id="geo-distancia">—</strong></span>
         </div>
-        <p class="note">Se cuenta desde antes de la hora de entrada y desde el minuto exacto en que termina la jornada. El mínimo para la primera hora y el margen para las siguientes son editables.</p>
+        
       </div>
     </section>
 
@@ -2914,8 +2949,21 @@
       const g = config.geo || {};
       const umbral = Math.max(1, Math.min(59, Number(g.umbralMinHora ?? 50)));
       const margen = Math.max(0, Math.min(30, Number(g.margenMin ?? 5)));
-      if (minutos < umbral) return 0;
-      return 1 + Math.floor((minutos + margen - umbral) / 60);
+      const minutosAjustados = minutos + margen;
+      if (minutosAjustados < umbral) return 0;
+      return 1 + Math.floor((minutosAjustados - umbral) / 60);
+    }
+
+    function actualizarAyudaGeoParametros() {
+      const minimoEl = document.getElementById('geo-umbral');
+      const margenEl = document.getElementById('geo-margen');
+      const preview = document.getElementById('geo-regla-preview');
+      if (!minimoEl || !margenEl || !preview) return;
+      const minimo = Math.max(1, Math.min(59, Number(minimoEl.value) || 50));
+      const margen = Math.max(0, Math.min(30, Number(margenEl.value) || 0));
+      const real = Math.max(0, minimo - margen);
+      preview.textContent = 'Ejemplo: con mínimo de ' + minimo + ' min y margen de ' + margen +
+        ' min, al acumular ' + real + ' min reales se registra 1 hora extra.';
     }
 
     function geoOtMsHoy() {
@@ -3037,7 +3085,7 @@
         if (badge) badge.textContent = 'EXTRA';
       } else if (geoState.inside && !enExtra) {
         titulo.textContent = 'En zona · jornada normal';
-        detalle.textContent = 'Dentro de ' + (g.jornadaInicio || '07:00') + '–' + (g.jornadaFin || '15:00') + ' (+margen). No suma extra.';
+        detalle.textContent = 'Dentro de tu horario habitual (' + (g.jornadaInicio || '07:00') + '–' + (g.jornadaFin || '15:00') + ').';
         if (badge) badge.textContent = 'JORNADA';
       } else {
         titulo.textContent = 'Fuera de la zona';
@@ -3180,6 +3228,7 @@
       if (el('geo-fin')) el('geo-fin').value = g.jornadaFin || '15:00';
       if (el('geo-margen')) el('geo-margen').value = g.margenMin != null ? g.margenMin : 5;
       if (el('geo-umbral')) el('geo-umbral').value = g.umbralMinHora != null ? g.umbralMinHora : 50;
+      actualizarAyudaGeoParametros();
       if (g.lat != null && g.lng != null) actualizarMapaGeo(Number(g.lat), Number(g.lng));
       const sec = el('geo-security-status');
       if (sec) sec.textContent = (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) ? '✓ GPS nativo de iOS disponible: el iPhone solicitará permiso de ubicación.' : (geoEntornoSeguro() ? '✓ Dirección HTTPS segura: Safari puede solicitar el permiso GPS.' : '⚠ Archivo local/HTTP: publica esta app en HTTPS para usar el GPS.');
@@ -3247,6 +3296,11 @@
         if (detalle) detalle.textContent = 'Si el marcador está en tu centro de trabajo, pulsa «Guardar zona». Si no, vuelve a localizarte.';
         toast('GPS localizado · precisión ±' + Math.round(pos.coords.accuracy) + ' m');
       }, onGeoError, {enableHighAccuracy:true, maximumAge:0, timeout:35000});
+    });
+
+    ['geo-margen','geo-umbral'].forEach(id => {
+      const campo = document.getElementById(id);
+      if (campo) campo.addEventListener('input', actualizarAyudaGeoParametros);
     });
 
     document.getElementById('btn-geo-guardar').addEventListener('click', () => {
