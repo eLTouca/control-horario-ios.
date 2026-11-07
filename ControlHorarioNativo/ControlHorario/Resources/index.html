@@ -3532,6 +3532,22 @@
     rellenarFormGeo();
     if (config.geo && config.geo.activo) startGeoWatch();
 
+    // Al volver del segundo plano, recupera el tiempo transcurrido usando la última zona conocida.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        tickGeoTiempo();
+        if (config.geo && config.geo.activo) {
+          if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
+            window.webkit.messageHandlers.location.postMessage('watch');
+          }
+        }
+      }
+    });
+    window.addEventListener('pageshow', () => {
+      tickGeoTiempo();
+      if (config.geo && config.geo.activo) startGeoWatch();
+    });
+
     // Registrar service worker (PWA / offline en iPhone)
     if ('serviceWorker' in navigator && window.isSecureContext) {
       navigator.serviceWorker.register('./sw.js').catch(err => console.warn('PWA: no se pudo registrar el modo offline', err));
