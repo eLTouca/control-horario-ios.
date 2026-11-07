@@ -376,6 +376,9 @@
 
 
     .periodo-banner {
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -387,6 +390,9 @@
       padding: 0.85rem 1.1rem;
       margin-bottom: 1rem;
     }
+
+    .periodo-banner:active { transform: scale(0.99); }
+    .periodo-banner:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 
     .periodo-banner .titulo {
       font-weight: 700;
