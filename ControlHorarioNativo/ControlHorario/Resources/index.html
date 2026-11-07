@@ -1668,6 +1668,16 @@
 
    
     #panel-nomina #plus-por-hora-extra { border-color: #c7d2fe; background: #f8faff; font-weight: 700; }
+    #panel-nomina .hijos-control {
+      display:flex; align-items:center; justify-content:space-between; gap:.45rem;
+      width:100%; height:44px; padding:.2rem .35rem; border:1.5px solid var(--border);
+      border-radius:10px; background:#fafbfc;
+    }
+    #panel-nomina .hijos-control button {
+      width:34px; height:34px; border:0; border-radius:8px; background:var(--primary-soft);
+      color:var(--primary); font-size:1.35rem; font-weight:700; line-height:1; cursor:pointer;
+    }
+    #panel-nomina .hijos-control output { flex:1; text-align:center; font-size:1rem; font-weight:700; }
     /* Nómina: campos rectangulares, alineados y con aprovechamiento del espacio */
     #panel-nomina > .card { padding: 1rem; }
     #panel-nomina .card h2 { margin-bottom: 0.45rem; }
@@ -2081,11 +2091,17 @@
           <div class="form-group">
             <label for="situacion-familiar">Situación familiar</label>
             <select id="situacion-familiar">
-              <option value="casado3" selected>Casado/a + 3 hijos (cónyuge ≤ 1.500 €)</option>
-              <option value="casado3-reparto">Casado/a + 3 hijos (reparto 50%)</option>
-              <option value="soltero3">Monoparental + 3 hijos</option>
-              <option value="soltero0">Soltero/a sin hijos</option>
+              <option value="soltero">Soltero/a</option>
+              <option value="casado" selected>Casado/a</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label>Número de hijos</label>
+            <div class="hijos-control">
+              <button type="button" id="hijos-restar" aria-label="Quitar un hijo">−</button>
+              <output id="numero-hijos">3</output>
+              <button type="button" id="hijos-sumar" aria-label="Añadir un hijo">+</button>
+            </div>
           </div>
         </div>
 
@@ -2098,7 +2114,7 @@
             <h3>Resultado estimado del periodo</h3>
             <div class="result-grid" id="resultado-grid"></div>
             <p class="note">
-              Convenio metal Pontevedra 2026 · SS ≈ 6,50 % · IRPF retención 2026 (casado 3 hijos).
+              Convenio metal Pontevedra 2026 · SS ≈ 6,50 % · IRPF estimado según situación familiar e hijos.
               Orientativo; la retención real la fija tu empresa con el algoritmo de la AEAT.
             </p>
           </div>
@@ -3140,27 +3156,47 @@
       return cuota;
     }
 
-    function calcularMinimoFamiliar(situacion) {
-      // Mínimo personal 5.550 €
-      // Hijos: 1º 2.400, 2º 2.700, 3º 4.000
+    function calcularMinimoFamiliar(situacion, numeroHijos) {
+      // Mínimo personal estatal de referencia y mínimo por descendientes.
       const personal = 5550;
-      const hijos3 = 2400 + 2700 + 4000; // 9.100
-
-      if (situacion === 'casado3') {
-        // Cónyuge sin rentas o ≤ 1.500 → se computan enteros (simplificado)
-        return personal + hijos3;
+      const importesHijos = [2400, 2700, 4000];
+      let minimoDescendientes = 0;
+      for (let i = 0; i < numeroHijos; i++) {
+        minimoDescendientes += importesHijos[i] || 4500;
       }
-      if (situacion === 'casado3-reparto') {
-        // Reparto 50 % de los mínimos de hijos
-        return personal + hijos3 / 2;
-      }
-      if (situacion === 'soltero3') {
-        // Monoparental: enteros
-        return personal + hijos3;
-      }
-      // soltero0
-      return personal;
+      // Estimación: en matrimonio se aplica el reparto habitual del 50%;
+      // en soltería se computa el 100% como supuesto simplificado.
+      return personal + minimoDescendientes * (situacion === 'casado' ? 0.5 : 1);
     }
+
+    const selectorSituacionFamiliar = document.getElementById('situacion-familiar');
+    const numeroHijosOutput = document.getElementById('numero-hijos');
+    let numeroHijos = 3;
+    function guardarSituacionFamiliar() {
+      try {
+        localStorage.setItem('controlHorario.situacionFamiliar', selectorSituacionFamiliar.value);
+        localStorage.setItem('controlHorario.numeroHijos', String(numeroHijos));
+      } catch (e) { console.warn('No se pudo guardar la situación familiar', e); }
+    }
+    function pintarNumeroHijos() {
+      numeroHijosOutput.textContent = String(numeroHijos);
+      document.getElementById('hijos-restar').disabled = numeroHijos <= 0;
+      document.getElementById('hijos-sumar').disabled = numeroHijos >= 20;
+    }
+    try {
+      const situacionGuardada = localStorage.getItem('controlHorario.situacionFamiliar');
+      if (situacionGuardada === 'soltero' || situacionGuardada === 'casado') selectorSituacionFamiliar.value = situacionGuardada;
+      const hijosGuardados = localStorage.getItem('controlHorario.numeroHijos');
+      if (hijosGuardados !== null && Number.isInteger(Number(hijosGuardados))) numeroHijos = Math.max(0, Math.min(20, Number(hijosGuardados)));
+    } catch (e) { console.warn('No se pudo recuperar la situación familiar', e); }
+    pintarNumeroHijos();
+    selectorSituacionFamiliar.addEventListener('change', guardarSituacionFamiliar);
+    document.getElementById('hijos-restar').addEventListener('click', () => {
+      numeroHijos = Math.max(0, numeroHijos - 1); pintarNumeroHijos(); guardarSituacionFamiliar();
+    });
+    document.getElementById('hijos-sumar').addEventListener('click', () => {
+      numeroHijos = Math.min(20, numeroHijos + 1); pintarNumeroHijos(); guardarSituacionFamiliar();
+    });
 
     document.getElementById('btn-calcular-nomina').addEventListener('click', () => {
       rellenarHorasPeriodo20();
@@ -3176,7 +3212,7 @@
       const otros = parseFloat(document.getElementById('otros-pluses').value) || 0;
       const nPagas = parseInt(document.getElementById('pagas').value) || 14;
       const contrato = document.getElementById('tipo-contrato').value;
-      const situacion = document.getElementById('situacion-familiar').value;
+      const situacion = document.getElementById('situacion-familiar').value;\n      guardarSituacionFamiliar();
 
       const importeExtras = horasExtra * precioHora;
       const importePlusHoraExtra = horasExtra * plusPorHoraExtra;
@@ -3201,15 +3237,10 @@
       if (situacion.includes('3')) rendimientoNeto -= 600;
       rendimientoNeto = Math.max(0, rendimientoNeto);
 
-      const minimo = calcularMinimoFamiliar(situacion);
+      const minimo = calcularMinimoFamiliar(situacion, numeroHijos);
       const cuotaBase = cuotaEscala(rendimientoNeto);
       const cuotaMinimo = cuotaEscala(minimo);
       let cuotaIRPF = Math.max(0, cuotaBase - cuotaMinimo);
-
-      const limiteExento = situacion === 'casado3' ? 19262 :
-                           situacion === 'soltero3' ? 18694 :
-                           situacion === 'casado3-reparto' ? 16867 : 15876;
-      if (brutoAnual <= limiteExento) cuotaIRPF = 0;
 
       let tipoRetencion = brutoAnual > 0 ? (cuotaIRPF / brutoAnual) : 0;
       tipoRetencion = Math.floor(tipoRetencion * 10000) / 10000;
