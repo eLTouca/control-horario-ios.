@@ -834,8 +834,16 @@
     }
     .pdf-preview-actions #btn-cerrar-previa {
       width: 40px;
+      min-width: 40px;
+      height: 40px;
       padding: 0;
-      font-size: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      font-family: Arial, sans-serif;
+      font-size: 19px;
+      text-align: center;
     }
     .pdf-preview-actions #btn-compartir-pdf {
       background: #eef2ff;
@@ -2629,6 +2637,15 @@
       pdfPendiente = null;
       if (frame) frame.src = '';
       if (box) box.classList.remove('visible');
+
+      // Al cerrar la previa, regresar siempre al panel principal de horas.
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+      const botonHoras = document.querySelector('.nav-btn[data-panel="horas"]');
+      const panelHoras = document.getElementById('panel-horas');
+      if (botonHoras) botonHoras.classList.add('active');
+      if (panelHoras) panelHoras.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     function enviarPdfAIOS(doc, nombreArchivo, accion) {
