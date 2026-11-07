@@ -186,16 +186,34 @@
     .geo-intro small { color: var(--text-secondary); font-size: 0.72rem; }
     .geo-example { font-weight: 650; color: var(--primary); }
     .geo-config-grid {
-      display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 0.6rem 0.7rem; margin: 0.65rem 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 0.6rem 0.7rem;
+      margin: 0.65rem 0;
     }
-    #panel-ubicacion .form-group { min-width: 0; }
-    #panel-ubicacion .form-group label {
-      font-size: 0.64rem; margin-bottom: 0.22rem; letter-spacing: 0.025em;
+    #panel-ubicacion .geo-config-grid .form-group {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
     }
-    #panel-ubicacion .form-group input,
-    #panel-ubicacion .form-group select {
-      min-height: 40px; padding: 0.48rem 0.58rem; font-size: 0.88rem;
+    #panel-ubicacion .geo-config-grid .form-group label {
+      min-height: 2.5em;
+      display: flex;
+      align-items: flex-end;
+      font-size: 0.64rem;
+      margin-bottom: 0.22rem;
+      letter-spacing: 0.025em;
+    }
+    #panel-ubicacion .geo-config-grid .form-group input,
+    #panel-ubicacion .geo-config-grid .form-group select {
+      width: 100%;
+      min-width: 0;
+      min-height: 42px;
+      box-sizing: border-box;
+      margin-top: auto;
+      padding: 0.48rem 0.58rem;
+      font-size: 0.88rem;
     }
     .geo-action-row { display:grid; grid-template-columns: 1fr 1fr; gap:0.55rem; margin:0.65rem 0; }
     .geo-action-row .btn { width:100%; min-height:42px; padding:0.55rem 0.4rem; font-size:0.8rem; }
@@ -1886,7 +1904,7 @@
           </div>
         </div>
 
-        <div class="form-row">
+        <div class="geo-config-grid">
           <div class="form-group">
             <label for="geo-nombre">Nombre de la zona</label>
             <input type="text" id="geo-nombre" placeholder="Ej: Taller / Empresa" />
@@ -1895,9 +1913,6 @@
             <label for="geo-radio">Radio de cobertura (metros)</label>
             <input type="number" id="geo-radio" min="30" max="2000" step="10" value="150" />
           </div>
-        </div>
-
-        <div class="form-row">
           <div class="form-group">
             <label for="geo-lat">Latitud</label>
             <input type="number" id="geo-lat" step="0.000001" placeholder="42.430000" />
