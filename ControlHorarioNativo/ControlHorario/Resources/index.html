@@ -1594,7 +1594,7 @@
           <span aria-hidden="true">＋</span> Registrar horas
         </button>
       </div>
-      <div class="periodo-banner" id="periodo-banner">
+      <div class="periodo-banner" id="periodo-banner" role="button" tabindex="0" aria-label="Generar y compartir resumen PDF del periodo de horas extras" title="Pulsa para generar y compartir el resumen PDF">
         <div>
           <div class="titulo">Periodo de horas extras</div>
           <div class="rango" id="periodo-banner-rango">—</div>
@@ -2776,6 +2776,42 @@
       box.scrollIntoView({ behavior: 'smooth', block: 'start' });
       toast('Previa lista — revisa y guarda si está bien');
     });
+
+    function generarPdfPeriodoActual() {
+      const { desde, hasta } = getPeriodo20();
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      const navPdf = document.querySelector('.nav-btn[data-panel="pdf"]');
+      if (navPdf) navPdf.classList.add('active');
+      const panelPdf = document.getElementById('panel-pdf');
+      if (panelPdf) panelPdf.classList.add('active');
+
+      document.querySelector('input[name="tipo-pdf"][value="personalizado"]').checked = true;
+      document.getElementById('pdf-desde').value = desde;
+      document.getElementById('pdf-hasta').value = hasta;
+      document.getElementById('pdf-nombre').value = document.getElementById('pdf-nombre').value || config.nombre || '';
+      document.getElementById('pdf-empresa').value = document.getElementById('pdf-empresa').value || config.empresa || '';
+
+      const result = construirPdf();
+      if (!result) return;
+      if (pdfPendiente && pdfPendiente.url) URL.revokeObjectURL(pdfPendiente.url);
+      const url = URL.createObjectURL(result.doc.output('blob'));
+      pdfPendiente = { doc: result.doc, nombreArchivo: result.nombreArchivo, url };
+      document.getElementById('pdf-preview-frame').src = url;
+      document.getElementById('pdf-preview-box').classList.add('visible');
+      toast('Resumen del periodo listo. Pulsa Compartir para enviarlo.');
+    }
+
+    const periodoBanner = document.getElementById('periodo-banner');
+    if (periodoBanner) {
+      periodoBanner.addEventListener('click', generarPdfPeriodoActual);
+      periodoBanner.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          generarPdfPeriodoActual();
+        }
+      });
+    }
 
     document.getElementById('btn-guardar-pdf-final').addEventListener('click', async () => {
       if (!pdfPendiente) { toast('Genera primero la previa'); return; }
