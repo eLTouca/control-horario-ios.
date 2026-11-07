@@ -173,6 +173,20 @@
       letter-spacing: -0.02em;
     }
 
+
+    .geo-horario-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem 0.75rem;
+      margin: 0.25rem 0 0.65rem;
+    }
+    .geo-horario-grid .form-group { min-width: 0; }
+    .geo-horario-grid .form-group label {
+      font-size: 0.66rem;
+      margin-bottom: 0.22rem;
+      letter-spacing: 0.02em;
+    }
+    .geo-horario-grid .form-group input { padding: 0.48rem 0.6rem; min-height: 40px; }
     .form-row {
       display: flex;
       flex-wrap: wrap;
@@ -1891,7 +1905,7 @@
           <div class="badge-h" id="geo-status-badge">—</div>
         </div>
 
-        <div class="form-row">
+        <div class="geo-horario-grid">
           <div class="form-group">
             <label for="geo-inicio">Inicio jornada</label>
             <input type="time" id="geo-inicio" value="07:00" />
@@ -1901,20 +1915,20 @@
             <input type="time" id="geo-fin" value="15:00" />
           </div>
           <div class="form-group">
-            <label for="geo-margen">Margen (min)</label>
+            <label for="geo-margen">Margen siguiente hora (min)</label>
             <input type="number" id="geo-margen" min="0" max="30" value="5" />
           </div>
           <div class="form-group">
-            <label for="geo-umbral">Mín. min para 1 h extra</label>
+            <label for="geo-umbral">Mínimo primera hora (min)</label>
             <input type="number" id="geo-umbral" min="1" max="59" value="50" />
           </div>
         </div>
-        <div class="lista-resumen" style="margin-top:0.75rem;">
+        <div class="lista-resumen" style="margin-top:0.5rem;">
           <span>Extra acumulada hoy: <strong id="geo-tiempo-hoy">0 min</strong></span>
           <span>Horas extras (enteras): <strong id="geo-horas-enteras">0 h</strong></span>
           <span>Distancia: <strong id="geo-distancia">—</strong></span>
         </div>
-        <p class="note">Solo se suma tiempo en zona <em>y</em> fuera de jornada (antes de las 7:00 o desde 15:05 con margen 5). Al salir o al completar horas, se registran enteras.</p>
+        <p class="note">Se cuenta desde antes de la hora de entrada y desde el minuto exacto en que termina la jornada. El mínimo para la primera hora y el margen para las siguientes son editables.</p>
       </div>
     </section>
 
@@ -2885,26 +2899,23 @@
       return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
     }
 
-    /** true si el instante es hora extra (fuera de jornada + margen) */
+    /** Las horas extra empiezan antes de la entrada o justo al terminar la jornada. */
     function esFranjaHoraExtra(d = new Date()) {
       const g = config.geo || {};
       const inicio = parseHoraMin(g.jornadaInicio || '07:00');
       const fin = parseHoraMin(g.jornadaFin || '15:00');
-      const margen = g.margenMin != null ? g.margenMin : 5;
-      // Jornada normal: [inicio, fin + margen). Antes de inicio = extra (llegar pronto).
-      // Después de fin+margen = extra. Entre inicio y fin+margen = jornada (llegar 5 min tarde no es extra).
       const ahora = minutosDesdeMedianoche(d);
-      return ahora < inicio || ahora >= (fin + margen);
+      // No se aplica margen al final: todo el tiempo posterior a la jornada cuenta.
+      return ahora < inicio || ahora >= fin;
     }
 
-    /**
-     * Solo horas completas. Más de umbral (50) min → 1 h; luego cada 60 min otra.
-     * 0–50 → 0 | 51–110 → 1 | 111–170 → 2 ...
-     */
+    /** El mínimo es inclusivo; el margen ayuda a completar las horas siguientes. */
     function minutosToHorasExtraEnteras(minutos) {
-      const umbral = (config.geo && config.geo.umbralMinHora != null) ? config.geo.umbralMinHora : 50;
-      if (minutos <= umbral) return 0;
-      return Math.floor((minutos - umbral - 1) / 60) + 1;
+      const g = config.geo || {};
+      const umbral = Math.max(1, Math.min(59, Number(g.umbralMinHora ?? 50)));
+      const margen = Math.max(0, Math.min(30, Number(g.margenMin ?? 5)));
+      if (minutos < umbral) return 0;
+      return 1 + Math.floor((minutos + margen - umbral) / 60);
     }
 
     function geoOtMsHoy() {
