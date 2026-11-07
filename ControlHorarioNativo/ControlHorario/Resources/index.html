@@ -238,7 +238,33 @@
       margin-bottom: 0.22rem;
       letter-spacing: 0.02em;
     }
-    .geo-horario-grid .form-group input { padding: 0.48rem 0.6rem; min-height: 40px; }
+    .geo-horario-grid .form-group {
+      min-width: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .geo-horario-grid .form-group label {
+      min-height: 2.5em;
+      display: flex;
+      align-items: flex-end;
+    }
+    .geo-horario-grid .form-group input {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0.48rem 0.45rem;
+      min-height: 42px;
+      font-size: 0.85rem;
+    }
+    .geo-horario-grid input[type="time"] {
+      appearance: none;
+      -webkit-appearance: none;
+      overflow: hidden;
+    }
     .form-row {
       display: flex;
       flex-wrap: wrap;
