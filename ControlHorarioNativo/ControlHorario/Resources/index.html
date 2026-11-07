@@ -896,6 +896,95 @@
       white-space: nowrap;
     }
 
+    /* Pestaña PDF: distribución compacta y cuatro opciones cuadradas uniformes */
+    #panel-pdf > .card {
+      padding: 1rem;
+    }
+    #panel-pdf .card h2 {
+      margin-bottom: 0.45rem;
+    }
+    #panel-pdf .card > p:first-of-type {
+      margin-bottom: 0.7rem !important;
+      font-size: 0.82rem !important;
+      line-height: 1.35;
+    }
+    #panel-pdf .form-group {
+      min-width: 0;
+    }
+    #panel-pdf .form-group[style*="margin-bottom"] {
+      margin-bottom: 0.75rem !important;
+    }
+    #panel-pdf .pdf-options {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+      margin-top: 0.35rem;
+    }
+    #panel-pdf .pdf-options label {
+      aspect-ratio: 1 / 1;
+      min-height: 0;
+      width: 100%;
+      padding: 0.5rem;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.55rem;
+      white-space: normal;
+      font-size: 0.86rem !important;
+      line-height: 1.2;
+    }
+    #panel-pdf .pdf-options input {
+      width: 19px;
+      height: 19px;
+    }
+    #panel-pdf .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 0.7rem;
+      align-items: start;
+    }
+    #panel-pdf .form-row .form-group {
+      min-width: 0;
+      width: 100%;
+    }
+    #panel-pdf .form-row .form-group label {
+      min-height: 2.5em;
+      display: flex;
+      align-items: flex-end;
+      margin-bottom: 0.25rem;
+      font-size: 0.65rem;
+      line-height: 1.2;
+    }
+    #panel-pdf .form-row input {
+      width: 100%;
+      min-width: 0;
+      min-height: 42px;
+      padding: 0.5rem 0.55rem;
+      font-size: 0.86rem;
+    }
+    #panel-pdf #btn-generar-pdf {
+      width: 100%;
+      min-height: 46px;
+      justify-content: center;
+      margin-top: 0.2rem !important;
+    }
+    #panel-pdf .note {
+      margin-top: 0.45rem;
+      font-size: 0.72rem;
+      line-height: 1.35;
+    }
+    @media (min-width: 520px) {
+      #panel-pdf .pdf-options {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 350px) {
+      #panel-pdf > .card { padding: 0.8rem 0.7rem; }
+      #panel-pdf .pdf-options { gap: 0.4rem; }
+      #panel-pdf .pdf-options label { font-size: 0.78rem !important; }
+      #panel-pdf .form-row { gap: 0.45rem; }
+      #panel-pdf .form-row input { font-size: 0.78rem; }
+    }
+
     .pdf-options label:has(input:checked) {
       background: var(--primary-soft);
       border-color: #a5b4fc;
