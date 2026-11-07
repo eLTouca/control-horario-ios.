@@ -677,46 +677,86 @@
       transform: translateY(0);
     }
 
+    /* Previsualización PDF inmersiva, adaptada a la pantalla del iPhone */
     .pdf-preview-box {
       display: none;
-      margin-top: 1.25rem;
-      border: 1.5px solid var(--border);
-      border-radius: 14px;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+      background: #e9edf5;
       overflow: hidden;
-      background: #f1f5f9;
     }
-
     .pdf-preview-box.visible {
-      display: block;
+      display: flex;
+      flex-direction: column;
     }
-
     .pdf-preview-header {
+      flex: 0 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      padding: 0.85rem 1rem;
-      background: white;
-      border-bottom: 1px solid var(--border);
+      gap: 10px;
+      padding: 10px 14px;
+      min-height: 62px;
+      background: rgba(255,255,255,.97);
+      border-bottom: 1px solid #dbe2ee;
+      box-shadow: 0 3px 14px rgba(15,23,42,.07);
     }
-
+    .pdf-preview-heading {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
     .pdf-preview-header strong {
-      font-size: 0.95rem;
-      color: var(--text);
+      font-size: 15px;
+      line-height: 1.2;
+      color: #111827;
+      letter-spacing: -.02em;
     }
-
+    .pdf-preview-subtitle {
+      font-size: 11px;
+      color: #64748b;
+    }
     .pdf-preview-actions {
       display: flex;
-      gap: 0.4rem;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
     }
-
+    .pdf-preview-actions .btn {
+      min-height: 40px;
+      padding: 0 11px;
+      font-size: 12px;
+      border-radius: 11px;
+    }
+    .pdf-preview-actions #btn-cerrar-previa {
+      width: 40px;
+      padding: 0;
+      font-size: 18px;
+    }
+    .pdf-preview-actions #btn-compartir-pdf {
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      color: #4338ca;
+    }
     .pdf-preview-frame {
+      display: block;
+      flex: 1 1 auto;
       width: 100%;
-      height: min(70vh, 640px);
+      min-height: 0;
+      height: auto;
       border: 0;
-      background: #e2e8f0;
+      background: #e9edf5;
+    }
+    @media (max-width: 390px) {
+      .pdf-preview-header { padding-left: 9px; padding-right: 9px; gap: 6px; }
+      .pdf-preview-actions { gap: 5px; }
+      .pdf-preview-actions .btn { padding: 0 8px; font-size: 11px; }
     }
 
         .pdf-options {
@@ -1632,15 +1672,19 @@
         </button>
         <p class="note">Primero verás una previa. Si te convence, eliges dónde guardarlo.</p>
 
-        <div class="pdf-preview-box" id="pdf-preview-box">
+        <div class="pdf-preview-box" id="pdf-preview-box" role="dialog" aria-modal="true" aria-label="Previsualización del PDF">
           <div class="pdf-preview-header">
-            <strong>Previa del PDF</strong>
+            <div class="pdf-preview-heading">
+              <strong>Tu documento está listo</strong>
+              <span class="pdf-preview-subtitle">Vista previa · PDF</span>
+            </div>
             <div class="pdf-preview-actions">
-              <button type="button" class="btn btn-outline btn-sm" id="btn-cerrar-previa">Cerrar</button>
-              <button type="button" class="btn btn-success btn-sm" id="btn-guardar-pdf-final">💾 Guardar PDF…</button>
+              <button type="button" class="btn btn-outline" id="btn-cerrar-previa" aria-label="Cerrar previsualización">✕</button>
+              <button type="button" class="btn btn-outline" id="btn-compartir-pdf">↗ Compartir</button>
+              <button type="button" class="btn btn-success" id="btn-guardar-pdf-final">↓ Guardar</button>
             </div>
           </div>
-          <iframe id="pdf-preview-frame" class="pdf-preview-frame" title="Previa del PDF"></iframe>
+          <iframe id="pdf-preview-frame" class="pdf-preview-frame" title="Previsualización del documento PDF"></iframe>
         </div>
       </div>
     </section>
@@ -2494,16 +2538,32 @@
       if (box) box.classList.remove('visible');
     }
 
+    function enviarPdfAIOS(doc, nombreArchivo, accion) {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.pdf) {
+        const bytes = new Uint8Array(doc.output('arraybuffer'));
+        let binario = '';
+        const bloque = 0x8000;
+        for (let i = 0; i < bytes.length; i += bloque) {
+          binario += String.fromCharCode.apply(null, bytes.subarray(i, i + bloque));
+        }
+        window.webkit.messageHandlers.pdf.postMessage({
+          action: accion,
+          filename: nombreArchivo,
+          data: btoa(binario)
+        });
+        return true;
+      }
+      return false;
+    }
+
     async function guardarPdfElegirUbicacion(doc, nombreArchivo) {
+      if (enviarPdfAIOS(doc, nombreArchivo, 'save')) return;
       const blob = doc.output('blob');
       if (window.showSaveFilePicker) {
         try {
           const handle = await window.showSaveFilePicker({
             suggestedName: nombreArchivo,
-            types: [{
-              description: 'Documento PDF',
-              accept: { 'application/pdf': ['.pdf'] }
-            }]
+            types: [{ description: 'Documento PDF', accept: { 'application/pdf': ['.pdf'] } }]
           });
           const writable = await handle.createWritable();
           await writable.write(blob);
@@ -2519,6 +2579,19 @@
       }
       doc.save(nombreArchivo);
       toast('PDF descargado');
+    }
+
+    function compartirPdf(doc, nombreArchivo) {
+      if (enviarPdfAIOS(doc, nombreArchivo, 'share')) return;
+      const blob = doc.output('blob');
+      const file = new File([blob], nombreArchivo, { type: 'application/pdf' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: nombreArchivo }).catch(() => {});
+      } else {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        toast('Abre el PDF y utiliza Compartir');
+      }
     }
 
     function construirPdf() {
@@ -2619,11 +2692,13 @@
     });
 
     document.getElementById('btn-guardar-pdf-final').addEventListener('click', async () => {
-      if (!pdfPendiente) {
-        toast('Genera primero la previa');
-        return;
-      }
+      if (!pdfPendiente) { toast('Genera primero la previa'); return; }
       await guardarPdfElegirUbicacion(pdfPendiente.doc, pdfPendiente.nombreArchivo);
+    });
+
+    document.getElementById('btn-compartir-pdf').addEventListener('click', () => {
+      if (!pdfPendiente) { toast('Genera primero la previa'); return; }
+      compartirPdf(pdfPendiente.doc, pdfPendiente.nombreArchivo);
     });
 
     document.getElementById('btn-cerrar-previa').addEventListener('click', () => {
