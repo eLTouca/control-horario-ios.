@@ -1667,6 +1667,7 @@
     #geo-map-large{width:100%;height:100%;flex:1;border:0;background:#e2e8f0}
 
    
+    #panel-nomina #plus-por-hora-extra { border-color: #c7d2fe; background: #f8faff; font-weight: 700; }
     /* Nómina: campos rectangulares, alineados y con aprovechamiento del espacio */
     #panel-nomina > .card { padding: 1rem; }
     #panel-nomina .card h2 { margin-bottom: 0.45rem; }
@@ -2021,6 +2022,10 @@
           <div class="form-group">
             <label for="horas-extra-mes">Horas extras (20→20)</label>
             <input type="number" id="horas-extra-mes" min="0" step="0.25" placeholder="Se calcula solo" />
+          </div>
+          <div class="form-group">
+            <label for="plus-por-hora-extra">Plus adicional por hora extra (€)</label>
+            <input type="number" id="plus-por-hora-extra" min="0" step="0.01" value="5" inputmode="decimal" />
           </div>
         </div>
 
@@ -3162,6 +3167,7 @@
       const sueldoBase = parseFloat(document.getElementById('sueldo-base').value) || 0;
       const precioHora = parseFloat(document.getElementById('precio-hora-extra').value) || 0;
       const horasExtra = parseFloat(document.getElementById('horas-extra-mes').value) || 0;
+      const plusPorHoraExtra = Math.max(0, parseFloat(document.getElementById('plus-por-hora-extra').value) || 0);
       const plusEspH = parseFloat(document.getElementById('plus-especiales').value) || 0;
       const horasEsp = parseFloat(document.getElementById('horas-especiales').value) || 0;
       const plusNoct = parseFloat(document.getElementById('plus-nocturnidad').value) || 0;
@@ -3173,12 +3179,13 @@
       const situacion = document.getElementById('situacion-familiar').value;
 
       const importeExtras = horasExtra * precioHora;
+      const importePlusHoraExtra = horasExtra * plusPorHoraExtra;
       const importeEsp = horasEsp * plusEspH;
       const plusesFijos = plusTrans + plusNoct + antiguedad + otros;
-      const brutoMensual = sueldoBase + importeExtras + importeEsp + plusesFijos;
+      const brutoMensual = sueldoBase + importeExtras + importePlusHoraExtra + importeEsp + plusesFijos;
 
       // Bruto anual: base × pagas + extras/pluses variables × 12 (aprox.)
-      const brutoAnual = sueldoBase * nPagas + (importeExtras + importeEsp + plusesFijos) * 12;
+      const brutoAnual = sueldoBase * nPagas + (importeExtras + importePlusHoraExtra + importeEsp + plusesFijos) * 12;
 
       const tipoSS = contrato === 'temporal' ? 0.0655 : 0.0650;
       const ssMensual = brutoMensual * tipoSS;
@@ -3214,6 +3221,7 @@
       grid.innerHTML = `
         <div class="label">Sueldo base convenio</div><div class="value">${formatNum(sueldoBase)} €</div>
         <div class="label">Horas extras (${formatNum(horasExtra, 2)} h × ${formatNum(precioHora)} €)</div><div class="value">${formatNum(importeExtras)} €</div>
+        <div class="label">Plus adicional horas extras (${formatNum(horasExtra, 2)} h × ${formatNum(plusPorHoraExtra)} €)</div><div class="value">${formatNum(importePlusHoraExtra)} €</div>
         <div class="label">Plus trabajos especiales</div><div class="value">${formatNum(importeEsp)} €</div>
         <div class="label">Nocturnidad + transporte + antigüedad + otros</div><div class="value">${formatNum(plusesFijos)} €</div>
         <div class="label"><strong>Bruto del periodo</strong></div><div class="value"><strong>${formatNum(brutoMensual)} €</strong></div>
@@ -3713,6 +3721,24 @@
 
     // ========== INIT ==========
     loadData();
+    const plusHoraExtraInput = document.getElementById('plus-por-hora-extra');
+    try {
+      const plusHoraExtraGuardado = localStorage.getItem('controlHorario.plusPorHoraExtra');
+      if (plusHoraExtraGuardado !== null && Number.isFinite(Number(plusHoraExtraGuardado)) && Number(plusHoraExtraGuardado) >= 0) {
+        plusHoraExtraInput.value = plusHoraExtraGuardado;
+      }
+    } catch (e) { console.warn('No se pudo recuperar el plus por hora extra', e); }
+    plusHoraExtraInput.addEventListener('input', () => {
+      const valor = Math.max(0, Number(plusHoraExtraInput.value) || 0);
+      try { localStorage.setItem('controlHorario.plusPorHoraExtra', String(valor)); }
+      catch (e) { console.warn('No se pudo guardar el plus por hora extra', e); }
+    });
+    plusHoraExtraInput.addEventListener('change', () => {
+      const valor = Math.max(0, Number(plusHoraExtraInput.value) || 0);
+      plusHoraExtraInput.value = valor.toFixed(2);
+      try { localStorage.setItem('controlHorario.plusPorHoraExtra', String(valor)); }
+      catch (e) { console.warn('No se pudo guardar el plus por hora extra', e); }
+    });
     document.getElementById('fecha').value = hoy();
     (function() {
       const { hasta } = getPeriodo20();
