@@ -1423,6 +1423,12 @@
     .geo-permission-help strong{font-size:.9rem}
     #geo-security-status{font-weight:700}
     @media(max-width:600px){#geo-map{height:225px}.geo-map-card{padding:.8rem}}
+    .geo-map-actions button{background:none;border:0;padding:.35rem .2rem;color:var(--primary);font:inherit;font-weight:700;cursor:pointer}
+    .geo-map-fullscreen{position:fixed;inset:0;z-index:9999;background:#f8fafc;display:none;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+    .geo-map-fullscreen.active{display:flex}
+    .geo-map-fullscreen-head{display:flex;align-items:center;justify-content:space-between;padding:1rem;background:white;border-bottom:1px solid var(--border)}
+    .geo-map-fullscreen-head button{border:0;border-radius:10px;padding:.65rem .9rem;background:var(--primary);color:white;font-weight:700}
+    #geo-map-large{width:100%;height:100%;flex:1;border:0;background:#e2e8f0}
 
   </style>
 
@@ -1816,8 +1822,12 @@
           </div>
           <iframe id="geo-map" title="Mapa de la ubicación seleccionada" loading="lazy"
             referrerpolicy="no-referrer-when-downgrade" src="about:blank"></iframe>
-          <div class="geo-map-actions"><a id="geo-open-map" href="https://www.openstreetmap.org" target="_blank" rel="noopener">Abrir mapa grande ↗</a></div>
+          <div class="geo-map-actions"><button id="geo-open-map" type="button">Abrir mapa grande ↗</button></div>
           <p class="geo-map-help">El marcador representa el centro de la zona. Comprueba que está en tu centro de trabajo antes de guardar.</p>
+        </div>
+        <div class="geo-map-fullscreen" id="geo-map-fullscreen" role="dialog" aria-modal="true" aria-label="Mapa ampliado">
+          <div class="geo-map-fullscreen-head"><strong>Ubicación del centro de trabajo</strong><button id="geo-close-map" type="button">Volver</button></div>
+          <iframe id="geo-map-large" title="Mapa ampliado de la ubicación" src="about:blank"></iframe>
         </div>
         <div class="geo-permission-help" id="geo-permission-help">
           <strong>Permiso de ubicación del iPhone</strong>
@@ -2984,6 +2994,19 @@
       saveGeoState();
       actualizarUIGeo();
     }
+
+    (function configurarMapaAmpliado() {
+      const abrir=document.getElementById('geo-open-map');
+      const cerrar=document.getElementById('geo-close-map');
+      const modal=document.getElementById('geo-map-fullscreen');
+      const pequeno=document.getElementById('geo-map');
+      const grande=document.getElementById('geo-map-large');
+      if(abrir) abrir.addEventListener('click',()=>{
+        if(!pequeno || !pequeno.src || pequeno.src==='about:blank'){toast('Primero localiza o fija una ubicación en el mapa');return;}
+        grande.src=pequeno.src; modal.classList.add('active');
+      });
+      if(cerrar) cerrar.addEventListener('click',()=>{modal.classList.remove('active');grande.src='about:blank';});
+    })();
 
     function actualizarMapaGeo(lat, lng, accuracy) {
       const map = document.getElementById('geo-map');
