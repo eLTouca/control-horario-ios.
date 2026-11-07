@@ -42,6 +42,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let content = WKUserContentController()
         content.add(context.coordinator, name: "location")
+        content.add(context.coordinator, name: "pdf")
         let config = WKWebViewConfiguration()
         config.userContentController = content
         let web = WKWebView(frame: .zero, configuration: config)
@@ -71,12 +72,50 @@ struct ControlHorarioWebView: UIViewRepresentable {
         init(locationManager: NativeLocationManager) { self.locationManager = locationManager }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            if message.name == "pdf" {
+                handlePDFMessage(message.body)
+                return
+            }
             guard let command = message.body as? String else { return }
             switch command {
             case "once": locationManager.requestSingleLocation()
             case "watch": locationManager.startWatching()
             case "stop": locationManager.stopWatching()
             default: break
+            }
+        }
+
+        private func handlePDFMessage(_ body: Any) {
+            guard let payload = body as? [String: Any],
+                  let action = payload["action"] as? String,
+                  let filename = payload["filename"] as? String,
+                  let base64 = payload["data"] as? String,
+                  let data = Data(base64Encoded: base64),
+                  let webView,
+                  let presenter = webView.parentViewController else { return }
+
+            let safeName = URL(fileURLWithPath: filename).lastPathComponent
+            let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(safeName)
+            do {
+                try data.write(to: fileURL, options: .atomic)
+            } catch {
+                return
+            }
+
+            DispatchQueue.main.async {
+                if action == "save" {
+                    let picker = UIDocumentPickerViewController(forExporting: [fileURL], asCopy: true)
+                    picker.shouldShowFileExtensions = true
+                    presenter.present(picker, animated: true)
+                } else if action == "share" {
+                    let activity = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+                    if let popover = activity.popoverPresentationController {
+                        popover.sourceView = webView
+                        popover.sourceRect = CGRect(x: webView.bounds.midX, y: webView.bounds.midY, width: 0, height: 0)
+                        popover.permittedArrowDirections = []
+                    }
+                    presenter.present(activity, animated: true)
+                }
             }
         }
     }
@@ -146,5 +185,16 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         onError?(2)
+    }
+}
+
+private extension UIView {
+    var parentViewController: UIViewController? {
+        var responder: UIResponder? = self
+        while let current = responder {
+            if let controller = current as? UIViewController { return controller }
+            responder = current.next
+        }
+        return nil
     }
 }
