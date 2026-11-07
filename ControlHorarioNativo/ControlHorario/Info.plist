@@ -11,7 +11,8 @@
     <key>LSRequiresIPhoneOS</key><true/>
     <key>UILaunchScreen</key><dict/>
     <key>NSLocationWhenInUseUsageDescription</key><string>Control horario necesita tu ubicación para comprobar si estás en el centro de trabajo y registrar la jornada según la zona configurada.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key><string>Control horario utiliza tu ubicación mientras la app está en uso para comprobar la zona de trabajo.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key><string>Control horario necesita comprobar tu entrada y salida de la zona de trabajo incluso cuando la app está en segundo plano.</string>
+    <key>UIBackgroundModes</key><array><string>location</string></array>
     <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
     <key>UIViewControllerBasedStatusBarAppearance</key><false/>
 </dict>
