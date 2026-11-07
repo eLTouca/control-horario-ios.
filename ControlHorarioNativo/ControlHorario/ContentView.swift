@@ -15,7 +15,7 @@ struct ContentView: View {
                     Image(systemName: "location.circle.fill").font(.system(size: 34)).foregroundStyle(.blue)
                     Text("Permite el acceso a tu ubicación")
                         .font(.headline)
-                    Text("Para fijar el centro de trabajo, permite que Control horario use tu ubicación mientras utilizas la app. Puedes cambiarlo después en Ajustes del iPhone.")
+                    Text("Para contar las horas con la app en segundo plano, permite el acceso a la ubicación en todo momento. En Ajustes del iPhone, selecciona Ubicación > Siempre y activa Ubicación precisa.")
                         .multilineTextAlignment(.center).font(.subheadline)
                     Button("Abrir Ajustes") {
                         if let url = URL(string: UIApplication.openSettingsURLString) {
