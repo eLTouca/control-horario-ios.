@@ -3078,15 +3078,35 @@
     }
 
     window.nativeLocationReceived = function(lat, lng, accuracy) {
-      const titulo = document.getElementById('geo-status-titulo');
-      const detalle = document.getElementById('geo-status-detalle');
-      document.getElementById('geo-lat').value = Number(lat).toFixed(6);
-      document.getElementById('geo-lng').value = Number(lng).toFixed(6);
-      actualizarMapaGeo(Number(lat), Number(lng), Number(accuracy));
-      if (titulo) titulo.textContent = 'Posición encontrada · confirma el mapa';
-      if (detalle) detalle.textContent = 'Si el marcador está en tu centro de trabajo, pulsa «Guardar zona». Si no, vuelve a localizarte.';
-      toast('GPS localizado · precisión ±' + Math.round(Number(accuracy)) + ' m');
-    };
+  const latNum = Number(lat);
+  const lngNum = Number(lng);
+  const accuracyNum = Number(accuracy);
+
+  document.getElementById('geo-lat').value = latNum.toFixed(6);
+  document.getElementById('geo-lng').value = lngNum.toFixed(6);
+  actualizarMapaGeo(latNum, lngNum, accuracyNum);
+
+  if (config.geo && config.geo.activo &&
+      config.geo.lat != null && config.geo.lng != null) {
+    onGeoPosition({
+      coords: {
+        latitude: latNum,
+        longitude: lngNum,
+        accuracy: accuracyNum
+      }
+    });
+    return;
+  }
+
+  const titulo = document.getElementById('geo-status-titulo');
+  const detalle = document.getElementById('geo-status-detalle');
+
+  if (titulo) titulo.textContent = 'Posición encontrada · confirma el mapa';
+  if (detalle) detalle.textContent =
+    'Si el marcador está en tu centro de trabajo, pulsa «Guardar zona». Si no, vuelve a localizarte.';
+
+  toast('GPS localizado · precisión ±' + Math.round(accuracyNum) + ' m');
+};
     window.nativeLocationError = function(code) { onGeoError({code:Number(code)}); };
 
     document.getElementById('btn-geo-aqui').addEventListener('click', () => {
