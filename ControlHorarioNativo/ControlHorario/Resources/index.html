@@ -1666,7 +1666,103 @@
     .geo-map-fullscreen-head button{border:0;border-radius:10px;padding:.65rem .9rem;background:var(--primary);color:white;font-weight:700}
     #geo-map-large{width:100%;height:100%;flex:1;border:0;background:#e2e8f0}
 
-  </style>
+   
+    /* Nómina: campos rectangulares, alineados y con aprovechamiento del espacio */
+    #panel-nomina > .card { padding: 1rem; }
+    #panel-nomina .card h2 { margin-bottom: 0.45rem; }
+    #panel-nomina .card > p.note:first-of-type {
+      margin: 0 0 0.8rem !important;
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+    #panel-nomina .form-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem 0.7rem;
+      margin: 0 0 0.75rem;
+      align-items: stretch;
+    }
+    #panel-nomina .form-row:first-of-type {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    #panel-nomina .form-group {
+      min-width: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: initial !important;
+    }
+    #panel-nomina .form-group label {
+      min-height: 2.65em;
+      display: flex;
+      align-items: flex-end;
+      margin: 0 0 0.25rem;
+      font-size: 0.64rem;
+      line-height: 1.2;
+      letter-spacing: 0.025em;
+    }
+    #panel-nomina .form-group input,
+    #panel-nomina .form-group select {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      height: 44px;
+      margin: auto 0 0;
+      padding: 0.5rem 0.55rem;
+      border-radius: 10px;
+      font-size: 0.84rem;
+      line-height: 1.2;
+    }
+    #panel-nomina #categoria-convenio {
+      font-size: 0.82rem;
+      padding-right: 1.8rem;
+    }
+    #panel-nomina #periodo-horas-txt {
+      padding: 0.65rem 0.75rem;
+      margin: 0 0 0.7rem !important;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f8fafc;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+    #panel-nomina #btn-calcular-nomina {
+      width: 100%;
+      min-height: 46px;
+      justify-content: center;
+    }
+    #panel-nomina .result-box {
+      padding: 0.9rem;
+      margin-top: 0.85rem;
+    }
+    #panel-nomina .result-grid {
+      gap: 0.45rem 0.8rem;
+      font-size: 0.84rem;
+    }
+    @media (max-width: 520px) {
+      #panel-nomina .form-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.6rem 0.55rem;
+      }
+      #panel-nomina .form-row:first-of-type {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      #panel-nomina .form-group label { font-size: 0.61rem; }
+      #panel-nomina .form-group input,
+      #panel-nomina .form-group select {
+        font-size: 0.8rem;
+        padding-left: 0.45rem;
+        padding-right: 0.45rem;
+      }
+    }
+    @media (max-width: 350px) {
+      #panel-nomina > .card { padding: 0.8rem 0.7rem; }
+      #panel-nomina .form-row { gap: 0.5rem 0.4rem; }
+      #panel-nomina .form-group label { font-size: 0.58rem; }
+    }
+
+</style>
 
 
 </head>
@@ -2988,12 +3084,31 @@
       }
     }
 
-    document.getElementById('categoria-convenio').addEventListener('change', () => {
-      const key = document.getElementById('categoria-convenio').value;
+    const CLAVE_CATEGORIA_NOMINA = 'controlHorario.ultimaCategoriaNomina';
+
+    function aplicarCategoriaNomina(key) {
       if (key !== 'custom' && CONVENIO_METAL[key]) {
         document.getElementById('sueldo-base').value = CONVENIO_METAL[key].base;
         document.getElementById('precio-hora-extra').value = CONVENIO_METAL[key].he;
       }
+    }
+
+    const selectorCategoriaNomina = document.getElementById('categoria-convenio');
+    try {
+      const categoriaGuardada = localStorage.getItem(CLAVE_CATEGORIA_NOMINA);
+      if (categoriaGuardada && Array.from(selectorCategoriaNomina.options).some(o => o.value === categoriaGuardada)) {
+        selectorCategoriaNomina.value = categoriaGuardada;
+        aplicarCategoriaNomina(categoriaGuardada);
+      }
+    } catch (e) {
+      console.warn('No se pudo recuperar la categoría de nómina', e);
+    }
+
+    selectorCategoriaNomina.addEventListener('change', () => {
+      const key = selectorCategoriaNomina.value;
+      aplicarCategoriaNomina(key);
+      try { localStorage.setItem(CLAVE_CATEGORIA_NOMINA, key); }
+      catch (e) { console.warn('No se pudo guardar la categoría de nómina', e); }
     });
 
     // Escala de retención IRPF 2026 (combinada de referencia)
