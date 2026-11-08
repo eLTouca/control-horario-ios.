@@ -1816,6 +1816,10 @@
 
       <div class="stats" id="stats-horas">
         <div class="stat-card">
+          <div class="value" id="stat-acumuladas">0</div>
+          <div class="label">Horas acumuladas</div>
+        </div>
+        <div class="stat-card">
           <div class="value" id="stat-mes">0</div>
           <div class="label">Horas del periodo</div>
         </div>
@@ -2488,6 +2492,9 @@
       const horasSem = registros
         .filter(r => r.fecha >= iniSem && r.fecha <= finSem)
         .reduce((s, r) => s + r.horas, 0);
+      const horasAcumuladas = registros.reduce((s, r) => s + (Number(r.horas) || 0), 0);
+      const acumuladasEl = document.getElementById('stat-acumuladas');
+      if (acumuladasEl) acumuladasEl.textContent = formatNum(horasAcumuladas, 1);
       const dias = new Set(delPeriodo.map(r => r.fecha)).size;
       const media = dias > 0 ? horasPeriodo / dias : 0;
 
