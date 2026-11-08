@@ -111,11 +111,11 @@ struct ControlHorarioWebView: UIViewRepresentable {
             let alert = UIAlertController(title: "Añadir nómina", message: "Haz una foto o selecciona una imagen de tu galería.", preferredStyle: .actionSheet)
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 alert.addAction(UIAlertAction(title: "Hacer una foto", style: .default) { [weak self] _ in
-                    self?.presentImagePicker(source: .camera)
+                    alert.dismiss(animated: true) { self?.presentImagePicker(source: .camera, from: presenter) }
                 })
             }
             alert.addAction(UIAlertAction(title: "Elegir de la galería", style: .default) { [weak self] _ in
-                self?.presentImagePicker(source: .photoLibrary)
+                alert.dismiss(animated: true) { self?.presentImagePicker(source: .photoLibrary, from: presenter) }
             })
             alert.addAction(UIAlertAction(title: "Cancelar", style: .cancel))
             if let popover = alert.popoverPresentationController {
@@ -126,8 +126,8 @@ struct ControlHorarioWebView: UIViewRepresentable {
             DispatchQueue.main.async { presenter.present(alert, animated: true) }
         }
 
-        private func presentImagePicker(source: UIImagePickerController.SourceType) {
-            guard let webView, let presenter = Self.topViewController() else {
+        private func presentImagePicker(source: UIImagePickerController.SourceType, from presenter: UIViewController) {
+            guard let webView else {
                 sendPayrollOCRResult(["ok": false, "error": "No se pudo abrir la cámara o galería."])
                 return
             }
