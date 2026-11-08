@@ -61,8 +61,8 @@ struct ControlHorarioWebView: UIViewRepresentable {
         locationManager.onGeofenceEvent = { [weak web] state, timestamp in
             let js = "window.nativeGeofenceEvent ? (window.nativeGeofenceEvent('\(state)', \(timestamp * 1000)), true) : false;"
             DispatchQueue.main.async {
-                web?.evaluateJavaScript(js) { _, error in
-                    if error == nil, let delivered = _ as? Bool, delivered { locationManager.acknowledgeGeofenceEvent(state, timestamp: timestamp) }
+                web?.evaluateJavaScript(js) { result, error in
+                    if error == nil, let delivered = result as? Bool, delivered { locationManager.acknowledgeGeofenceEvent(state, timestamp: timestamp) }
                 }
             }
         }
