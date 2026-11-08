@@ -2002,97 +2002,24 @@
           Horas extras del <strong>día 20 al 20</strong>. Importa una nómina para estimar las deducciones con tus porcentajes reales.
         </p>
 
-        <div class="form-row">
-          <div class="form-group" style="flex: 2; min-width: 220px;">
-            <label for="categoria-convenio">Categoría (convenio metal Pontevedra)</label>
-            <select id="categoria-convenio">
-              <option value="5A" selected>Oficial 1ª / 2ª de taller — 1.860,37 €/mes · HE 23,93 €</option>
-              <option value="4A">Encargado / Oficial 1ª admin. — 1.996,98 € · HE 25,83 €</option>
-              <option value="5B">Analista 2ª / Chofer camión — 1.768,84 € · HE 22,65 €</option>
-              <option value="6A">Oficial 3ª / Chofer — 1.722,23 € · HE 22,00 €</option>
-              <option value="6B">Especialista / Almacenero — 1.679,33 € · HE 21,39 €</option>
-              <option value="6C">Auxiliar admin. / lab. — 1.617,26 € · HE 20,53 €</option>
-              <option value="7A">Peón / Portero — 1.608,77 € · HE 20,43 €</option>
-              <option value="3B">Maestro taller / Contramaestre — 2.196,30 € · HE 28,63 €</option>
-              <option value="2B">Jefe de taller — 2.490,80 € · HE 32,75 €</option>
-              <option value="custom">Personalizado (editar a mano)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="sueldo-base">Sueldo base mensual (€)</label>
-            <input type="number" id="sueldo-base" min="0" step="0.01" value="1860.37" />
-          </div>
-          <div class="form-group">
-            <label for="precio-hora-extra">Precio hora extra (€)</label>
-            <input type="number" id="precio-hora-extra" min="0" step="0.01" value="23.93" />
-          </div>
-          <div class="form-group">
-            <label for="horas-extra-mes">Horas extras (20→20)</label>
-            <input type="number" id="horas-extra-mes" min="0" step="0.25" placeholder="Se calcula solo" />
-          </div>
-          <div class="form-group">
-            <label for="plus-por-hora-extra">Plus adicional por hora extra (€)</label>
-            <input type="number" id="plus-por-hora-extra" min="0" step="0.01" value="5" inputmode="decimal" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="plus-especiales">Plus trabajos especiales (€/h)</label>
-            <select id="plus-especiales">
-              <option value="0">Ninguno</option>
-              <option value="0.80">Un supuesto — 0,80 €/h</option>
-              <option value="1.24">Dos o más — 1,24 €/h</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="horas-especiales">Horas con plus especiales</label>
-            <input type="number" id="horas-especiales" min="0" step="0.25" value="0" />
-          </div>
-          <div class="form-group">
-            <label for="plus-nocturnidad">Plus nocturnidad (€)</label>
-            <input type="number" id="plus-nocturnidad" min="0" step="0.01" value="0" placeholder="25% s. base si aplica" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="plus-transporte">Plus transporte / otros fijos</label>
-            <input type="number" id="plus-transporte" min="0" step="0.01" value="0" />
-          </div>
-          <div class="form-group">
-            <label for="antiguedad">Antigüedad / CAC (€/mes)</label>
-            <input type="number" id="antiguedad" min="0" step="0.01" value="0" />
-          </div>
-          <div class="form-group">
-            <label for="otros-pluses">Otros pluses</label>
-            <input type="number" id="otros-pluses" min="0" step="0.01" value="0" />
-          </div>
-        </div>
-
-        <div class="aeat-box" style="border:1px solid #c7d2fe;background:#f8faff;border-radius:12px;padding:.9rem;margin:.2rem 0 .9rem;">
-          <strong style="display:block;margin-bottom:.35rem;">Importar nómina automáticamente</strong>
-          <p class="note" style="margin:0 0 .7rem;">Haz una foto o selecciona una imagen de tu nómina. El iPhone leerá los importes sin enviar la imagen a Internet.</p>
+        <div class="aeat-box" style="border:1px solid #c7d2fe;background:#f8faff;border-radius:12px;padding:1rem;margin:.2rem 0 .9rem;">
+          <strong style="display:block;margin-bottom:.35rem;">Añadir nómina</strong>
+          <p class="note" style="margin:0 0 .7rem;">Haz una foto o selecciona una imagen de tu nómina. El reconocimiento se realiza en el iPhone y la imagen no se envía a Internet.</p>
           <button class="btn btn-primary" type="button" id="btn-importar-nomina">📷 Hacer foto o elegir de galería</button>
-          <p id="nomina-lectura-estado" role="status" style="font-size:.82rem;margin:.55rem 0 0;color:var(--text-secondary);">Todavía no has añadido ninguna nómina.</p>
-          <div id="nomina-lectura-datos" style="display:none;margin-top:.75rem;padding-top:.7rem;border-top:1px solid #c7d2fe;">
-            <div id="nomina-lectura-resumen" style="font-size:.85rem;line-height:1.65;"></div>
-            <div class="form-row" style="margin-top:.5rem;">
-              <div class="form-group">
-                <label for="nomina-irpf-manual">IRPF de tu nómina (%)</label>
-                <input id="nomina-irpf-manual" type="number" min="0" max="50" step="0.01" inputmode="decimal" placeholder="Ej. 12,00" />
-              </div>
-              <div class="form-group">
-                <label for="nomina-ss-manual">Seguridad Social estimada (%)</label>
-                <input id="nomina-ss-manual" type="number" min="0" max="20" step="0.01" inputmode="decimal" placeholder="Se calcula al leerla" />
-              </div>
+          <p id="nomina-lectura-estado" role="status" style="font-size:.85rem;margin:.65rem 0;color:var(--text-secondary);">Todavía no has añadido ninguna nómina.</p>
+          <p id="nomina-lectura-error" role="alert" style="display:none;color:#be123c;font-size:.85rem;margin:.45rem 0;"></p>
+          <div id="nomina-lectura-datos" style="display:none;margin-top:.65rem;padding-top:.75rem;border-top:1px solid #c7d2fe;">
+            <strong>Comprueba los datos detectados</strong>
+            <div class="form-row">
+              <div class="form-group"><label for="nomina-bruto">Total devengado / bruto (€)</label><input id="nomina-bruto" type="text" inputmode="decimal" placeholder="Ej. 2.100,00"></div>
+              <div class="form-group"><label for="nomina-base">Base de cotización (€)</label><input id="nomina-base" type="text" inputmode="decimal" placeholder="Opcional"></div>
             </div>
-            <button class="btn btn-primary" type="button" id="btn-confirmar-nomina">Confirmar datos de la nómina</button>
+            <div class="form-row">
+              <div class="form-group"><label for="nomina-ss">Seguridad Social trabajador (€)</label><input id="nomina-ss" type="text" inputmode="decimal" placeholder="Ej. 136,50"></div>
+              <div class="form-group"><label for="nomina-irpf">Retención IRPF (%)</label><input id="nomina-irpf" type="text" inputmode="decimal" placeholder="Ej. 12,00"></div>
+            </div>
+            <div class="form-group"><label for="nomina-neto">Líquido a percibir (€) — opcional</label><input id="nomina-neto" type="text" inputmode="decimal" placeholder="Ej. 1.780,00"></div>
           </div>
-          <p id="nomina-lectura-error" role="alert" style="display:none;color:#be123c;font-size:.82rem;margin:.45rem 0 0;"></p>
         </div>
 
         <p class="note" id="periodo-horas-txt" style="margin-bottom: 0.75rem;"></p>
@@ -3122,183 +3049,150 @@
     });
 
     let textoNominaReconocido = '';
-    let retencionIRPFLeida = null;
-    let tipoSSLeido = null;
-    let brutoNominaImportada = null;
-    let netoNominaImportada = null;
 
     function solicitarLecturaNomina() {
       return new Promise((resolve, reject) => {
         if (!window.webkit?.messageHandlers?.payrollPhoto) {
-          reject(new Error('Esta función requiere la app nativa instalada en un iPhone.'));
+          reject(new Error('La cámara y la galería solo están disponibles dentro de la app instalada en el iPhone.'));
           return;
         }
-        const timeout = setTimeout(() => {
-          window.payrollOCRResult = null;
-          reject(new Error('La lectura está tardando demasiado. Inténtalo de nuevo.'));
-        }, 60000);
+        const timeout = setTimeout(() => { window.payrollOCRResult = null; reject(new Error('La lectura ha tardado demasiado. Inténtalo de nuevo.')); }, 60000);
         window.payrollOCRResult = result => {
           clearTimeout(timeout);
           window.payrollOCRResult = null;
-          if (!result?.ok) reject(new Error(result?.error || 'No se pudo leer la nómina.'));
+          if (!result?.ok) reject(new Error(result?.error || 'No se ha podido leer la imagen.'));
           else resolve(result.text || '');
         };
         window.webkit.messageHandlers.payrollPhoto.postMessage({});
       });
     }
 
-    function importeDesdeTexto(valor) {
-      if (!valor) return null;
-      const limpio = String(valor).replace(/[^0-9,.-]/g, '').replace(/\.(?=\d{3}(?:,|$))/g, '').replace(',', '.');
-      const n = Number(limpio);
+    function numeroNomina(valor) {
+      if (valor == null || String(valor).trim() === '') return null;
+      let s = String(valor).replace(/[^0-9,.-]/g, '');
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+      const n = Number(s);
       return Number.isFinite(n) ? n : null;
     }
 
-    function importeDeLinea(linea) {
-      const encontrados = linea.match(/-?\d{1,3}(?:\.\d{3})*(?:,\d{2})|-?\d+(?:,\d{2})/g);
-      return encontrados?.length ? importeDesdeTexto(encontrados[encontrados.length - 1]) : null;
+    function numerosEnLinea(linea) {
+      const matches = String(linea).match(/-?\d[\d. ]*(?:,\d{1,2}|\.\d{2})?/g) || [];
+      return matches.map(numeroNomina).filter(n => n !== null);
+    }
+
+    function importeLinea(linea) {
+      const nums = numerosEnLinea(linea);
+      return nums.length ? nums[nums.length - 1] : null;
+    }
+
+    function normalizarOCR(s) {
+      return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        .replace(/[|]/g, 'l').replace(/\s+/g, ' ').trim();
     }
 
     function analizarTextoNomina(texto) {
       const lineas = texto.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
-      const buscar = expresion => lineas.find(l => expresion.test(l));
-      const lineaBruto = buscar(/total\s+devengado|total\s+percepciones|total\s+bruto/i);
-      const lineaBase = buscar(/base.*cotiz|cotiz.*base/i);
-      const lineaNeto = buscar(/l[ií]quido.*percibir|total\s+l[ií]quido|l[ií]quido\s+a\s+percibir/i);
-      const lineaIRPF = buscar(/IRPF|I\.R\.P\.F|retenci[oó]n.*renta/i);
+      const encontrar = re => lineas.find(l => re.test(normalizarOCR(l)));
+      const brutoLinea = encontrar(/total\s*(?:devengado|percepciones|bruto)|total\s*a\s*devengar|devengos\s*total/);
+      const baseLinea = encontrar(/base\s*(?:de\s*)?(?:cotizacion|cc|contingencias)|base\s*reguladora/);
+      const netoLinea = encontrar(/liquido\s*(?:total|a\s*percibir|a\s*cobrar)|total\s*liquido|neto\s*a\s*percibir/);
+      const irpfLinea = encontrar(/irpf|i\.?r\.?p\.?f|retencion\s*(?:a\s*cuenta\s*)?(?:del\s*)?irpf/);
+      const ssLineas = lineas.filter(l => /contingencias comunes|desempleo|formacion profesional|\bmei\b|mecanismo de equidad|aportacion trabajador|cuota trabajador/i.test(normalizarOCR(l)));
+      let ss = ssLineas.reduce((sum,l) => sum + Math.abs(importeLinea(l) || 0), 0);
+      if (!ssLineas.length) {
+        const totalSS = encontrar(/total.*(?:seguridad social|cotizaciones trabajador|aportacion trabajador)/);
+        ss = totalSS ? Math.abs(importeLinea(totalSS) || 0) : 0;
+      }
       let irpf = null;
-      if (lineaIRPF) {
-        const porcentaje = lineaIRPF.match(/(\d{1,2}(?:[,.]\d{1,2})?)\s*%/);
-        if (porcentaje) irpf = importeDesdeTexto(porcentaje[1]);
+      if (irpfLinea) {
+        const m = irpfLinea.match(/(\d{1,2}(?:[,.]\d{1,2})?)\s*%/);
+        if (m) irpf = numeroNomina(m[1]);
         else {
-          const numeros = lineaIRPF.match(/\d{1,2}(?:[,.]\d{1,2})?/g) || [];
-          const candidato = numeros.map(importeDesdeTexto).find(n => n >= 0 && n <= 50);
-          if (candidato !== undefined) irpf = candidato;
+          const vals = numerosEnLinea(irpfLinea);
+          const possible = vals.find(n => n >= 0 && n <= 50);
+          if (possible !== undefined) irpf = possible;
         }
       }
-      const lineasSS = lineas.filter(l => /contingencias comunes|desempleo|formaci[oó]n profesional|MEI|mecanismo de equidad/i.test(l));
-      let totalSS = lineasSS.reduce((s,l) => s + (importeDeLinea(l) || 0), 0);
-      if (!lineasSS.length) {
-        const lineaSS = buscar(/total.*cotizaciones.*trabajador|total.*seguridad social/i);
-        if (lineaSS) totalSS = importeDeLinea(lineaSS) || 0;
-      }
       return {
-        bruto: lineaBruto ? importeDeLinea(lineaBruto) : null,
-        base: lineaBase ? importeDeLinea(lineaBase) : null,
-        neto: lineaNeto ? importeDeLinea(lineaNeto) : null,
+        bruto: brutoLinea ? importeLinea(brutoLinea) : null,
+        base: baseLinea ? importeLinea(baseLinea) : null,
+        neto: netoLinea ? importeLinea(netoLinea) : null,
         irpf,
-        totalSS: totalSS > 0 ? totalSS : null
+        ss: ss > 0 ? ss : null,
+        lineas: lineas.length
       };
     }
 
-    function mostrarLecturaNomina(datos) {
-      const dinero = n => n == null ? 'No identificado' : formatNum(n) + ' €';
-      const resumen = document.getElementById('nomina-lectura-resumen');
-      resumen.innerHTML = `
-        <div><strong>Bruto de la nómina:</strong> ${dinero(datos.bruto)}</div>
-        <div><strong>Base de cotización:</strong> ${dinero(datos.base)}</div>
-        <div><strong>Seguridad Social del trabajador:</strong> ${dinero(datos.totalSS)}</div>
-        <div><strong>IRPF:</strong> ${datos.irpf == null ? 'No identificado' : formatNum(datos.irpf) + ' %'}</div>
-        <div><strong>Neto:</strong> ${dinero(datos.neto)}</div>`;
-      document.getElementById('nomina-irpf-manual').value = datos.irpf == null ? '' : datos.irpf;
-      const baseSS = datos.base || datos.bruto;
-      const ssPercent = datos.totalSS && baseSS ? (datos.totalSS / baseSS) * 100 : null;
-      document.getElementById('nomina-ss-manual').value = ssPercent == null ? '' : ssPercent.toFixed(2);
+    function rellenarDatosNomina(datos) {
+      const poner = (id, v) => { document.getElementById(id).value = v == null ? '' : String(v).replace('.', ','); };
+      poner('nomina-bruto', datos.bruto);
+      poner('nomina-base', datos.base);
+      poner('nomina-ss', datos.ss);
+      poner('nomina-irpf', datos.irpf);
+      poner('nomina-neto', datos.neto);
       document.getElementById('nomina-lectura-datos').style.display = 'block';
-      document.getElementById('nomina-lectura-error').style.display = 'none';
-      document.getElementById('nomina-lectura-estado').textContent = 'Lectura completada. Comprueba los datos antes de confirmarlos.';
+      document.getElementById('btn-calcular-nomina').disabled = false;
     }
 
     document.getElementById('btn-importar-nomina').addEventListener('click', async () => {
       const estado = document.getElementById('nomina-lectura-estado');
       const error = document.getElementById('nomina-lectura-error');
       error.style.display = 'none';
-      retencionIRPFLeida = null; tipoSSLeido = null; brutoNominaImportada = null; netoNominaImportada = null;
       estado.textContent = 'Abriendo cámara o galería…';
       try {
         textoNominaReconocido = await solicitarLecturaNomina();
         const datos = analizarTextoNomina(textoNominaReconocido);
-        brutoNominaImportada = datos.bruto;
-        netoNominaImportada = datos.neto;
-        mostrarLecturaNomina(datos);
+        rellenarDatosNomina(datos);
+        const encontrados = [datos.bruto, datos.base, datos.ss, datos.irpf, datos.neto].filter(v => v !== null).length;
+        estado.textContent = encontrados
+          ? 'Lectura terminada: se han reconocido ' + encontrados + ' de 5 datos. Revisa y completa los campos que falten.'
+          : 'La foto se ha leído, pero no se han identificado los importes. Puedes introducirlos manualmente abajo.';
       } catch (e) {
-        estado.textContent = 'No se ha podido importar la nómina.';
-        error.textContent = e.message || 'No se pudo leer la nómina.';
-        error.style.display = 'block';
-      }
-    });
-
-    document.getElementById('btn-confirmar-nomina').addEventListener('click', () => {
-      const campoIRPF = document.getElementById('nomina-irpf-manual').value.trim();
-      const irpf = Number(campoIRPF);
-      const ss = Number(document.getElementById('nomina-ss-manual').value);
-      const error = document.getElementById('nomina-lectura-error');
-      if (!campoIRPF || !Number.isFinite(irpf) || irpf < 0 || irpf > 50) {
-        error.textContent = 'Comprueba el porcentaje de IRPF de tu nómina e introdúcelo si no se ha detectado.';
-        error.style.display = 'block'; return;
-      }
-      retencionIRPFLeida = irpf / 100;
-      tipoSSLeido = Number.isFinite(ss) && ss > 0 && ss <= 20 ? ss / 100 : null;
-      document.getElementById('nomina-lectura-estado').textContent = 'Nómina confirmada. Ya puedes calcular tu estimación.';
-      error.style.display = 'none';
-      toast('Datos de nómina confirmados');
-    });
-
-    document.getElementById('btn-calcular-nomina').addEventListener('click', async () => {
-      rellenarHorasPeriodo20();
-      const sueldoBase = parseFloat(document.getElementById('sueldo-base').value) || 0;
-      const precioHora = parseFloat(document.getElementById('precio-hora-extra').value) || 0;
-      const horasExtra = parseFloat(document.getElementById('horas-extra-mes').value) || 0;
-      const plusPorHoraExtra = Math.max(0, parseFloat(document.getElementById('plus-por-hora-extra').value) || 0);
-      const plusEspH = parseFloat(document.getElementById('plus-especiales').value) || 0;
-      const horasEsp = parseFloat(document.getElementById('horas-especiales').value) || 0;
-      const plusNoct = parseFloat(document.getElementById('plus-nocturnidad').value) || 0;
-      const plusTrans = parseFloat(document.getElementById('plus-transporte').value) || 0;
-      const antiguedad = parseFloat(document.getElementById('antiguedad').value) || 0;
-      const otros = parseFloat(document.getElementById('otros-pluses').value) || 0;
-      const nPagas = parseInt(document.getElementById('pagas').value) || 14;
-      const contrato = document.getElementById('tipo-contrato').value;
-
-      const importeExtras = horasExtra * precioHora;
-      const importePlusHoraExtra = horasExtra * plusPorHoraExtra;
-      const importeEsp = horasEsp * plusEspH;
-      const plusesFijos = plusTrans + plusNoct + antiguedad + otros;
-      const importeVariable = importeExtras + importePlusHoraExtra + importeEsp + plusesFijos;
-      const brutoReferencia = brutoNominaImportada != null ? brutoNominaImportada : sueldoBase;
-      const brutoMensual = brutoReferencia + importeVariable;
-
-      if (retencionIRPFLeida === null) {
-        const error = document.getElementById('nomina-lectura-error');
-        error.textContent = 'Primero haz una foto o importa una nómina y confirma el porcentaje de IRPF.';
+        estado.textContent = 'No se ha podido reconocer la nómina.';
+        error.textContent = e.message || 'Error al leer la imagen.';
         error.style.display = 'block';
         document.getElementById('nomina-lectura-datos').style.display = 'block';
-        return;
+        document.getElementById('btn-calcular-nomina').disabled = false;
       }
-      // Estimación local: reutiliza el IRPF real de la nómina aportada.
-      const tipoSS = tipoSSLeido || (contrato === 'temporal' ? 0.0655 : 0.0650);
-      const tipoRetencion = retencionIRPFLeida;
-      const tipoAEAT = tipoRetencion * 100;
-      const usaNetoNomina = netoNominaImportada != null;
-      const baseDeducciones = usaNetoNomina ? importeVariable : brutoMensual;
-      const ssMensual = baseDeducciones * tipoSS;
-      const irpfMensual = baseDeducciones * tipoRetencion;
-      const netoReferencia = usaNetoNomina ? netoNominaImportada : brutoReferencia - (brutoReferencia * tipoSS) - (brutoReferencia * tipoRetencion);
-      const netoMensual = netoReferencia + importeVariable - ssMensual - irpfMensual;
+    });
 
+    // Los campos manuales funcionan aunque la foto falle.
+    ['nomina-bruto','nomina-base','nomina-ss','nomina-irpf','nomina-neto'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        document.getElementById('btn-calcular-nomina').disabled = false;
+      });
+    });
+
+    document.getElementById('btn-calcular-nomina').addEventListener('click', () => {
+      const bruto = numeroNomina(document.getElementById('nomina-bruto').value);
+      const base = numeroNomina(document.getElementById('nomina-base').value);
+      const ss = numeroNomina(document.getElementById('nomina-ss').value) || 0;
+      const irpf = numeroNomina(document.getElementById('nomina-irpf').value);
+      const netoIntroducido = numeroNomina(document.getElementById('nomina-neto').value);
+      const error = document.getElementById('nomina-lectura-error');
+      if (bruto === null || bruto <= 0) {
+        error.textContent = 'Introduce el total bruto o devengado de la nómina.';
+        error.style.display = 'block'; return;
+      }
+      if (irpf === null || irpf < 0 || irpf > 50) {
+        error.textContent = 'Introduce el porcentaje de IRPF que aparece en la nómina.';
+        error.style.display = 'block'; return;
+      }
+      const retencion = bruto * irpf / 100;
+      const netoCalculado = netoIntroducido !== null && netoIntroducido > 0
+        ? netoIntroducido : bruto - ss - retencion;
       const grid = document.getElementById('resultado-grid');
       grid.innerHTML = `
-        <div class="label">${brutoNominaImportada != null ? "Bruto de la nómina importada" : "Sueldo base de referencia"}</div><div class="value">${formatNum(brutoReferencia)} €</div>
-        <div class="label">Horas extras (${formatNum(horasExtra, 2)} h × ${formatNum(precioHora)} €)</div><div class="value">${formatNum(importeExtras)} €</div>
-        <div class="label">Plus adicional horas extras (${formatNum(horasExtra, 2)} h × ${formatNum(plusPorHoraExtra)} €)</div><div class="value">${formatNum(importePlusHoraExtra)} €</div>
-        <div class="label">Plus trabajos especiales</div><div class="value">${formatNum(importeEsp)} €</div>
-        <div class="label">Nocturnidad + transporte + antigüedad + otros</div><div class="value">${formatNum(plusesFijos)} €</div>
-        <div class="label"><strong>Bruto del periodo</strong></div><div class="value"><strong>${formatNum(brutoMensual)} €</strong></div>
-        <div class="label">Seguridad Social (${(tipoSS * 100).toFixed(2)} %)</div><div class="value">− ${formatNum(ssMensual)} €</div>
-        <div class="label">IRPF según tu nómina (${(tipoAEAT).toFixed(2)} %)</div><div class="value">− ${formatNum(irpfMensual)} €</div>
-        <div class="label total">Neto estimado a cobrar</div><div class="value total">${formatNum(netoMensual)} €</div>
-      `;
+        <div class="label">Total bruto / devengado</div><div class="value">${formatNum(bruto)} €</div>
+        <div class="label">Base de cotización</div><div class="value">${base === null ? 'No indicada' : formatNum(base) + ' €'}</div>
+        <div class="label">Seguridad Social del trabajador</div><div class="value">− ${formatNum(ss)} €</div>
+        <div class="label">IRPF (${irpf.toFixed(2)} %)</div><div class="value">− ${formatNum(retencion)} €</div>
+        <div class="label total">Neto estimado</div><div class="value total">${formatNum(netoCalculado)} €</div>
+        ${netoIntroducido !== null ? '<div class="label">Neto leído de la nómina</div><div class="value">' + formatNum(netoIntroducido) + ' €</div>' : ''}`;
       document.getElementById('resultado-nomina').style.display = 'block';
-      toast('Estimación de nómina calculada');
+      error.style.display = 'none';
+      document.getElementById('nomina-lectura-estado').textContent = 'Cálculo realizado. Comprueba que los importes leídos coinciden con tu nómina.';
     });
 
     // ========== GEOLOCALIZACIÓN ==========
