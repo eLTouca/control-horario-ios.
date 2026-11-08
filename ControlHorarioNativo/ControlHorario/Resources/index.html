@@ -142,9 +142,23 @@
     .panel {
       display: none;
       animation: fadeUp 0.3s ease;
+      will-change: transform, opacity;
+      transform-origin: center center;
     }
 
     .panel.active { display: block; }
+
+    .panel.swipe-in-left { animation: swipeInLeft 0.28s cubic-bezier(.2,.75,.25,1) both; }
+    .panel.swipe-in-right { animation: swipeInRight 0.28s cubic-bezier(.2,.75,.25,1) both; }
+
+    @keyframes swipeInLeft {
+      from { opacity: .55; transform: translateX(34px) scale(.985); filter: blur(1px); }
+      to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+    }
+    @keyframes swipeInRight {
+      from { opacity: .55; transform: translateX(-34px) scale(.985); filter: blur(1px); }
+      to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+    }
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(10px); }
@@ -2486,48 +2500,96 @@
       renderCalendario();
     });
 
-    // ========== CAMBIO DE PESTAÑAS POR DESLIZAMIENTO ==========
-    // En iPhone: deslizar a la izquierda avanza y a la derecha retrocede.
-    // Se ignoran controles, campos editables, mapas y visores para no interferir
-    // con sus gestos propios (scroll, selección, zoom o interacción).
+    // ========== DESLIZAMIENTO FLUIDO ENTRE PESTAÑAS ==========
     (function() {
-      let inicioX = 0;
-      let inicioY = 0;
-      let gestoValido = false;
+      let inicioX = 0, inicioY = 0, panelArrastrado = null;
+      let gestoValido = false, ejeHorizontal = false, desplazamiento = 0;
       const distanciaMinima = 65;
       const selectoresInteractivos = 'button, a, input, select, textarea, label, [contenteditable="true"], iframe, .leaflet-container, .map, .geo-map-card, #pdf-preview-box';
 
+      function restaurarPanel() {
+        if (!panelArrastrado) return;
+        panelArrastrado.style.transition = 'transform 220ms cubic-bezier(.2,.8,.2,1), opacity 220ms ease, filter 220ms ease';
+        panelArrastrado.style.transform = '';
+        panelArrastrado.style.opacity = '';
+        panelArrastrado.style.filter = '';
+        panelArrastrado = null;
+      }
+
       document.addEventListener('touchstart', function(e) {
         if (document.body.classList.contains('modo-rapido') || e.touches.length !== 1) {
-          gestoValido = false;
-          return;
+          gestoValido = false; return;
         }
-        const objetivo = e.target;
-        if (objetivo && objetivo.closest && objetivo.closest(selectoresInteractivos)) {
-          gestoValido = false;
-          return;
+        if (e.target && e.target.closest && e.target.closest(selectoresInteractivos)) {
+          gestoValido = false; return;
         }
+        const botones = Array.from(document.querySelectorAll('.nav-btn'));
+        const indice = botones.findIndex(b => b.classList.contains('active'));
+        if (indice < 0) { gestoValido = false; return; }
         inicioX = e.touches[0].clientX;
         inicioY = e.touches[0].clientY;
-        gestoValido = true;
+        panelArrastrado = document.querySelector('.panel.active');
+        gestoValido = !!panelArrastrado;
+        ejeHorizontal = false;
+        desplazamiento = 0;
+        if (panelArrastrado) {
+          panelArrastrado.style.transition = 'none';
+          panelArrastrado.style.willChange = 'transform, opacity';
+        }
+      }, { passive: true });
+
+      document.addEventListener('touchmove', function(e) {
+        if (!gestoValido || e.touches.length !== 1 || !panelArrastrado) return;
+        const dx = e.touches[0].clientX - inicioX;
+        const dy = e.touches[0].clientY - inicioY;
+        if (!ejeHorizontal) {
+          if (Math.abs(dy) > 9 && Math.abs(dy) > Math.abs(dx)) {
+            gestoValido = false; restaurarPanel(); return;
+          }
+          if (Math.abs(dx) > 9 && Math.abs(dx) > Math.abs(dy) * 1.15) ejeHorizontal = true;
+        }
+        if (!ejeHorizontal) return;
+        desplazamiento = dx;
+        const ancho = Math.max(window.innerWidth, 320);
+        const resistencia = Math.sign(dx) * Math.min(Math.abs(dx), ancho * .72);
+        const inclinacion = Math.max(-2.2, Math.min(2.2, dx / ancho * 2.2));
+        panelArrastrado.style.transform = 'translate3d(' + resistencia + 'px,0,0) rotate(' + inclinacion + 'deg) scale(' + (1 - Math.min(Math.abs(dx) / ancho, .04)) + ')';
+        panelArrastrado.style.opacity = String(1 - Math.min(Math.abs(dx) / (ancho * 2.8), .22));
+        panelArrastrado.style.filter = 'drop-shadow(' + (-Math.sign(dx) * 8) + 'px 8px 18px rgba(15,23,42,.10))';
       }, { passive: true });
 
       document.addEventListener('touchend', function(e) {
-        if (!gestoValido || !e.changedTouches || e.changedTouches.length !== 1) return;
+        if (!gestoValido || !e.changedTouches || e.changedTouches.length !== 1) {
+          gestoValido = false; return;
+        }
         gestoValido = false;
         const dx = e.changedTouches[0].clientX - inicioX;
         const dy = e.changedTouches[0].clientY - inicioY;
-        if (Math.abs(dx) < distanciaMinima || Math.abs(dx) < Math.abs(dy) * 1.35) return;
-
+        if (!ejeHorizontal || Math.abs(dx) < distanciaMinima || Math.abs(dx) < Math.abs(dy) * 1.25) {
+          restaurarPanel(); return;
+        }
         const botones = Array.from(document.querySelectorAll('.nav-btn'));
-        const indiceActual = botones.findIndex(b => b.classList.contains('active'));
-        if (indiceActual < 0) return;
-        const siguiente = indiceActual + (dx < 0 ? 1 : -1);
-        if (siguiente >= 0 && siguiente < botones.length) botones[siguiente].click();
+        const indice = botones.findIndex(b => b.classList.contains('active'));
+        const siguiente = indice + (dx < 0 ? 1 : -1);
+        if (siguiente < 0 || siguiente >= botones.length) { restaurarPanel(); return; }
+
+        const panelSalida = panelArrastrado;
+        const direccion = dx < 0 ? -1 : 1;
+        const ancho = Math.max(window.innerWidth, 320);
+        panelSalida.style.transition = 'transform 150ms cubic-bezier(.2,.75,.25,1), opacity 150ms ease, filter 150ms ease';
+        panelSalida.style.transform = 'translate3d(' + (direccion * ancho * .92) + 'px,0,0) rotate(' + (direccion * 2) + 'deg) scale(.97)';
+        panelSalida.style.opacity = '.25';
+        panelSalida.style.filter = 'blur(1px)';
+        panelArrastrado = null;
+        window.direccionCambioPestana = dx < 0 ? 'left' : 'right';
+        setTimeout(function() {
+          botones[siguiente].click();
+        }, 115);
       }, { passive: true });
 
       document.addEventListener('touchcancel', function() {
         gestoValido = false;
+        restaurarPanel();
       }, { passive: true });
     })();
 
@@ -2537,7 +2599,17 @@
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
-        document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+        const panelDestino = document.getElementById('panel-' + btn.dataset.panel);
+        panelDestino.classList.add('active');
+        if (window.direccionCambioPestana) {
+          panelDestino.classList.remove('swipe-in-left', 'swipe-in-right');
+          void panelDestino.offsetWidth;
+          panelDestino.classList.add(window.direccionCambioPestana === 'left' ? 'swipe-in-left' : 'swipe-in-right');
+          window.direccionCambioPestana = null;
+          panelDestino.addEventListener('animationend', function() {
+            panelDestino.classList.remove('swipe-in-left', 'swipe-in-right');
+          }, { once: true });
+        }
 
         if (btn.dataset.panel === 'nomina') {
           rellenarHorasPeriodo20();
