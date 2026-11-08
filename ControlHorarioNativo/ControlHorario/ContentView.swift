@@ -134,6 +134,7 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
     private let manager = CLLocationManager()
     private let regionID = "control-horario-centro"
     private var mode: Mode = .single
+    private var isGeofenceActive = false
     private var requestedAlways = false
     private var pendingRegion: CLCircularRegion?
     @Published var showPermissionHelp = false
@@ -164,6 +165,7 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
 
     func startWatching(latitude: Double, longitude: Double, radius: Double) {
         mode = .geofence
+        isGeofenceActive = true
         guard CLLocationManager.locationServicesEnabled(),
               CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else {
             onError?(2); return
@@ -192,7 +194,7 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
     }
 
     private func beginMonitoring(_ region: CLCircularRegion) {
-        guard mode == .geofence else { return }
+        guard isGeofenceActive else { return }
         for old in manager.monitoredRegions where old.identifier == regionID {
             manager.stopMonitoring(for: old)
         }
@@ -201,6 +203,7 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
 
     func stopWatching() {
         mode = .single
+        isGeofenceActive = false
         pendingRegion = nil
         for region in manager.monitoredRegions where region.identifier == regionID {
             manager.stopMonitoring(for: region)
@@ -211,10 +214,10 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         switch manager.authorizationStatus {
         case .authorizedAlways:
             DispatchQueue.main.async { self.showPermissionHelp = false }
-            if mode == .geofence, let region = pendingRegion { beginMonitoring(region) }
+            if isGeofenceActive, let region = pendingRegion { beginMonitoring(region) }
             else if mode == .single { manager.requestLocation() }
         case .authorizedWhenInUse:
-            if mode == .geofence {
+            if isGeofenceActive {
                 if !requestedAlways {
                     requestedAlways = true
                     manager.requestAlwaysAuthorization()
@@ -236,17 +239,17 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
     }
 
     func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
-        guard region.identifier == regionID, mode == .geofence else { return }
+        guard region.identifier == regionID, isGeofenceActive else { return }
         if state == .inside { onGeofenceEvent?("state-inside") }
         else if state == .outside { onGeofenceEvent?("state-outside") }
     }
 
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
-        if region.identifier == regionID { onGeofenceEvent?("enter") }
+        if region.identifier == regionID, isGeofenceActive { onGeofenceEvent?("enter") }
     }
 
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
-        if region.identifier == regionID { onGeofenceEvent?("exit") }
+        if region.identifier == regionID, isGeofenceActive { onGeofenceEvent?("exit") }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
