@@ -3666,8 +3666,8 @@
       // La consulta inicial de iOS reconcilia el estado real sin contabilizar
       // el tiempo durante el que la app pudo estar suspendida.
       if (state === 'state-inside') {
+        asegurarDiaGeo();
         geoState.inside = true;
-        geoState.date = hoy();
         geoState.lastTick = Date.now();
         saveGeoState();
       } else if (state === 'state-outside') {
