@@ -60,7 +60,11 @@ struct ControlHorarioWebView: UIViewRepresentable {
         }
         locationManager.onGeofenceEvent = { [weak web] state, timestamp in
             let js = "window.nativeGeofenceEvent && window.nativeGeofenceEvent('\(state)', \(timestamp * 1000));"
-            DispatchQueue.main.async { web?.evaluateJavaScript(js) }
+            DispatchQueue.main.async {
+                web?.evaluateJavaScript(js) { _, error in
+                    if error == nil { locationManager.acknowledgeGeofenceEvent(state, timestamp: timestamp) }
+                }
+            }
         }
         if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: nil) {
             web.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
@@ -85,7 +89,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
                 else if command == "stop" { locationManager.stopWatching() }
                 else if command == "sync" {
                     for event in locationManager.takePendingGeofenceEvents() {
-                        let js = "window.nativeGeofenceEvent && window.nativeGeofenceEvent('\\(event.state)', \\(event.timestamp * 1000));"
+                        let js = "window.nativeGeofenceEvent && window.nativeGeofenceEvent('\(event.state)', \(event.timestamp * 1000));"
                         self.webView?.evaluateJavaScript(js)
                     }
                 }
@@ -164,11 +168,21 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         }
     }
 
-    private func queueGeofenceEvent(_ state: String) {
+    func acknowledgeGeofenceEvent(_ state: String, timestamp: TimeInterval) {
         var stored = UserDefaults.standard.array(forKey: pendingEventsKey) as? [[String: Any]] ?? []
-        stored.append(["state": state, "timestamp": Date().timeIntervalSince1970])
+        stored.removeAll {
+            ($0["state"] as? String) == state &&
+            abs(($0["timestamp"] as? TimeInterval ?? 0) - timestamp) < 0.01
+        }
         UserDefaults.standard.set(stored, forKey: pendingEventsKey)
-        onGeofenceEvent?(state, Date().timeIntervalSince1970)
+    }
+
+    private func queueGeofenceEvent(_ state: String) {
+        let timestamp = Date().timeIntervalSince1970
+        var stored = UserDefaults.standard.array(forKey: pendingEventsKey) as? [[String: Any]] ?? []
+        stored.append(["state": state, "timestamp": timestamp])
+        UserDefaults.standard.set(stored, forKey: pendingEventsKey)
+        onGeofenceEvent?(state, timestamp)
     }
     private enum Mode { case single, geofence }
 
