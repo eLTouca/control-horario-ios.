@@ -3663,13 +3663,25 @@
   toast('GPS localizado · precisión ±' + Math.round(accuracyNum) + ' m');
 };
     window.nativeGeofenceEvent = function(state) {
-      const entra = state === 'inside';
-      if (entra && !geoState.inside) {
+      // La consulta inicial de iOS reconcilia el estado real sin contabilizar
+      // el tiempo durante el que la app pudo estar suspendida.
+      if (state === 'state-inside') {
         geoState.inside = true;
+        geoState.date = hoy();
+        geoState.lastTick = Date.now();
+        saveGeoState();
+      } else if (state === 'state-outside') {
+        geoState.inside = false;
+        geoState.lastTick = Date.now();
+        saveGeoState();
+        flushGeoHoras();
+      } else if (state === 'enter' && !geoState.inside) {
+        geoState.inside = true;
+        geoState.date = hoy();
         geoState.lastTick = Date.now();
         saveGeoState();
         toast('Entrada detectada en ' + (config.geo.nombre || 'el centro'));
-      } else if (!entra && geoState.inside) {
+      } else if (state === 'exit' && geoState.inside) {
         tickGeoTiempo();
         geoState.inside = false;
         saveGeoState();
