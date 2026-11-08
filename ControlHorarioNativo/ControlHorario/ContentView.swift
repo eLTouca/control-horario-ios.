@@ -212,13 +212,17 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
             if mode == .geofence, let region = pendingRegion { beginMonitoring(region) }
             else if mode == .single { manager.requestLocation() }
         case .authorizedWhenInUse:
-            if mode == .geofence && !requestedAlways {
-                requestedAlways = true
-                manager.requestAlwaysAuthorization()
+            if mode == .geofence {
+                if !requestedAlways {
+                    requestedAlways = true
+                    manager.requestAlwaysAuthorization()
+                } else {
+                    DispatchQueue.main.async { self.showPermissionHelp = true }
+                }
             } else if mode == .single {
                 manager.requestLocation()
+                DispatchQueue.main.async { self.showPermissionHelp = false }
             }
-            DispatchQueue.main.async { self.showPermissionHelp = false }
         case .denied, .restricted:
             DispatchQueue.main.async { self.showPermissionHelp = true; self.onError?(1) }
         default: break
