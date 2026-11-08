@@ -1999,7 +1999,7 @@
         <h2>💰 Nómina · Convenio Metal Pontevedra 2026</h2>
         <p class="note" style="margin-bottom: 1rem;">
           Tablas del convenio de empresas del metal sin convenio propio (BOP Pontevedra 08/07/2026).
-          Horas extras del <strong>día 20 al 20</strong>. Situación fiscal: casado/a con 3 hijos. Cálculo orientativo.
+          Horas extras del <strong>día 20 al 20</strong>. Importa una nómina para estimar las deducciones con tus porcentajes reales.
         </p>
 
         <div class="form-row">
@@ -2106,36 +2106,25 @@
         </div>
 
         <div class="aeat-box" style="border:1px solid #c7d2fe;background:#f8faff;border-radius:12px;padding:.9rem;margin:.2rem 0 .9rem;">
-          <strong style="display:block;margin-bottom:.35rem;">Cálculo oficial AEAT · Datos necesarios</strong>
-          <p class="note" style="margin:0 0 .7rem;">Estos datos se envían directamente a la Agencia Tributaria para calcular el porcentaje. Los NIF no se guardan en la app.</p>
-          <div class="form-row">
-            <div class="form-group"><label for="aeat-nombre">Nombre y apellidos del trabajador</label><input id="aeat-nombre" type="text" maxlength="40" autocomplete="off" /></div>
-            <div class="form-group"><label for="aeat-nif">NIF del trabajador</label><input id="aeat-nif" type="text" maxlength="9" autocapitalize="characters" autocomplete="off" /></div>
-            <div class="form-group"><label for="aeat-nacimiento">Año de nacimiento</label><input id="aeat-nacimiento" type="number" min="1906" max="2026" inputmode="numeric" placeholder="1985" /></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label for="aeat-empresa">Nombre o razón social de la empresa</label><input id="aeat-empresa" type="text" maxlength="40" autocomplete="off" /></div>
-            <div class="form-group"><label for="aeat-nif-empresa">NIF de la empresa</label><input id="aeat-nif-empresa" type="text" maxlength="9" autocapitalize="characters" autocomplete="off" /></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label for="aeat-renta-conyuge">Si estás casado/a, ingresos anuales del cónyuge</label>
-              <select id="aeat-renta-conyuge"><option value="mas1500" selected>Más de 1.500 € o no lo sé</option><option value="hasta1500">Hasta 1.500 € (sin rentas exentas)</option></select>
+          <strong style="display:block;margin-bottom:.35rem;">Importar nómina automáticamente</strong>
+          <p class="note" style="margin:0 0 .7rem;">Haz una foto o selecciona una imagen de tu nómina. El iPhone leerá los importes sin enviar la imagen a Internet.</p>
+          <button class="btn btn-primary" type="button" id="btn-importar-nomina">📷 Hacer foto o elegir de galería</button>
+          <p id="nomina-lectura-estado" role="status" style="font-size:.82rem;margin:.55rem 0 0;color:var(--text-secondary);">Todavía no has añadido ninguna nómina.</p>
+          <div id="nomina-lectura-datos" style="display:none;margin-top:.75rem;padding-top:.7rem;border-top:1px solid #c7d2fe;">
+            <div id="nomina-lectura-resumen" style="font-size:.85rem;line-height:1.65;"></div>
+            <div class="form-row" style="margin-top:.5rem;">
+              <div class="form-group">
+                <label for="nomina-irpf-manual">IRPF de tu nómina (%)</label>
+                <input id="nomina-irpf-manual" type="number" min="0" max="50" step="0.01" inputmode="decimal" placeholder="Ej. 12,00" />
+              </div>
+              <div class="form-group">
+                <label for="nomina-ss-manual">Seguridad Social estimada (%)</label>
+                <input id="nomina-ss-manual" type="number" min="0" max="20" step="0.01" inputmode="decimal" placeholder="Se calcula al leerla" />
+              </div>
             </div>
-            <div class="form-group"><label for="aeat-nif-conyuge">NIF del cónyuge (solo si gana hasta 1.500 €)</label><input id="aeat-nif-conyuge" type="text" maxlength="9" autocapitalize="characters" autocomplete="off" /></div>
+            <button class="btn btn-primary" type="button" id="btn-confirmar-nomina">Confirmar datos de la nómina</button>
           </div>
-          <div class="form-row">
-            <div class="form-group"><label for="aeat-anios-hijos">Años de nacimiento de los hijos que dan derecho a mínimo</label><input id="aeat-anios-hijos" type="text" inputmode="numeric" placeholder="Ej.: 2021, 2023, 2026" autocomplete="off" /></div>
-            <div class="form-group"><label for="aeat-cotizaciones">Total anual de cotizaciones del trabajador a la Seguridad Social (€)</label><input id="aeat-cotizaciones" type="number" min="0.01" step="0.01" required placeholder="Suma de las cuotas del trabajador de todas las nóminas del año" aria-describedby="aeat-cotizaciones-ayuda" /><small id="aeat-cotizaciones-ayuda" class="note">Introduce lo que se descuenta al trabajador en concepto de Seguridad Social durante todo el año (contingencias comunes, desempleo, formación profesional y MEI). No incluyas la cuota que paga la empresa.</small></div>
-          </div>
-          <label style="display:flex;align-items:flex-start;gap:.55rem;font-size:.82rem;text-transform:none;letter-spacing:0;color:var(--text);margin:.25rem 0 .65rem;">
-            <input id="aeat-monoparental" type="checkbox" style="width:auto;margin-top:.2rem;" />
-            Soy soltero/a, separado/a o viudo/a y los hijos conviven exclusivamente conmigo, no con el otro progenitor.
-          </label>
-          <label style="display:flex;align-items:flex-start;gap:.55rem;font-size:.82rem;text-transform:none;letter-spacing:0;color:var(--text);margin:.25rem 0 .65rem;">
-            <input id="aeat-consentimiento" type="checkbox" style="width:auto;margin-top:.2rem;" />
-            Autorizo el envío a la AEAT de los datos fiscales indicados para calcular la retención. Se enviarán el NIF y nombre del trabajador, NIF y nombre de la empresa, año de nacimiento, situación familiar, hijos, retribución anual y cotizaciones; también el NIF del cónyuge si corresponde.
-          </label>
-          <p id="aeat-error" role="status" style="display:none;color:#be123c;font-size:.82rem;margin:.35rem 0 0;"></p>
+          <p id="nomina-lectura-error" role="alert" style="display:none;color:#be123c;font-size:.82rem;margin:.45rem 0 0;"></p>
         </div>
 
         <p class="note" id="periodo-horas-txt" style="margin-bottom: 0.75rem;"></p>
@@ -2147,7 +2136,7 @@
             <h3>Resultado estimado del periodo</h3>
             <div class="result-grid" id="resultado-grid"></div>
             <p class="note">
-              Convenio metal Pontevedra 2026 · Seguridad Social estimada · IRPF calculado por el servicio oficial AEAT 2026.
+              Estimación local basada en la nómina importada. No sustituye al cálculo oficial de retenciones de la AEAT.
             </p>
           </div>
         </div>
@@ -3164,52 +3153,121 @@
       catch (e) { console.warn('No se pudo guardar la categoría de nómina', e); }
     });
 
-    function solicitarCalculoAEAT(xml) {
+    let textoNominaReconocido = '';
+    let retencionIRPFLeida = null;
+    let tipoSSLeido = null;
+
+    function solicitarLecturaNomina() {
       return new Promise((resolve, reject) => {
-        if (!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.aeat) {
-          reject(new Error('Esta función requiere la versión nativa de Control horario instalada desde Xcode.'));
+        if (!window.webkit?.messageHandlers?.payrollPhoto) {
+          reject(new Error('Esta función requiere la app nativa instalada en un iPhone.'));
           return;
         }
         const timeout = setTimeout(() => {
-          window.aeatResult = null;
-          reject(new Error('La AEAT no ha respondido en el tiempo esperado. Inténtalo más tarde.'));
-        }, 45000);
-        window.aeatResult = result => {
+          window.payrollOCRResult = null;
+          reject(new Error('La lectura está tardando demasiado. Inténtalo de nuevo.'));
+        }, 60000);
+        window.payrollOCRResult = result => {
           clearTimeout(timeout);
-          window.aeatResult = null;
-          resolve(result);
+          window.payrollOCRResult = null;
+          if (!result?.ok) reject(new Error(result?.error || 'No se pudo leer la nómina.'));
+          else resolve(result.text || '');
         };
-        window.webkit.messageHandlers.aeat.postMessage({ xml });
+        window.webkit.messageHandlers.payrollPhoto.postMessage({});
       });
     }
 
-    const selectorSituacionFamiliar = document.getElementById('situacion-familiar');
-    const numeroHijosOutput = document.getElementById('numero-hijos');
-    let numeroHijos = 3;
-    function guardarSituacionFamiliar() {
+    function importeDesdeTexto(valor) {
+      if (!valor) return null;
+      const limpio = String(valor).replace(/[^0-9,.-]/g, '').replace(/\.(?=\d{3}(?:,|$))/g, '').replace(',', '.');
+      const n = Number(limpio);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function importeDeLinea(linea) {
+      const encontrados = linea.match(/-?\d{1,3}(?:\.\d{3})*(?:,\d{2})|-?\d+(?:,\d{2})/g);
+      return encontrados?.length ? importeDesdeTexto(encontrados[encontrados.length - 1]) : null;
+    }
+
+    function analizarTextoNomina(texto) {
+      const lineas = texto.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      const buscar = expresion => lineas.find(l => expresion.test(l));
+      const lineaBruto = buscar(/total\s+devengado|total\s+percepciones|total\s+bruto/i);
+      const lineaBase = buscar(/base.*cotiz|cotiz.*base/i);
+      const lineaNeto = buscar(/l[ií]quido.*percibir|total\s+l[ií]quido|l[ií]quido\s+a\s+percibir/i);
+      const lineaIRPF = buscar(/IRPF|I\.R\.P\.F|retenci[oó]n.*renta/i);
+      let irpf = null;
+      if (lineaIRPF) {
+        const porcentaje = lineaIRPF.match(/(\d{1,2}(?:[,.]\d{1,2})?)\s*%/);
+        if (porcentaje) irpf = importeDesdeTexto(porcentaje[1]);
+        else {
+          const numeros = lineaIRPF.match(/\d{1,2}(?:[,.]\d{1,2})?/g) || [];
+          const candidato = numeros.map(importeDesdeTexto).find(n => n >= 0 && n <= 50);
+          if (candidato !== undefined) irpf = candidato;
+        }
+      }
+      const lineasSS = lineas.filter(l => /contingencias comunes|desempleo|formaci[oó]n profesional|MEI|mecanismo de equidad|seguridad social/i.test(l));
+      let totalSS = lineasSS.reduce((s,l) => s + (importeDeLinea(l) || 0), 0);
+      if (!lineasSS.length) {
+        const lineaSS = buscar(/total.*cotizaciones.*trabajador|total.*seguridad social/i);
+        if (lineaSS) totalSS = importeDeLinea(lineaSS) || 0;
+      }
+      return {
+        bruto: lineaBruto ? importeDeLinea(lineaBruto) : null,
+        base: lineaBase ? importeDeLinea(lineaBase) : null,
+        neto: lineaNeto ? importeDeLinea(lineaNeto) : null,
+        irpf,
+        totalSS: totalSS > 0 ? totalSS : null
+      };
+    }
+
+    function mostrarLecturaNomina(datos) {
+      const dinero = n => n == null ? 'No identificado' : formatNum(n) + ' €';
+      const resumen = document.getElementById('nomina-lectura-resumen');
+      resumen.innerHTML = `
+        <div><strong>Bruto de la nómina:</strong> ${dinero(datos.bruto)}</div>
+        <div><strong>Base de cotización:</strong> ${dinero(datos.base)}</div>
+        <div><strong>Seguridad Social del trabajador:</strong> ${dinero(datos.totalSS)}</div>
+        <div><strong>IRPF:</strong> ${datos.irpf == null ? 'No identificado' : formatNum(datos.irpf) + ' %'}</div>
+        <div><strong>Neto:</strong> ${dinero(datos.neto)}</div>`;
+      document.getElementById('nomina-irpf-manual').value = datos.irpf == null ? '' : datos.irpf;
+      const baseSS = datos.base || datos.bruto;
+      const ssPercent = datos.totalSS && baseSS ? (datos.totalSS / baseSS) * 100 : null;
+      document.getElementById('nomina-ss-manual').value = ssPercent == null ? '' : ssPercent.toFixed(2);
+      document.getElementById('nomina-lectura-datos').style.display = 'block';
+      document.getElementById('nomina-lectura-error').style.display = 'none';
+      document.getElementById('nomina-lectura-estado').textContent = 'Lectura completada. Comprueba los datos antes de confirmarlos.';
+    }
+
+    document.getElementById('btn-importar-nomina').addEventListener('click', async () => {
+      const estado = document.getElementById('nomina-lectura-estado');
+      const error = document.getElementById('nomina-lectura-error');
+      error.style.display = 'none';
+      estado.textContent = 'Abriendo cámara o galería…';
       try {
-        localStorage.setItem('controlHorario.situacionFamiliar', selectorSituacionFamiliar.value);
-        localStorage.setItem('controlHorario.numeroHijos', String(numeroHijos));
-      } catch (e) { console.warn('No se pudo guardar la situación familiar', e); }
-    }
-    function pintarNumeroHijos() {
-      numeroHijosOutput.textContent = String(numeroHijos);
-      document.getElementById('hijos-restar').disabled = numeroHijos <= 0;
-      document.getElementById('hijos-sumar').disabled = numeroHijos >= 20;
-    }
-    try {
-      const situacionGuardada = localStorage.getItem('controlHorario.situacionFamiliar');
-      if (situacionGuardada === 'soltero' || situacionGuardada === 'casado') selectorSituacionFamiliar.value = situacionGuardada;
-      const hijosGuardados = localStorage.getItem('controlHorario.numeroHijos');
-      if (hijosGuardados !== null && Number.isInteger(Number(hijosGuardados))) numeroHijos = Math.max(0, Math.min(20, Number(hijosGuardados)));
-    } catch (e) { console.warn('No se pudo recuperar la situación familiar', e); }
-    pintarNumeroHijos();
-    selectorSituacionFamiliar.addEventListener('change', guardarSituacionFamiliar);
-    document.getElementById('hijos-restar').addEventListener('click', () => {
-      numeroHijos = Math.max(0, numeroHijos - 1); pintarNumeroHijos(); guardarSituacionFamiliar();
+        textoNominaReconocido = await solicitarLecturaNomina();
+        const datos = analizarTextoNomina(textoNominaReconocido);
+        mostrarLecturaNomina(datos);
+      } catch (e) {
+        estado.textContent = 'No se ha podido importar la nómina.';
+        error.textContent = e.message || 'No se pudo leer la nómina.';
+        error.style.display = 'block';
+      }
     });
-    document.getElementById('hijos-sumar').addEventListener('click', () => {
-      numeroHijos = Math.min(20, numeroHijos + 1); pintarNumeroHijos(); guardarSituacionFamiliar();
+
+    document.getElementById('btn-confirmar-nomina').addEventListener('click', () => {
+      const irpf = Number(document.getElementById('nomina-irpf-manual').value);
+      const ss = Number(document.getElementById('nomina-ss-manual').value);
+      const error = document.getElementById('nomina-lectura-error');
+      if (!Number.isFinite(irpf) || irpf < 0 || irpf > 50) {
+        error.textContent = 'Comprueba el porcentaje de IRPF de tu nómina e introdúcelo si no se ha detectado.';
+        error.style.display = 'block'; return;
+      }
+      retencionIRPFLeida = irpf / 100;
+      tipoSSLeido = Number.isFinite(ss) && ss > 0 && ss <= 20 ? ss / 100 : null;
+      document.getElementById('nomina-lectura-estado').textContent = 'Nómina confirmada. Ya puedes calcular tu estimación.';
+      error.style.display = 'none';
+      toast('Datos de nómina confirmados');
     });
 
     document.getElementById('btn-calcular-nomina').addEventListener('click', async () => {
@@ -3242,77 +3300,18 @@
       const ssMensual = brutoMensual * tipoSS;
       const ssAnual = brutoAnual * tipoSS;
 
-      // El IRPF se calcula mediante el servicio oficial de retenciones AEAT 2026.
-      const valor = id => (document.getElementById(id)?.value || '').trim();
-      const nif = valor('aeat-nif').toUpperCase();
-      const nifEmpresa = valor('aeat-nif-empresa').toUpperCase();
-      const nifConyuge = valor('aeat-nif-conyuge').toUpperCase();
-      const nombre = valor('aeat-nombre');
-      const empresa = valor('aeat-empresa');
-      const nacimiento = Number(valor('aeat-nacimiento'));
-      const aniosHijos = valor('aeat-anios-hijos').split(/[;,\s]+/).filter(Boolean).map(Number);
-      const monoparental = document.getElementById('aeat-monoparental').checked;
-      const rentaConyugeBaja = valor('aeat-renta-conyuge') === 'hasta1500';
-      const consentimiento = document.getElementById('aeat-consentimiento').checked;
-      const errorAEAT = document.getElementById('aeat-error');
-      errorAEAT.style.display = 'none';
-      const nifValido = v => /^[A-Z0-9]{9}$/.test(v);
-      if (!consentimiento) {
-        errorAEAT.textContent = 'Marca la casilla de autorización para enviar los datos a la AEAT.';
-        errorAEAT.style.display = 'block'; return;
+      if (retencionIRPFLeida === null) {
+        const error = document.getElementById('nomina-lectura-error');
+        error.textContent = 'Primero haz una foto o importa una nómina y confirma el porcentaje de IRPF.';
+        error.style.display = 'block';
+        document.getElementById('nomina-lectura-datos').style.display = 'block';
+        return;
       }
-      if (!(Number(valor('aeat-cotizaciones')) > 0)) {
-        errorAEAT.textContent = 'Introduce las cotizaciones anuales a la Seguridad Social. La AEAT las necesita para calcular correctamente la retención.';
-        errorAEAT.style.display = 'block'; return;
-      }
-      if (!nombre || !nifValido(nif) || !nifValido(nifEmpresa) || !empresa || !Number.isInteger(nacimiento) || nacimiento < 1906 || nacimiento > 2026) {
-        errorAEAT.textContent = 'Completa nombre, NIF del trabajador y empresa, y año de nacimiento. Los NIF deben tener 9 caracteres.';
-        errorAEAT.style.display = 'block'; return;
-      }
-      if (situacion === 'casado' && rentaConyugeBaja && !nifValido(nifConyuge)) {
-        errorAEAT.textContent = 'Para la situación familiar 2, la AEAT exige el NIF del cónyuge.';
-        errorAEAT.style.display = 'block'; return;
-      }
-      if (aniosHijos.length !== numeroHijos || aniosHijos.some(y => !Number.isInteger(y) || y < 1906 || y > 2026)) {
-        errorAEAT.textContent = 'Indica el año de nacimiento de cada hijo que da derecho a mínimo. Deben coincidir con el contador de hijos.';
-        errorAEAT.style.display = 'block'; return;
-      }
-      if (monoparental && (situacion !== 'soltero' || aniosHijos.length === 0)) {
-        errorAEAT.textContent = 'La situación familiar 1 requiere no estar casado/a y al menos un descendiente que conviva exclusivamente contigo.';
-        errorAEAT.style.display = 'block'; return;
-      }
-      const situacionAEAT = situacion === 'casado'
-        ? (rentaConyugeBaja ? 'Situacion2' : 'Situacion3')
-        : (monoparental ? 'Situacion1' : 'Situacion3');
-      const xmlEscape = v => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-      const descendientesXML = aniosHijos.map(y => '<Descendiente><Nacimiento>'+y+'</Nacimiento>'+(monoparental?'<ComputadoEntero/>':'')+'</Descendiente>').join('');
-      const nifConyugeXML = situacionAEAT === 'Situacion2' ? '<NifConyuge>'+xmlEscape(nifConyuge)+'</NifConyuge>' : '';
-      const cotizaciones = Math.max(0, Number(valor('aeat-cotizaciones')) || 0);
-      const cotizacionesXML = cotizaciones > 0 ? '<Cotizaciones>'+cotizaciones.toFixed(2)+'</Cotizaciones>' : '';
-      const xml = '<AEATRetencionesEntrada2026><IdDoc><CodModelo>RET</CodModelo><Ejercicio>2026</Ejercicio></IdDoc><Retenedor><Nif>'+xmlEscape(nifEmpresa)+'</Nif><ApellidosNombre>'+xmlEscape(empresa)+'</ApellidosNombre><Retenido><Nif>'+xmlEscape(nif)+'</Nif><ApellidosNombre>'+xmlEscape(nombre)+'</ApellidosNombre><Nacimiento>'+nacimiento+'</Nacimiento><SituacionFamiliar><'+situacionAEAT+'>'+nifConyugeXML+'</'+situacionAEAT+'></SituacionFamiliar><SituacionLaboral><TrabajadorActivo><Contrato>1</Contrato></TrabajadorActivo></SituacionLaboral>'+descendientesXML+'<RetribAnuales>'+brutoAnual.toFixed(2)+'</RetribAnuales>'+cotizacionesXML+'</Retenido></Retenedor></AEATRetencionesEntrada2026>';
-      let respuestaAEAT;
-      try {
-        respuestaAEAT = await solicitarCalculoAEAT(xml);
-      } catch (err) {
-        errorAEAT.textContent = err.message || 'No se pudo conectar con el servicio oficial de la AEAT.';
-        errorAEAT.style.display = 'block'; return;
-      }
-      if (!respuestaAEAT || !respuestaAEAT.ok || !respuestaAEAT.xml) {
-        errorAEAT.textContent = (respuestaAEAT && respuestaAEAT.error) || 'La AEAT no ha devuelto un resultado válido.';
-        errorAEAT.style.display = 'block'; return;
-      }
-      const xmlRespuesta = new DOMParser().parseFromString(respuestaAEAT.xml, 'text/xml');
-      const errores = Array.from(xmlRespuesta.getElementsByTagName('Descripcion')).map(e => e.textContent).filter(Boolean);
-      if (errores.length) {
-        errorAEAT.textContent = errores.join(' · ');
-        errorAEAT.style.display = 'block'; return;
-      }
-      const tipoAEAT = Number(xmlRespuesta.getElementsByTagName('TipoRetencion')[0]?.textContent);
-      if (!Number.isFinite(tipoAEAT) || tipoAEAT < 0 || tipoAEAT > 100) {
-        errorAEAT.textContent = 'La respuesta de la AEAT no contiene un porcentaje de retención reconocible.';
-        errorAEAT.style.display = 'block'; return;
-      }
-      const tipoRetencion = tipoAEAT / 100;
+      // Estimación local: reutiliza el IRPF real de la nómina aportada.
+      const tipoSS = tipoSSLeido || (contrato === 'temporal' ? 0.0655 : 0.0650);
+      const ssMensual = brutoMensual * tipoSS;
+      const tipoRetencion = retencionIRPFLeida;
+      const tipoAEAT = tipoRetencion * 100;
       const irpfMensual = brutoMensual * tipoRetencion;
       const netoMensual = brutoMensual - ssMensual - irpfMensual;
 
@@ -3325,11 +3324,11 @@
         <div class="label">Nocturnidad + transporte + antigüedad + otros</div><div class="value">${formatNum(plusesFijos)} €</div>
         <div class="label"><strong>Bruto del periodo</strong></div><div class="value"><strong>${formatNum(brutoMensual)} €</strong></div>
         <div class="label">Seguridad Social (${(tipoSS * 100).toFixed(2)} %)</div><div class="value">− ${formatNum(ssMensual)} €</div>
-        <div class="label">IRPF AEAT (${(tipoAEAT).toFixed(2)} %)</div><div class="value">− ${formatNum(irpfMensual)} €</div>
+        <div class="label">IRPF según tu nómina (${(tipoAEAT).toFixed(2)} %)</div><div class="value">− ${formatNum(irpfMensual)} €</div>
         <div class="label total">Neto estimado a cobrar</div><div class="value total">${formatNum(netoMensual)} €</div>
       `;
       document.getElementById('resultado-nomina').style.display = 'block';
-      toast('Retención oficial AEAT calculada');
+      toast('Estimación de nómina calculada');
     });
 
     // ========== GEOLOCALIZACIÓN ==========
