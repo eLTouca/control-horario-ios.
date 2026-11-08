@@ -58,8 +58,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
             let js = "window.nativeLocationError && window.nativeLocationError(\(code));"
             DispatchQueue.main.async { web?.evaluateJavaScript(js) }
         }
-        locationManager.onGeofenceEvent = { [weak web] inside in
-            let state = inside ? "inside" : "outside"
+        locationManager.onGeofenceEvent = { [weak web] state in
             let js = "window.nativeGeofenceEvent && window.nativeGeofenceEvent('\(state)');"
             DispatchQueue.main.async { web?.evaluateJavaScript(js) }
         }
@@ -140,7 +139,7 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
     @Published var showPermissionHelp = false
     var onUpdate: ((Double, Double, Double) -> Void)?
     var onError: ((Int) -> Void)?
-    var onGeofenceEvent: ((Bool) -> Void)?
+    var onGeofenceEvent: ((String) -> Void)?
     private enum Mode { case single, geofence }
 
     override init() {
@@ -232,16 +231,16 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
 
     func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
         guard region.identifier == regionID, mode == .geofence else { return }
-        if state == .inside { onGeofenceEvent?(true) }
-        else if state == .outside { onGeofenceEvent?(false) }
+        if state == .inside { onGeofenceEvent?("state-inside") }
+        else if state == .outside { onGeofenceEvent?("state-outside") }
     }
 
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
-        if region.identifier == regionID { onGeofenceEvent?(true) }
+        if region.identifier == regionID { onGeofenceEvent?("enter") }
     }
 
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
-        if region.identifier == regionID { onGeofenceEvent?(false) }
+        if region.identifier == regionID { onGeofenceEvent?("exit") }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
