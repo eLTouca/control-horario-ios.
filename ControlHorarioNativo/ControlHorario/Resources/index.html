@@ -3206,7 +3206,7 @@
           if (candidato !== undefined) irpf = candidato;
         }
       }
-      const lineasSS = lineas.filter(l => /contingencias comunes|desempleo|formaci[oó]n profesional|MEI|mecanismo de equidad|seguridad social/i.test(l));
+      const lineasSS = lineas.filter(l => /contingencias comunes|desempleo|formaci[oó]n profesional|MEI|mecanismo de equidad/i.test(l));
       let totalSS = lineasSS.reduce((s,l) => s + (importeDeLinea(l) || 0), 0);
       if (!lineasSS.length) {
         const lineaSS = buscar(/total.*cotizaciones.*trabajador|total.*seguridad social/i);
@@ -3284,8 +3284,6 @@
       const otros = parseFloat(document.getElementById('otros-pluses').value) || 0;
       const nPagas = parseInt(document.getElementById('pagas').value) || 14;
       const contrato = document.getElementById('tipo-contrato').value;
-      const situacion = document.getElementById('situacion-familiar').value;
-      guardarSituacionFamiliar();
 
       const importeExtras = horasExtra * precioHora;
       const importePlusHoraExtra = horasExtra * plusPorHoraExtra;
@@ -3295,10 +3293,6 @@
 
       // Bruto anual: base × pagas + extras/pluses variables × 12 (aprox.)
       const brutoAnual = sueldoBase * nPagas + (importeExtras + importePlusHoraExtra + importeEsp + plusesFijos) * 12;
-
-      const tipoSS = contrato === 'temporal' ? 0.0655 : 0.0650;
-      const ssMensual = brutoMensual * tipoSS;
-      const ssAnual = brutoAnual * tipoSS;
 
       if (retencionIRPFLeida === null) {
         const error = document.getElementById('nomina-lectura-error');
