@@ -2486,6 +2486,51 @@
       renderCalendario();
     });
 
+    // ========== CAMBIO DE PESTAÑAS POR DESLIZAMIENTO ==========
+    // En iPhone: deslizar a la izquierda avanza y a la derecha retrocede.
+    // Se ignoran controles, campos editables, mapas y visores para no interferir
+    // con sus gestos propios (scroll, selección, zoom o interacción).
+    (function() {
+      let inicioX = 0;
+      let inicioY = 0;
+      let gestoValido = false;
+      const distanciaMinima = 65;
+      const selectoresInteractivos = 'button, a, input, select, textarea, label, [contenteditable="true"], iframe, .leaflet-container, .map, .geo-map-card, #pdf-preview-box';
+
+      document.addEventListener('touchstart', function(e) {
+        if (document.body.classList.contains('modo-rapido') || e.touches.length !== 1) {
+          gestoValido = false;
+          return;
+        }
+        const objetivo = e.target;
+        if (objetivo && objetivo.closest && objetivo.closest(selectoresInteractivos)) {
+          gestoValido = false;
+          return;
+        }
+        inicioX = e.touches[0].clientX;
+        inicioY = e.touches[0].clientY;
+        gestoValido = true;
+      }, { passive: true });
+
+      document.addEventListener('touchend', function(e) {
+        if (!gestoValido || !e.changedTouches || e.changedTouches.length !== 1) return;
+        gestoValido = false;
+        const dx = e.changedTouches[0].clientX - inicioX;
+        const dy = e.changedTouches[0].clientY - inicioY;
+        if (Math.abs(dx) < distanciaMinima || Math.abs(dx) < Math.abs(dy) * 1.35) return;
+
+        const botones = Array.from(document.querySelectorAll('.nav-btn'));
+        const indiceActual = botones.findIndex(b => b.classList.contains('active'));
+        if (indiceActual < 0) return;
+        const siguiente = indiceActual + (dx < 0 ? 1 : -1);
+        if (siguiente >= 0 && siguiente < botones.length) botones[siguiente].click();
+      }, { passive: true });
+
+      document.addEventListener('touchcancel', function() {
+        gestoValido = false;
+      }, { passive: true });
+    })();
+
     // ========== NAVEGACIÓN ==========
     document.querySelectorAll('.nav-btn').forEach(btn => {
       btn.addEventListener('click', () => {
