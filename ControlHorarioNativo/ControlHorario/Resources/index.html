@@ -2012,6 +2012,11 @@
           <button class="btn btn-primary" type="button" id="btn-importar-nomina">📷 Hacer foto o elegir de galería</button>
           <p id="nomina-lectura-estado" role="status" style="font-size:.85rem;margin:.65rem 0;color:var(--text-secondary);">Puedes importar una nómina o rellenar los importes manualmente.</p>
           <p id="nomina-lectura-error" role="alert" style="display:none;color:#be123c;font-size:.85rem;margin:.45rem 0;"></p>
+          <details id="nomina-ocr-diagnostico" style="display:none;margin:.55rem 0;padding:.55rem;border:1px solid var(--border);border-radius:8px;">
+            <summary style="cursor:pointer;font-weight:600;">Ver texto que ha leído el iPhone</summary>
+            <p style="font-size:.8rem;color:var(--text-secondary);">Este es el texto bruto reconocido por iOS, antes de interpretar los importes.</p>
+            <textarea id="nomina-ocr-texto" readonly rows="9" style="width:100%;font-size:.8rem;white-space:pre-wrap;"></textarea>
+          </details>
           <div id="nomina-lectura-datos" style="display:block;margin-top:.65rem;padding-top:.75rem;border-top:1px solid #c7d2fe;">
             <strong>Comprueba los datos detectados</strong>
             <div class="form-row">
@@ -3021,11 +3026,17 @@
     window.payrollOCRResult = function(resultado) {
       const estado = document.getElementById('nomina-lectura-estado');
       const error = document.getElementById('nomina-lectura-error');
+      const diagnostico = document.getElementById('nomina-ocr-diagnostico');
+      const textoOCR = document.getElementById('nomina-ocr-texto');
+      if (diagnostico) diagnostico.style.display = 'none';
+      if (textoOCR) textoOCR.value = '';
       if (!resultado || !resultado.ok || !resultado.text) {
-        if (estado) estado.textContent = 'No se han podido leer los datos. Puedes introducirlos manualmente.';
+        if (estado) estado.textContent = 'iOS no ha devuelto texto legible. Puedes introducir los importes manualmente.';
         if (error) { error.textContent = resultado?.error || 'No se pudo leer la nómina.'; error.style.display = 'block'; }
         return;
       }
+      if (textoOCR) textoOCR.value = resultado.text;
+      if (diagnostico) diagnostico.style.display = 'block';
       const bruto = extraerImporteNomina(resultado.text, [/total devengado/, /total percepciones/, /total bruto/, /total remuneraciones/]);
       const base = extraerImporteNomina(resultado.text, [/base de cotizacion/, /base cotizacion/, /base contingencias comunes/]);
       const ss = extraerImporteNomina(resultado.text, [/total aportaciones/, /total seguridad social/, /contingencias comunes.*trabajador/, /desempleo.*formacion/]);
