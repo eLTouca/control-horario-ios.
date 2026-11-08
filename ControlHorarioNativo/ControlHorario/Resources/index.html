@@ -2125,11 +2125,15 @@
           </div>
           <div class="form-row">
             <div class="form-group"><label for="aeat-anios-hijos">Años de nacimiento de los hijos que dan derecho a mínimo</label><input id="aeat-anios-hijos" type="text" inputmode="numeric" placeholder="Ej.: 2021, 2023, 2026" autocomplete="off" /></div>
-            <div class="form-group"><label for="aeat-cotizaciones">Cotizaciones anuales a la Seguridad Social (€)</label><input id="aeat-cotizaciones" type="number" min="0" step="0.01" placeholder="Opcional; según nómina" /></div>
+            <div class="form-group"><label for="aeat-cotizaciones">Cotizaciones anuales a la Seguridad Social (€)</label><input id="aeat-cotizaciones" type="number" min="0.01" step="0.01" required placeholder="Obligatorio; suma anual de nóminas" /></div>
           </div>
           <label style="display:flex;align-items:flex-start;gap:.55rem;font-size:.82rem;text-transform:none;letter-spacing:0;color:var(--text);margin:.25rem 0 .65rem;">
             <input id="aeat-monoparental" type="checkbox" style="width:auto;margin-top:.2rem;" />
             Soy soltero/a, separado/a o viudo/a y los hijos conviven exclusivamente conmigo, no con el otro progenitor.
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:.55rem;font-size:.82rem;text-transform:none;letter-spacing:0;color:var(--text);margin:.25rem 0 .65rem;">
+            <input id="aeat-consentimiento" type="checkbox" style="width:auto;margin-top:.2rem;" />
+            Autorizo el envío a la AEAT de los datos fiscales indicados para calcular la retención. Se enviarán el NIF y nombre del trabajador, NIF y nombre de la empresa, año de nacimiento, situación familiar, hijos, retribución anual y cotizaciones; también el NIF del cónyuge si corresponde.
           </label>
           <p id="aeat-error" role="status" style="display:none;color:#be123c;font-size:.82rem;margin:.35rem 0 0;"></p>
         </div>
@@ -3250,9 +3254,18 @@
       const aniosHijos = valor('aeat-anios-hijos').split(/[;,\s]+/).filter(Boolean).map(Number);
       const monoparental = document.getElementById('aeat-monoparental').checked;
       const rentaConyugeBaja = valor('aeat-renta-conyuge') === 'hasta1500';
+      const consentimiento = document.getElementById('aeat-consentimiento').checked;
       const errorAEAT = document.getElementById('aeat-error');
       errorAEAT.style.display = 'none';
       const nifValido = v => /^[A-Z0-9]{9}$/.test(v);
+      if (!consentimiento) {
+        errorAEAT.textContent = 'Marca la casilla de autorización para enviar los datos a la AEAT.';
+        errorAEAT.style.display = 'block'; return;
+      }
+      if (!(Number(valor('aeat-cotizaciones')) > 0)) {
+        errorAEAT.textContent = 'Introduce las cotizaciones anuales a la Seguridad Social. La AEAT las necesita para calcular correctamente la retención.';
+        errorAEAT.style.display = 'block'; return;
+      }
       if (!nombre || !nifValido(nif) || !nifValido(nifEmpresa) || !empresa || !Number.isInteger(nacimiento) || nacimiento < 1906 || nacimiento > 2026) {
         errorAEAT.textContent = 'Completa nombre, NIF del trabajador y empresa, y año de nacimiento. Los NIF deben tener 9 caracteres.';
         errorAEAT.style.display = 'block'; return;
