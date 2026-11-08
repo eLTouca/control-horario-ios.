@@ -166,7 +166,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
                     }
                 } catch {
                     DispatchQueue.main.async {
-                        self?.sendPayrollOCRResult(["ok": false, "error": "No se pudo leer la nómina: \\(error.localizedDescription)"])
+                        self?.sendPayrollOCRResult(["ok": false, "error": "No se pudo leer la nómina: \(error.localizedDescription)"])
                     }
                 }
             }
@@ -177,7 +177,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
                   let data = try? JSONSerialization.data(withJSONObject: result, options: [.fragmentsAllowed]),
                   let json = String(data: data, encoding: .utf8) else { return }
             DispatchQueue.main.async {
-                webView.evaluateJavaScript("window.payrollOCRResult && window.payrollOCRResult(\\(json));")
+                webView.evaluateJavaScript("window.payrollOCRResult && window.payrollOCRResult(\(json));")
             }
         }
 
