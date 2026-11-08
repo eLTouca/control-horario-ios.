@@ -58,8 +58,8 @@ struct ControlHorarioWebView: UIViewRepresentable {
             let js = "window.nativeLocationError && window.nativeLocationError(\(code));"
             DispatchQueue.main.async { web?.evaluateJavaScript(js) }
         }
-        locationManager.onGeofenceEvent = { [weak web] state in
-            let js = "window.nativeGeofenceEvent && window.nativeGeofenceEvent('\(state)');"
+        locationManager.onGeofenceEvent = { [weak web] state, timestamp in
+            let js = "window.nativeGeofenceEvent && window.nativeGeofenceEvent('\(state)', \(timestamp * 1000));"
             DispatchQueue.main.async { web?.evaluateJavaScript(js) }
         }
         if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: nil) {
@@ -83,6 +83,12 @@ struct ControlHorarioWebView: UIViewRepresentable {
             if let command = message.body as? String {
                 if command == "once" { locationManager.requestSingleLocation() }
                 else if command == "stop" { locationManager.stopWatching() }
+                else if command == "sync" {
+                    for event in locationManager.takePendingGeofenceEvents() {
+                        let js = "window.nativeGeofenceEvent && window.nativeGeofenceEvent('\\(event.state)', \\(event.timestamp * 1000));"
+                        self.webView?.evaluateJavaScript(js)
+                    }
+                }
                 return
             }
             if let payload = message.body as? [String: Any],
@@ -140,7 +146,30 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
     @Published var showPermissionHelp = false
     var onUpdate: ((Double, Double, Double) -> Void)?
     var onError: ((Int) -> Void)?
-    var onGeofenceEvent: ((String) -> Void)?
+    var onGeofenceEvent: ((String, TimeInterval) -> Void)?
+    private let pendingEventsKey = "ControlHorario.pendingGeofenceEvents"
+
+    struct PendingGeofenceEvent {
+        let state: String
+        let timestamp: TimeInterval
+    }
+
+    func takePendingGeofenceEvents() -> [PendingGeofenceEvent] {
+        let stored = UserDefaults.standard.array(forKey: pendingEventsKey) as? [[String: Any]] ?? []
+        UserDefaults.standard.removeObject(forKey: pendingEventsKey)
+        return stored.compactMap { item in
+            guard let state = item["state"] as? String,
+                  let timestamp = item["timestamp"] as? TimeInterval else { return nil }
+            return PendingGeofenceEvent(state: state, timestamp: timestamp)
+        }
+    }
+
+    private func queueGeofenceEvent(_ state: String) {
+        var stored = UserDefaults.standard.array(forKey: pendingEventsKey) as? [[String: Any]] ?? []
+        stored.append(["state": state, "timestamp": Date().timeIntervalSince1970])
+        UserDefaults.standard.set(stored, forKey: pendingEventsKey)
+        onGeofenceEvent?(state, Date().timeIntervalSince1970)
+    }
     private enum Mode { case single, geofence }
 
     override init() {
@@ -240,16 +269,16 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
 
     func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
         guard region.identifier == regionID, isGeofenceActive else { return }
-        if state == .inside { onGeofenceEvent?("state-inside") }
-        else if state == .outside { onGeofenceEvent?("state-outside") }
+        if state == .inside { onGeofenceEvent?("state-inside", Date().timeIntervalSince1970) }
+        else if state == .outside { onGeofenceEvent?("state-outside", Date().timeIntervalSince1970) }
     }
 
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
-        if region.identifier == regionID, isGeofenceActive { onGeofenceEvent?("enter") }
+        if region.identifier == regionID { queueGeofenceEvent("enter") }
     }
 
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
-        if region.identifier == regionID, isGeofenceActive { onGeofenceEvent?("exit") }
+        if region.identifier == regionID { queueGeofenceEvent("exit") }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
