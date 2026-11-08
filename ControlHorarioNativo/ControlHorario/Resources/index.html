@@ -2584,6 +2584,13 @@
         window.direccionCambioPestana = dx < 0 ? 'left' : 'right';
         setTimeout(function() {
           botones[siguiente].click();
+          setTimeout(function() {
+            panelSalida.style.transition = '';
+            panelSalida.style.transform = '';
+            panelSalida.style.opacity = '';
+            panelSalida.style.filter = '';
+            panelSalida.style.willChange = '';
+          }, 180);
         }, 115);
       }, { passive: true });
 
