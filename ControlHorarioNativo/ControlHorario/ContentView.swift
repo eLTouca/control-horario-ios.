@@ -43,6 +43,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
         let content = WKUserContentController()
         content.add(context.coordinator, name: "location")
         content.add(context.coordinator, name: "pdf")
+        content.add(context.coordinator, name: "aeat")
         let config = WKWebViewConfiguration()
         config.userContentController = content
         let web = WKWebView(frame: .zero, configuration: config)
@@ -76,12 +77,76 @@ struct ControlHorarioWebView: UIViewRepresentable {
                 handlePDFMessage(message.body)
                 return
             }
+            if message.name == "aeat" {
+                handleAEATMessage(message.body)
+                return
+            }
             guard let command = message.body as? String else { return }
             switch command {
             case "once": locationManager.requestSingleLocation()
             case "watch": locationManager.startWatching()
             case "stop": locationManager.stopWatching()
             default: break
+            }
+        }
+
+        private func handleAEATMessage(_ body: Any) {
+            guard let payload = body as? [String: Any],
+                  let xml = payload["xml"] as? String,
+                  !xml.isEmpty,
+                  let webView else { return }
+
+            // Sesión efímera: no persiste cookies ni caché de la petición.
+            guard let url = URL(string: "https://www2.agenciatributaria.gob.es/wlpl/PRET-R200/mc") else { return }
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.timeoutInterval = 45
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+            request.setValue("text/xml, application/xml, */*", forHTTPHeaderField: "Accept")
+
+            let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
+            guard let encodedXML = xml.addingPercentEncoding(withAllowedCharacters: allowed) else {
+                sendAEATResult(["ok": false, "error": "No se pudieron preparar los datos para la AEAT."], to: webView)
+                return
+            }
+            request.httpBody = "EJER=2026&PER=0&F01=\(encodedXML)".data(using: .utf8)
+
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.urlCache = nil
+            configuration.httpCookieStorage = nil
+            configuration.httpCookieAcceptPolicy = .never
+            configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+            let session = URLSession(configuration: configuration)
+            session.dataTask(with: request) { [weak self, weak webView] data, response, error in
+                guard let self, let webView else { return }
+                if let error {
+                    self.sendAEATResult(["ok": false, "error": "Error de conexión con la AEAT: \(error.localizedDescription)"], to: webView)
+                    session.finishTasksAndInvalidate()
+                    return
+                }
+                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                guard let data, let responseXML = String(data: data, encoding: .utf8), !responseXML.isEmpty else {
+                    self.sendAEATResult(["ok": false, "error": "La AEAT ha devuelto una respuesta vacía (HTTP \(status))."], to: webView)
+                    session.finishTasksAndInvalidate()
+                    return
+                }
+                if status == 400 {
+                    self.sendAEATResult(["ok": false, "error": "La AEAT ha rechazado los datos enviados (HTTP 400). Revisa los datos fiscales introducidos."], to: webView)
+                } else if !(200...299).contains(status) {
+                    self.sendAEATResult(["ok": false, "error": "El servicio de la AEAT no está disponible (HTTP \(status))."], to: webView)
+                } else {
+                    self.sendAEATResult(["ok": true, "xml": responseXML], to: webView)
+                }
+                session.finishTasksAndInvalidate()
+            }.resume()
+        }
+
+        private func sendAEATResult(_ result: [String: Any], to webView: WKWebView) {
+            guard let data = try? JSONSerialization.data(withJSONObject: result, options: [.fragmentsAllowed]),
+                  let json = String(data: data, encoding: .utf8) else { return }
+            DispatchQueue.main.async {
+                webView.evaluateJavaScript("window.aeatResult && window.aeatResult(\(json));")
             }
         }
 
