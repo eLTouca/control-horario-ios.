@@ -141,7 +141,24 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
 
     func requestSingleLocation() {
         mode = .single
-        requestPermissionAndStart()
+        guard CLLocationManager.locationServicesEnabled() else {
+            onError?(2)
+            return
+        }
+
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            // Solo se muestra el diálogo del sistema la primera vez.
+            manager.requestWhenInUseAuthorization()
+        case .authorizedAlways, .authorizedWhenInUse:
+            // Con permiso concedido, obtener una lectura puntual sin volver a pedirlo.
+            manager.requestLocation()
+        case .denied, .restricted:
+            showPermissionHelp = true
+            onError?(1)
+        @unknown default:
+            onError?(2)
+        }
     }
 
     func startWatching() {
@@ -192,14 +209,14 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
                 manager.allowsBackgroundLocationUpdates = true
                 manager.startUpdatingLocation()
             } else {
-                manager.startUpdatingLocation()
+                manager.requestLocation()
             }
         case .authorizedWhenInUse:
             if mode == .watching && !requestedAlways {
                 requestedAlways = true
                 manager.requestAlwaysAuthorization()
             } else if mode == .single {
-                manager.startUpdatingLocation()
+                manager.requestLocation()
             }
             DispatchQueue.main.async { self.showPermissionHelp = false }
         case .denied, .restricted:
