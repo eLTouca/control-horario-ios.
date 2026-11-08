@@ -58,6 +58,11 @@ struct ControlHorarioWebView: UIViewRepresentable {
             let js = "window.nativeLocationError && window.nativeLocationError(\(code));"
             DispatchQueue.main.async { web?.evaluateJavaScript(js) }
         }
+        locationManager.onGeofenceEvent = { [weak web] inside in
+            let state = inside ? "inside" : "outside"
+            let js = "window.nativeGeofenceEvent && window.nativeGeofenceEvent('\(state)');"
+            DispatchQueue.main.async { web?.evaluateJavaScript(js) }
+        }
         if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: nil) {
             web.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }
@@ -76,12 +81,17 @@ struct ControlHorarioWebView: UIViewRepresentable {
                 handlePDFMessage(message.body)
                 return
             }
-            guard let command = message.body as? String else { return }
-            switch command {
-            case "once": locationManager.requestSingleLocation()
-            case "watch": locationManager.startWatching()
-            case "stop": locationManager.stopWatching()
-            default: break
+            if let command = message.body as? String {
+                if command == "once" { locationManager.requestSingleLocation() }
+                else if command == "stop" { locationManager.stopWatching() }
+                return
+            }
+            if let payload = message.body as? [String: Any],
+               payload["action"] as? String == "watch",
+               let lat = payload["lat"] as? Double,
+               let lng = payload["lng"] as? Double,
+               let radius = payload["radius"] as? Double {
+                locationManager.startWatching(latitude: lat, longitude: lng, radius: radius)
             }
         }
 
@@ -123,81 +133,76 @@ struct ControlHorarioWebView: UIViewRepresentable {
 
 final class NativeLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
+    private let regionID = "control-horario-centro"
     private var mode: Mode = .single
     private var requestedAlways = false
+    private var pendingRegion: CLCircularRegion?
     @Published var showPermissionHelp = false
     var onUpdate: ((Double, Double, Double) -> Void)?
     var onError: ((Int) -> Void)?
-    private enum Mode: Equatable { case single, watching }
+    var onGeofenceEvent: ((Bool) -> Void)?
+    private enum Mode { case single, geofence }
 
     override init() {
         super.init()
         manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.distanceFilter = 5
+        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        manager.distanceFilter = kCLDistanceFilterNone
         manager.activityType = .other
-        manager.pausesLocationUpdatesAutomatically = false
+        manager.pausesLocationUpdatesAutomatically = true
     }
 
     func requestSingleLocation() {
         mode = .single
-        guard CLLocationManager.locationServicesEnabled() else {
-            onError?(2)
-            return
-        }
-
+        guard CLLocationManager.locationServicesEnabled() else { onError?(2); return }
         switch manager.authorizationStatus {
-        case .notDetermined:
-            // Solo se muestra el diálogo del sistema la primera vez.
-            manager.requestWhenInUseAuthorization()
-        case .authorizedAlways, .authorizedWhenInUse:
-            // Con permiso concedido, obtener una lectura puntual sin volver a pedirlo.
-            manager.requestLocation()
-        case .denied, .restricted:
-            showPermissionHelp = true
-            onError?(1)
-        @unknown default:
-            onError?(2)
+        case .notDetermined: manager.requestWhenInUseAuthorization()
+        case .authorizedAlways, .authorizedWhenInUse: manager.requestLocation()
+        case .denied, .restricted: showPermissionHelp = true; onError?(1)
+        @unknown default: onError?(2)
         }
     }
 
-    func startWatching() {
-        mode = .watching
-        manager.allowsBackgroundLocationUpdates = true
-        manager.pausesLocationUpdatesAutomatically = false
-        requestPermissionAndStart()
+    func startWatching(latitude: Double, longitude: Double, radius: Double) {
+        mode = .geofence
+        guard CLLocationManager.locationServicesEnabled(),
+              CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else {
+            onError?(2); return
+        }
+        let region = CLCircularRegion(
+            center: CLLocationCoordinate2D(latitude: latitude, longitude: longitude),
+            radius: min(1000, max(100, radius)),
+            identifier: regionID
+        )
+        region.notifyOnEntry = true
+        region.notifyOnExit = true
+        pendingRegion = region
+        switch manager.authorizationStatus {
+        case .notDetermined, .authorizedWhenInUse:
+            requestedAlways = true
+            manager.requestAlwaysAuthorization()
+        case .authorizedAlways:
+            beginMonitoring(region)
+        case .denied, .restricted:
+            showPermissionHelp = true
+            onError?(1)
+        @unknown default: onError?(2)
+        }
+    }
+
+    private func beginMonitoring(_ region: CLCircularRegion) {
+        guard mode == .geofence else { return }
+        for old in manager.monitoredRegions where old.identifier == regionID {
+            manager.stopMonitoring(for: old)
+        }
+        manager.startMonitoring(for: region)
     }
 
     func stopWatching() {
         mode = .single
-        manager.stopUpdatingLocation()
-        manager.allowsBackgroundLocationUpdates = false
-    }
-
-    private func requestPermissionAndStart() {
-        guard CLLocationManager.locationServicesEnabled() else { onError?(2); return }
-        switch manager.authorizationStatus {
-        case .notDetermined:
-            if mode == .watching {
-                requestedAlways = true
-                manager.requestAlwaysAuthorization()
-            } else {
-                manager.requestWhenInUseAuthorization()
-            }
-        case .authorizedAlways:
-            manager.startUpdatingLocation()
-        case .authorizedWhenInUse:
-            if mode == .watching {
-                requestedAlways = true
-                manager.requestAlwaysAuthorization()
-            } else {
-                manager.startUpdatingLocation()
-            }
-        case .denied, .restricted:
-            showPermissionHelp = true
-            onError?(1)
-        @unknown default:
-            onError?(2)
+        pendingRegion = nil
+        for region in manager.monitoredRegions where region.identifier == regionID {
+            manager.stopMonitoring(for: region)
         }
     }
 
@@ -205,14 +210,10 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         switch manager.authorizationStatus {
         case .authorizedAlways:
             DispatchQueue.main.async { self.showPermissionHelp = false }
-            if mode == .watching {
-                manager.allowsBackgroundLocationUpdates = true
-                manager.startUpdatingLocation()
-            } else {
-                manager.requestLocation()
-            }
+            if mode == .geofence, let region = pendingRegion { beginMonitoring(region) }
+            else if mode == .single { manager.requestLocation() }
         case .authorizedWhenInUse:
-            if mode == .watching && !requestedAlways {
+            if mode == .geofence && !requestedAlways {
                 requestedAlways = true
                 manager.requestAlwaysAuthorization()
             } else if mode == .single {
@@ -220,25 +221,42 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
             }
             DispatchQueue.main.async { self.showPermissionHelp = false }
         case .denied, .restricted:
-            DispatchQueue.main.async {
-                self.showPermissionHelp = true
-                self.onError?(1)
-            }
+            DispatchQueue.main.async { self.showPermissionHelp = true; self.onError?(1) }
         default: break
         }
     }
 
+    func locationManager(_ manager: CLLocationManager, didStartMonitoringFor region: CLRegion) {
+        manager.requestState(for: region)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
+        guard region.identifier == regionID, mode == .geofence else { return }
+        if state == .inside { onGeofenceEvent?(true) }
+        else if state == .outside { onGeofenceEvent?(false) }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        if region.identifier == regionID { onGeofenceEvent?(true) }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
+        if region.identifier == regionID { onGeofenceEvent?(false) }
+    }
+
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
+        guard mode == .single, let location = locations.last else { return }
         onUpdate?(location.coordinate.latitude, location.coordinate.longitude, location.horizontalAccuracy)
-        if mode == .single { manager.stopUpdatingLocation() }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         onError?(2)
     }
-}
 
+    func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: Error) {
+        onError?(2)
+    }
+}
 private extension UIView {
     var parentViewController: UIViewController? {
         var responder: UIResponder? = self
