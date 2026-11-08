@@ -3528,8 +3528,8 @@
 
     function hoyFecha(d = new Date()) { return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-'); }
 
-    function tickGeoTiempo() {
-      const now = Date.now();
+    function tickGeoTiempo(nowOverride) {
+      const now = Number.isFinite(Number(nowOverride)) ? Number(nowOverride) : Date.now();
       if (!geoState.lastTick) geoState.lastTick = now;
       const anterior = geoState.lastTick;
       if (geoState.inside && now > anterior) {
@@ -3827,34 +3827,41 @@
 
   toast('GPS localizado · precisión ±' + Math.round(accuracyNum) + ' m');
 };
-    window.nativeGeofenceEvent = function(state) {
-      // La consulta inicial de iOS reconcilia el estado real sin contabilizar
-      // el tiempo durante el que la app pudo estar suspendida.
+    window.nativeGeofenceEvent = function(state, eventTimestamp) {
+      const eventTime = Number.isFinite(Number(eventTimestamp)) ? Number(eventTimestamp) : Date.now();
+      // No reiniciar lastTick al reabrir: así se recupera todo el intervalo
+      // aunque iOS haya suspendido la WebView durante horas.
       if (state === 'state-inside') {
         asegurarDiaGeo();
         geoState.inside = true;
-        geoState.lastTick = Date.now();
+        if (!geoState.lastTick) geoState.lastTick = eventTime;
         saveGeoState();
       } else if (state === 'state-outside') {
+        if (geoState.inside) tickGeoTiempo(eventTime);
         geoState.inside = false;
-        geoState.lastTick = Date.now();
+        geoState.lastTick = eventTime;
         saveGeoState();
-        flushGeoHoras();
+        sincronizarHorasExtraRegistro(hoyFecha(new Date(eventTime)));
       } else if (state === 'enter' && !geoState.inside) {
         geoState.inside = true;
-        geoState.date = hoy();
-        geoState.lastTick = Date.now();
+        geoState.date = hoyFecha(new Date(eventTime));
+        geoState.lastTick = eventTime;
         saveGeoState();
         toast('Entrada detectada en ' + (config.geo.nombre || 'el centro'));
       } else if (state === 'exit' && geoState.inside) {
-        tickGeoTiempo();
+        tickGeoTiempo(eventTime);
         geoState.inside = false;
         saveGeoState();
-        flushGeoHoras();
+        sincronizarHorasExtraRegistro(hoyFecha(new Date(eventTime)));
         toast('Salida detectada del centro');
       }
       actualizarUIGeo();
     };
+    // Recupera eventos de geovalla que iOS haya entregado mientras la app
+    // estaba cerrada o antes de que la WebView terminase de cargar.
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
+      window.webkit.messageHandlers.location.postMessage('sync');
+    }
     window.nativeLocationError = function(code) { onGeoError({code:Number(code)}); };
 
     document.getElementById('btn-geo-aqui').addEventListener('click', () => {
