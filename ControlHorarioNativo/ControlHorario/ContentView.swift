@@ -277,24 +277,19 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         guard CLLocationManager.locationServicesEnabled() else { onError?(2); return }
         switch manager.authorizationStatus {
         case .notDetermined:
-            if mode == .watching {
-                if !UserDefaults.standard.bool(forKey: askedForAlwaysKey) {
-                    UserDefaults.standard.set(true, forKey: askedForAlwaysKey)
-                    manager.requestAlwaysAuthorization()
-                } else {
-                    DispatchQueue.main.async { self.showPermissionHelp = true }
-                }
-            } else {
-                manager.requestWhenInUseAuthorization()
-            }
+            // El primer permiso se solicita una sola vez. iOS guarda la elección.
+            manager.requestWhenInUseAuthorization()
         case .authorizedAlways:
             manager.startUpdatingLocation()
         case .authorizedWhenInUse:
-            if mode == .watching {
-                requestedAlways = true
+            if mode == .watching && !UserDefaults.standard.bool(forKey: askedForAlwaysKey) {
+                UserDefaults.standard.set(true, forKey: askedForAlwaysKey)
                 manager.requestAlwaysAuthorization()
             } else {
                 manager.startUpdatingLocation()
+                if mode == .watching {
+                    DispatchQueue.main.async { self.showPermissionHelp = true }
+                }
             }
         case .denied, .restricted:
             showPermissionHelp = true
@@ -308,21 +303,16 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         switch manager.authorizationStatus {
         case .authorizedAlways:
             DispatchQueue.main.async { self.showPermissionHelp = false }
-            if mode == .watching {
-                manager.allowsBackgroundLocationUpdates = true
-                manager.startUpdatingLocation()
+            if mode == .watching { manager.allowsBackgroundLocationUpdates = true }
+            manager.startUpdatingLocation()
+        case .authorizedWhenInUse:
+            if mode == .watching && !UserDefaults.standard.bool(forKey: askedForAlwaysKey) {
+                UserDefaults.standard.set(true, forKey: askedForAlwaysKey)
+                manager.requestAlwaysAuthorization()
             } else {
                 manager.startUpdatingLocation()
+                DispatchQueue.main.async { self.showPermissionHelp = (mode == .watching) }
             }
-        case .authorizedWhenInUse:
-            if mode == .watching {
-                // iOS conserva el permiso concedido; no repetir el diálogo en cada apertura.
-                manager.startUpdatingLocation()
-                DispatchQueue.main.async { self.showPermissionHelp = true }
-            } else if mode == .single {
-                manager.startUpdatingLocation()
-            }
-            DispatchQueue.main.async { self.showPermissionHelp = false }
         case .denied, .restricted:
             DispatchQueue.main.async {
                 self.showPermissionHelp = true
