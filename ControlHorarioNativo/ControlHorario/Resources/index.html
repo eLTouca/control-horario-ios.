@@ -2979,6 +2979,76 @@
     });
 
     // ========== NÓMINA ==========
+    const btnImportarNomina = document.getElementById('btn-importar-nomina');
+    if (btnImportarNomina) btnImportarNomina.addEventListener('click', () => {
+      const estado = document.getElementById('nomina-lectura-estado');
+      const error = document.getElementById('nomina-lectura-error');
+      if (error) { error.style.display = 'none'; error.textContent = ''; }
+      if (window.webkit?.messageHandlers?.payrollPhoto) {
+        if (estado) estado.textContent = 'Abriendo cámara o galería…';
+        window.webkit.messageHandlers.payrollPhoto.postMessage('open');
+      } else {
+        if (estado) estado.textContent = 'Selector nativo no disponible. Abre la app instalada.';
+        toast('No está disponible el selector nativo');
+      }
+    });
+    function normalizarTextoNomina(v) {
+      return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+    function numeroNomina(v) {
+      if (v == null) return null;
+      let t = String(v).replace(/[^0-9,.-]/g, '');
+      if (!t) return null;
+      if (t.includes(',') && t.includes('.')) t = t.replace(/\./g, '').replace(',', '.');
+      else if (t.includes(',')) t = t.replace(',', '.');
+      const n = Number(t); return Number.isFinite(n) ? n : null;
+    }
+    function extraerImporteNomina(texto, patrones) {
+      for (const linea of String(texto || '').split(/\n+/)) {
+        if (!patrones.some(p => p.test(normalizarTextoNomina(linea)))) continue;
+        const nums = linea.match(/-?\d[\d. ]*(?:,\d{1,2})?/g) || [];
+        for (const candidato of nums.reverse()) { const n = numeroNomina(candidato); if (n != null && n > 0) return n; }
+      }
+      return null;
+    }
+    window.payrollOCRResult = function(resultado) {
+      const estado = document.getElementById('nomina-lectura-estado');
+      const error = document.getElementById('nomina-lectura-error');
+      if (!resultado || !resultado.ok || !resultado.text) {
+        if (estado) estado.textContent = 'No se han podido leer los datos. Puedes introducirlos manualmente.';
+        if (error) { error.textContent = resultado?.error || 'No se pudo leer la nómina.'; error.style.display = 'block'; }
+        return;
+      }
+      const bruto = extraerImporteNomina(resultado.text, [/total devengado/, /total percepciones/, /total bruto/, /total remuneraciones/]);
+      const base = extraerImporteNomina(resultado.text, [/base de cotizacion/, /base cotizacion/, /base contingencias comunes/]);
+      const ss = extraerImporteNomina(resultado.text, [/total aportaciones/, /total seguridad social/, /contingencias comunes.*trabajador/, /desempleo.*formacion/]);
+      const irpfLine = resultado.text.split(/\n+/).find(x => /irpf|i\.r\.p\.f/i.test(x));
+      let irpf = null;
+      if (irpfLine) { const nums = irpfLine.match(/\d+(?:[,.]\d+)?/g) || []; if (nums.length) irpf = numeroNomina(nums[0]); }
+      const neto = extraerImporteNomina(resultado.text, [/liquido a percibir/, /liquido total/, /neto a percibir/]);
+      const set = (id, value) => { const el = document.getElementById(id); if (el && value != null) el.value = String(value).replace('.', ','); };
+      set('nomina-bruto', bruto); set('nomina-base', base); set('nomina-ss', ss); set('nomina-irpf', irpf); set('nomina-neto', neto);
+      const count = [bruto,base,ss,irpf,neto].filter(x => x != null).length;
+      if (estado) estado.textContent = count ? 'Lectura terminada: ' + count + ' campos detectados. Revísalos antes de calcular.' : 'La foto se ha leído, pero no se reconocieron importes. Introduce los datos manualmente.';
+      if (error) error.style.display = 'none';
+    };
+    const btnCalcularNomina = document.getElementById('btn-calcular-nomina');
+    if (btnCalcularNomina) btnCalcularNomina.addEventListener('click', () => {
+      const bruto = numeroNomina(document.getElementById('nomina-bruto')?.value);
+      const ss = numeroNomina(document.getElementById('nomina-ss')?.value) || 0;
+      const irpfPct = numeroNomina(document.getElementById('nomina-irpf')?.value);
+      const netoIntroducido = numeroNomina(document.getElementById('nomina-neto')?.value);
+      const error = document.getElementById('nomina-lectura-error');
+      if (bruto == null || bruto <= 0 || irpfPct == null || irpfPct < 0 || irpfPct > 100) {
+        if (error) { error.textContent = 'Introduce un bruto válido y el porcentaje de IRPF de la nómina.'; error.style.display = 'block'; } return;
+      }
+      const irpfEuros = bruto * irpfPct / 100;
+      const neto = netoIntroducido != null ? netoIntroducido : bruto - ss - irpfEuros;
+      const grid = document.getElementById('resultado-grid'), resultado = document.getElementById('resultado-nomina');
+      if (grid) grid.innerHTML = '<span class="label">Bruto</span><span class="value">' + formatNum(bruto,2) + ' €</span><span class="label">Seguridad Social</span><span class="value">−' + formatNum(ss,2) + ' €</span><span class="label">IRPF (' + formatNum(irpfPct,2) + '%)</span><span class="value">−' + formatNum(irpfEuros,2) + ' €</span><span class="label total">Neto estimado' + (netoIntroducido != null ? ' (nómina)' : '') + '</span><span class="value total">' + formatNum(neto,2) + ' €</span>';
+      if (resultado) resultado.style.display = 'block'; if (error) error.style.display = 'none';
+    });
+
     // ========== GEOLOCALIZACIÓN ==========
     function haversineM(lat1, lng1, lat2, lng2) {
       const R = 6371000;
