@@ -2022,9 +2022,7 @@
           </div>
         </div>
 
-        <p class="note" id="periodo-horas-txt" style="margin-bottom: 0.75rem;"></p>
-
-        <button class="btn btn-primary" id="btn-calcular-nomina">Calcular nómina neta</button>
+        <button class="btn btn-primary" id="btn-calcular-nomina" type="button">Calcular estimación</button>
 
         <div id="resultado-nomina" style="display: none;">
           <div class="result-box">
@@ -2410,9 +2408,6 @@
         btn.classList.add('active');
         document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
 
-        if (btn.dataset.panel === 'nomina') {
-          rellenarHorasPeriodo20();
-        }
         if (btn.dataset.panel === 'pdf') {
           actualizarRangoPDF();
         }
