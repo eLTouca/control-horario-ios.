@@ -3327,33 +3327,72 @@
     function asegurarDiaGeo() {
       const today = hoy();
       if (geoState.date !== today) {
-        if (geoState.date && ((geoState.pendingOtMs || 0) > 0 || geoState.inside)) {
-          flushGeoHoras(geoState.date);
-        }
+        if (geoState.date) sincronizarHorasExtraRegistro(geoState.date);
         geoState.date = today;
         geoState.pendingOtMs = 0;
         geoState.horasYaRegistradas = 0;
-        geoState.lastTick = Date.now();
         saveGeoState();
       }
     }
 
+    function extraMsEntre(inicioMs, finMs) {
+      let total = 0;
+      let cursor = inicioMs;
+      while (cursor < finMs) {
+        const dia = new Date(cursor);
+        const medianoche = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+        const siguiente = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate() + 1);
+        const tramoFin = Math.min(finMs, siguiente.getTime());
+        const g = config.geo || {};
+        const inicio = parseHoraMin(g.jornadaInicio || '07:00');
+        const fin = parseHoraMin(g.jornadaFin || '15:00');
+        const a = medianoche.getTime();
+        const limiteInicio = a + inicio * 60000;
+        const limiteFin = a + fin * 60000;
+        const solapa = (x1, x2, y1, y2) => Math.max(0, Math.min(x2, y2) - Math.max(x1, y1));
+        if (inicio <= fin) {
+          total += solapa(cursor, tramoFin, a, limiteInicio);
+          total += solapa(cursor, tramoFin, limiteFin, siguiente.getTime());
+        } else {
+          total += solapa(cursor, tramoFin, limiteFin, limiteInicio);
+        }
+        cursor = tramoFin;
+      }
+      return total;
+    }
+
+    function hoyFecha(d = new Date()) { return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-'); }
+
     function tickGeoTiempo() {
-      asegurarDiaGeo();
       const now = Date.now();
       if (!geoState.lastTick) geoState.lastTick = now;
-      const delta = Math.max(0, now - geoState.lastTick);
-      geoState.lastTick = now;
-      // Solo acumula si estás en zona Y en franja de extra
-      if (geoState.inside && esFranjaHoraExtra(new Date(now))) {
-        geoState.pendingOtMs = (geoState.pendingOtMs || 0) + delta;
-        geoState.enFranjaExtra = true;
+      const anterior = geoState.lastTick;
+      if (geoState.inside && now > anterior) {
+        // Reparte correctamente el tiempo si la jornada cruza la medianoche.
+        let cursor = anterior;
+        while (cursor < now) {
+          const d = new Date(cursor);
+          const finDia = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+          const tramoFin = Math.min(now, finDia);
+          const fechaTramo = hoyFecha(new Date(cursor));
+          if (geoState.date && geoState.date !== fechaTramo) {
+            sincronizarHorasExtraRegistro(geoState.date);
+            geoState.pendingOtMs = 0;
+            geoState.horasYaRegistradas = 0;
+            geoState.date = fechaTramo;
+          } else if (!geoState.date) {
+            geoState.date = fechaTramo;
+          }
+          geoState.pendingOtMs = (geoState.pendingOtMs || 0) + extraMsEntre(cursor, tramoFin);
+          sincronizarHorasExtraRegistro(fechaTramo);
+          cursor = tramoFin;
+        }
       } else {
-        geoState.enFranjaExtra = geoState.inside && esFranjaHoraExtra();
+        asegurarDiaGeo();
       }
+      geoState.lastTick = now;
+      geoState.enFranjaExtra = geoState.inside && esFranjaHoraExtra(new Date(now));
       saveGeoState();
-      // Si ya hay horas enteras nuevas, registrarlas en caliente
-      sincronizarHorasExtraRegistro(hoy());
       actualizarUIGeo();
     }
 
@@ -3546,7 +3585,14 @@
       stopGeoWatch();
       if (!config.geo.activo) { actualizarUIGeo(); return; }
       if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
-        window.webkit.messageHandlers.location.postMessage('watch');
+        if (config.geo.lat == null || config.geo.lng == null) { actualizarUIGeo(); return; }
+        window.webkit.messageHandlers.location.postMessage({
+          action: 'watch',
+          lat: Number(config.geo.lat),
+          lng: Number(config.geo.lng),
+          radius: Number(config.geo.radio || 150)
+        });
+        geoTickTimer = setInterval(tickGeoTiempo, 20000);
         actualizarUIGeo();
         return;
       }
@@ -3616,6 +3662,22 @@
 
   toast('GPS localizado · precisión ±' + Math.round(accuracyNum) + ' m');
 };
+    window.nativeGeofenceEvent = function(state) {
+      const entra = state === 'inside';
+      if (entra && !geoState.inside) {
+        geoState.inside = true;
+        geoState.lastTick = Date.now();
+        saveGeoState();
+        toast('Entrada detectada en ' + (config.geo.nombre || 'el centro'));
+      } else if (!entra && geoState.inside) {
+        tickGeoTiempo();
+        geoState.inside = false;
+        saveGeoState();
+        flushGeoHoras();
+        toast('Salida detectada del centro');
+      }
+      actualizarUIGeo();
+    };
     window.nativeLocationError = function(code) { onGeoError({code:Number(code)}); };
 
     document.getElementById('btn-geo-aqui').addEventListener('click', () => {
@@ -3868,16 +3930,12 @@
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         tickGeoTiempo();
-        if (config.geo && config.geo.activo) {
-          if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
-            window.webkit.messageHandlers.location.postMessage('watch');
-          }
-        }
+
       }
     });
     window.addEventListener('pageshow', () => {
       tickGeoTiempo();
-      if (config.geo && config.geo.activo) startGeoWatch();
+
     });
 
     // Registrar service worker (PWA / offline en iPhone)
