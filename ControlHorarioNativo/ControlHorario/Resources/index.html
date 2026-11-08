@@ -3156,6 +3156,8 @@
     let textoNominaReconocido = '';
     let retencionIRPFLeida = null;
     let tipoSSLeido = null;
+    let brutoNominaImportada = null;
+    let netoNominaImportada = null;
 
     function solicitarLecturaNomina() {
       return new Promise((resolve, reject) => {
@@ -3243,10 +3245,13 @@
       const estado = document.getElementById('nomina-lectura-estado');
       const error = document.getElementById('nomina-lectura-error');
       error.style.display = 'none';
+      retencionIRPFLeida = null; tipoSSLeido = null; brutoNominaImportada = null; netoNominaImportada = null;
       estado.textContent = 'Abriendo cámara o galería…';
       try {
         textoNominaReconocido = await solicitarLecturaNomina();
         const datos = analizarTextoNomina(textoNominaReconocido);
+        brutoNominaImportada = datos.bruto;
+        netoNominaImportada = datos.neto;
         mostrarLecturaNomina(datos);
       } catch (e) {
         estado.textContent = 'No se ha podido importar la nómina.';
@@ -3256,10 +3261,11 @@
     });
 
     document.getElementById('btn-confirmar-nomina').addEventListener('click', () => {
-      const irpf = Number(document.getElementById('nomina-irpf-manual').value);
+      const campoIRPF = document.getElementById('nomina-irpf-manual').value.trim();
+      const irpf = Number(campoIRPF);
       const ss = Number(document.getElementById('nomina-ss-manual').value);
       const error = document.getElementById('nomina-lectura-error');
-      if (!Number.isFinite(irpf) || irpf < 0 || irpf > 50) {
+      if (!campoIRPF || !Number.isFinite(irpf) || irpf < 0 || irpf > 50) {
         error.textContent = 'Comprueba el porcentaje de IRPF de tu nómina e introdúcelo si no se ha detectado.';
         error.style.display = 'block'; return;
       }
@@ -3289,10 +3295,9 @@
       const importePlusHoraExtra = horasExtra * plusPorHoraExtra;
       const importeEsp = horasEsp * plusEspH;
       const plusesFijos = plusTrans + plusNoct + antiguedad + otros;
-      const brutoMensual = sueldoBase + importeExtras + importePlusHoraExtra + importeEsp + plusesFijos;
-
-      // Bruto anual: base × pagas + extras/pluses variables × 12 (aprox.)
-      const brutoAnual = sueldoBase * nPagas + (importeExtras + importePlusHoraExtra + importeEsp + plusesFijos) * 12;
+      const importeVariable = importeExtras + importePlusHoraExtra + importeEsp + plusesFijos;
+      const brutoReferencia = brutoNominaImportada != null ? brutoNominaImportada : sueldoBase;
+      const brutoMensual = brutoReferencia + importeVariable;
 
       if (retencionIRPFLeida === null) {
         const error = document.getElementById('nomina-lectura-error');
@@ -3303,15 +3308,18 @@
       }
       // Estimación local: reutiliza el IRPF real de la nómina aportada.
       const tipoSS = tipoSSLeido || (contrato === 'temporal' ? 0.0655 : 0.0650);
-      const ssMensual = brutoMensual * tipoSS;
       const tipoRetencion = retencionIRPFLeida;
       const tipoAEAT = tipoRetencion * 100;
-      const irpfMensual = brutoMensual * tipoRetencion;
-      const netoMensual = brutoMensual - ssMensual - irpfMensual;
+      const usaNetoNomina = netoNominaImportada != null;
+      const baseDeducciones = usaNetoNomina ? importeVariable : brutoMensual;
+      const ssMensual = baseDeducciones * tipoSS;
+      const irpfMensual = baseDeducciones * tipoRetencion;
+      const netoReferencia = usaNetoNomina ? netoNominaImportada : brutoReferencia - (brutoReferencia * tipoSS) - (brutoReferencia * tipoRetencion);
+      const netoMensual = netoReferencia + importeVariable - ssMensual - irpfMensual;
 
       const grid = document.getElementById('resultado-grid');
       grid.innerHTML = `
-        <div class="label">Sueldo base convenio</div><div class="value">${formatNum(sueldoBase)} €</div>
+        <div class="label">${brutoNominaImportada != null ? "Bruto de la nómina importada" : "Sueldo base de referencia"}</div><div class="value">${formatNum(brutoReferencia)} €</div>
         <div class="label">Horas extras (${formatNum(horasExtra, 2)} h × ${formatNum(precioHora)} €)</div><div class="value">${formatNum(importeExtras)} €</div>
         <div class="label">Plus adicional horas extras (${formatNum(horasExtra, 2)} h × ${formatNum(plusPorHoraExtra)} €)</div><div class="value">${formatNum(importePlusHoraExtra)} €</div>
         <div class="label">Plus trabajos especiales</div><div class="value">${formatNum(importeEsp)} €</div>
