@@ -2,6 +2,7 @@ import SwiftUI
 import WebKit
 import CoreLocation
 import UIKit
+import Vision
 
 struct ContentView: View {
     @StateObject private var location = NativeLocationManager()
@@ -43,7 +44,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
         let content = WKUserContentController()
         content.add(context.coordinator, name: "location")
         content.add(context.coordinator, name: "pdf")
-        content.add(context.coordinator, name: "aeat")
+        content.add(context.coordinator, name: "payrollPhoto")
         let config = WKWebViewConfiguration()
         config.userContentController = content
         let web = WKWebView(frame: .zero, configuration: config)
@@ -67,9 +68,10 @@ struct ControlHorarioWebView: UIViewRepresentable {
 
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 
-    final class Coordinator: NSObject, WKScriptMessageHandler {
+    final class Coordinator: NSObject, WKScriptMessageHandler, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
         let locationManager: NativeLocationManager
         weak var webView: WKWebView?
+        private var activeImagePicker: UIImagePickerController?
         init(locationManager: NativeLocationManager) { self.locationManager = locationManager }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -77,8 +79,8 @@ struct ControlHorarioWebView: UIViewRepresentable {
                 handlePDFMessage(message.body)
                 return
             }
-            if message.name == "aeat" {
-                handleAEATMessage(message.body)
+            if message.name == "payrollPhoto" {
+                presentPayrollSourcePicker()
                 return
             }
             guard let command = message.body as? String else { return }
@@ -90,63 +92,92 @@ struct ControlHorarioWebView: UIViewRepresentable {
             }
         }
 
-        private func handleAEATMessage(_ body: Any) {
-            guard let payload = body as? [String: Any],
-                  let xml = payload["xml"] as? String,
-                  !xml.isEmpty,
-                  let webView else { return }
-
-            // Sesión efímera: no persiste cookies ni caché de la petición.
-            guard let url = URL(string: "https://www2.agenciatributaria.gob.es/wlpl/PRET-R200/mc") else { return }
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.timeoutInterval = 45
-            request.cachePolicy = .reloadIgnoringLocalCacheData
-            request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-            request.setValue("text/xml, application/xml, */*", forHTTPHeaderField: "Accept")
-
-            let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
-            guard let encodedXML = xml.addingPercentEncoding(withAllowedCharacters: allowed) else {
-                sendAEATResult(["ok": false, "error": "No se pudieron preparar los datos para la AEAT."], to: webView)
-                return
+        // Selección de nómina y reconocimiento OCR completamente local en el iPhone.
+        private func presentPayrollSourcePicker() {
+            guard let webView, let presenter = webView.parentViewController else { return }
+            let alert = UIAlertController(title: "Añadir nómina", message: "Haz una foto o selecciona una imagen de tu galería.", preferredStyle: .actionSheet)
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                alert.addAction(UIAlertAction(title: "Hacer una foto", style: .default) { [weak self] _ in
+                    self?.presentImagePicker(source: .camera)
+                })
             }
-            request.httpBody = "EJER=2026&PER=0&F01=\(encodedXML)".data(using: .utf8)
-
-            let configuration = URLSessionConfiguration.ephemeral
-            configuration.urlCache = nil
-            configuration.httpCookieStorage = nil
-            configuration.httpCookieAcceptPolicy = .never
-            configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-            let session = URLSession(configuration: configuration)
-            session.dataTask(with: request) { [weak self, weak webView] data, response, error in
-                guard let self, let webView else { return }
-                if let error {
-                    self.sendAEATResult(["ok": false, "error": "Error de conexión con la AEAT: \(error.localizedDescription)"], to: webView)
-                    session.finishTasksAndInvalidate()
-                    return
-                }
-                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-                guard let data, let responseXML = String(data: data, encoding: .utf8), !responseXML.isEmpty else {
-                    self.sendAEATResult(["ok": false, "error": "La AEAT ha devuelto una respuesta vacía (HTTP \(status))."], to: webView)
-                    session.finishTasksAndInvalidate()
-                    return
-                }
-                if status == 400 {
-                    self.sendAEATResult(["ok": false, "error": "La AEAT ha rechazado los datos enviados (HTTP 400). Revisa los datos fiscales introducidos."], to: webView)
-                } else if !(200...299).contains(status) {
-                    self.sendAEATResult(["ok": false, "error": "El servicio de la AEAT no está disponible (HTTP \(status))."], to: webView)
-                } else {
-                    self.sendAEATResult(["ok": true, "xml": responseXML], to: webView)
-                }
-                session.finishTasksAndInvalidate()
-            }.resume()
+            alert.addAction(UIAlertAction(title: "Elegir de la galería", style: .default) { [weak self] _ in
+                self?.presentImagePicker(source: .photoLibrary)
+            })
+            alert.addAction(UIAlertAction(title: "Cancelar", style: .cancel))
+            if let popover = alert.popoverPresentationController {
+                popover.sourceView = webView
+                popover.sourceRect = CGRect(x: webView.bounds.midX, y: webView.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            presenter.present(alert, animated: true)
         }
 
-        private func sendAEATResult(_ result: [String: Any], to webView: WKWebView) {
-            guard let data = try? JSONSerialization.data(withJSONObject: result, options: [.fragmentsAllowed]),
+        private func presentImagePicker(source: UIImagePickerController.SourceType) {
+            guard let webView, let presenter = webView.parentViewController else { return }
+            let picker = UIImagePickerController()
+            picker.sourceType = source
+            picker.delegate = self
+            picker.allowsEditing = false
+            activeImagePicker = picker
+            presenter.present(picker, animated: true)
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            picker.dismiss(animated: true)
+            activeImagePicker = nil
+        }
+
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            let image = (info[.originalImage] as? UIImage)
+            picker.dismiss(animated: true) { [weak self] in
+                self?.activeImagePicker = nil
+                guard let image else {
+                    self?.sendPayrollOCRResult(["ok": false, "error": "No se pudo abrir la imagen seleccionada."])
+                    return
+                }
+                self?.recognizePayrollText(in: image)
+            }
+        }
+
+        private func recognizePayrollText(in image: UIImage) {
+            guard let cgImage = image.cgImage else {
+                sendPayrollOCRResult(["ok": false, "error": "La imagen no tiene un formato compatible."])
+                return
+            }
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                let request = VNRecognizeTextRequest()
+                request.recognitionLevel = .accurate
+                request.automaticallyDetectsLanguage = true
+                request.recognitionLanguages = ["es-ES", "es"]
+                request.usesLanguageCorrection = true
+                do {
+                    try VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+                    let lines = (request.results ?? []).compactMap { observation in
+                        observation.topCandidates(1).first?.string
+                    }
+                    let recognizedText = lines.joined(separator: "\n")
+                    DispatchQueue.main.async {
+                        guard !recognizedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                            self?.sendPayrollOCRResult(["ok": false, "error": "No se ha podido leer el texto. Prueba con una foto más nítida, bien iluminada y con la nómina completa."])
+                            return
+                        }
+                        self?.sendPayrollOCRResult(["ok": true, "text": recognizedText])
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        self?.sendPayrollOCRResult(["ok": false, "error": "No se pudo leer la nómina: \\(error.localizedDescription)"])
+                    }
+                }
+            }
+        }
+
+        private func sendPayrollOCRResult(_ result: [String: Any]) {
+            guard let webView,
+                  let data = try? JSONSerialization.data(withJSONObject: result, options: [.fragmentsAllowed]),
                   let json = String(data: data, encoding: .utf8) else { return }
             DispatchQueue.main.async {
-                webView.evaluateJavaScript("window.aeatResult && window.aeatResult(\(json));")
+                webView.evaluateJavaScript("window.payrollOCRResult && window.payrollOCRResult(\\(json));")
             }
         }
 
