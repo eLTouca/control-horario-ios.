@@ -2105,6 +2105,35 @@
           </div>
         </div>
 
+        <div class="aeat-box" style="border:1px solid #c7d2fe;background:#f8faff;border-radius:12px;padding:.9rem;margin:.2rem 0 .9rem;">
+          <strong style="display:block;margin-bottom:.35rem;">Cálculo oficial AEAT · Datos necesarios</strong>
+          <p class="note" style="margin:0 0 .7rem;">Estos datos se envían directamente a la Agencia Tributaria para calcular el porcentaje. Los NIF no se guardan en la app.</p>
+          <div class="form-row">
+            <div class="form-group"><label for="aeat-nombre">Nombre y apellidos del trabajador</label><input id="aeat-nombre" type="text" maxlength="40" autocomplete="off" /></div>
+            <div class="form-group"><label for="aeat-nif">NIF del trabajador</label><input id="aeat-nif" type="text" maxlength="9" autocapitalize="characters" autocomplete="off" /></div>
+            <div class="form-group"><label for="aeat-nacimiento">Año de nacimiento</label><input id="aeat-nacimiento" type="number" min="1906" max="2026" inputmode="numeric" placeholder="1985" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label for="aeat-empresa">Nombre o razón social de la empresa</label><input id="aeat-empresa" type="text" maxlength="40" autocomplete="off" /></div>
+            <div class="form-group"><label for="aeat-nif-empresa">NIF de la empresa</label><input id="aeat-nif-empresa" type="text" maxlength="9" autocapitalize="characters" autocomplete="off" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label for="aeat-renta-conyuge">Si estás casado/a, ingresos anuales del cónyuge</label>
+              <select id="aeat-renta-conyuge"><option value="mas1500" selected>Más de 1.500 € o no lo sé</option><option value="hasta1500">Hasta 1.500 € (sin rentas exentas)</option></select>
+            </div>
+            <div class="form-group"><label for="aeat-nif-conyuge">NIF del cónyuge (solo si gana hasta 1.500 €)</label><input id="aeat-nif-conyuge" type="text" maxlength="9" autocapitalize="characters" autocomplete="off" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label for="aeat-anios-hijos">Años de nacimiento de los hijos que dan derecho a mínimo</label><input id="aeat-anios-hijos" type="text" inputmode="numeric" placeholder="Ej.: 2021, 2023, 2026" autocomplete="off" /></div>
+            <div class="form-group"><label for="aeat-cotizaciones">Cotizaciones anuales a la Seguridad Social (€)</label><input id="aeat-cotizaciones" type="number" min="0" step="0.01" placeholder="Opcional; según nómina" /></div>
+          </div>
+          <label style="display:flex;align-items:flex-start;gap:.55rem;font-size:.82rem;text-transform:none;letter-spacing:0;color:var(--text);margin:.25rem 0 .65rem;">
+            <input id="aeat-monoparental" type="checkbox" style="width:auto;margin-top:.2rem;" />
+            Soy soltero/a, separado/a o viudo/a y los hijos conviven exclusivamente conmigo, no con el otro progenitor.
+          </label>
+          <p id="aeat-error" role="status" style="display:none;color:#be123c;font-size:.82rem;margin:.35rem 0 0;"></p>
+        </div>
+
         <p class="note" id="periodo-horas-txt" style="margin-bottom: 0.75rem;"></p>
 
         <button class="btn btn-primary" id="btn-calcular-nomina">Calcular nómina neta</button>
@@ -3132,41 +3161,23 @@
       catch (e) { console.warn('No se pudo guardar la categoría de nómina', e); }
     });
 
-    // Escala de retención IRPF 2026 (combinada de referencia)
-    const ESCALA_IRPF = [
-      { hasta: 12450, tipo: 0.19 },
-      { hasta: 20200, tipo: 0.24 },
-      { hasta: 35200, tipo: 0.30 },
-      { hasta: 60000, tipo: 0.37 },
-      { hasta: 300000, tipo: 0.45 },
-      { hasta: Infinity, tipo: 0.47 }
-    ];
-
-    function cuotaEscala(base) {
-      let restante = Math.max(0, base);
-      let cuota = 0;
-      let prev = 0;
-      for (const tramo of ESCALA_IRPF) {
-        const tramoBase = Math.min(restante, tramo.hasta - prev);
-        if (tramoBase <= 0) break;
-        cuota += tramoBase * tramo.tipo;
-        restante -= tramoBase;
-        prev = tramo.hasta;
-      }
-      return cuota;
-    }
-
-    function calcularMinimoFamiliar(situacion, numeroHijos) {
-      // Mínimo personal estatal de referencia y mínimo por descendientes.
-      const personal = 5550;
-      const importesHijos = [2400, 2700, 4000];
-      let minimoDescendientes = 0;
-      for (let i = 0; i < numeroHijos; i++) {
-        minimoDescendientes += importesHijos[i] || 4500;
-      }
-      // Estimación: en matrimonio se aplica el reparto habitual del 50%;
-      // en soltería se computa el 100% como supuesto simplificado.
-      return personal + minimoDescendientes * (situacion === 'casado' ? 0.5 : 1);
+    function solicitarCalculoAEAT(xml) {
+      return new Promise((resolve, reject) => {
+        if (!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.aeat) {
+          reject(new Error('Esta función requiere la versión nativa de Control horario instalada desde Xcode.'));
+          return;
+        }
+        const timeout = setTimeout(() => {
+          window.aeatResult = null;
+          reject(new Error('La AEAT no ha respondido en el tiempo esperado. Inténtalo más tarde.'));
+        }, 45000);
+        window.aeatResult = result => {
+          clearTimeout(timeout);
+          window.aeatResult = null;
+          resolve(result);
+        };
+        window.webkit.messageHandlers.aeat.postMessage({ xml });
+      });
     }
 
     const selectorSituacionFamiliar = document.getElementById('situacion-familiar');
@@ -3198,7 +3209,7 @@
       numeroHijos = Math.min(20, numeroHijos + 1); pintarNumeroHijos(); guardarSituacionFamiliar();
     });
 
-    document.getElementById('btn-calcular-nomina').addEventListener('click', () => {
+    document.getElementById('btn-calcular-nomina').addEventListener('click', async () => {
       rellenarHorasPeriodo20();
       const sueldoBase = parseFloat(document.getElementById('sueldo-base').value) || 0;
       const precioHora = parseFloat(document.getElementById('precio-hora-extra').value) || 0;
@@ -3228,24 +3239,68 @@
       const ssMensual = brutoMensual * tipoSS;
       const ssAnual = brutoAnual * tipoSS;
 
-      let rendimientoNeto = brutoAnual - ssAnual - 2000;
-      if (rendimientoNeto <= 11250) {
-        rendimientoNeto -= 7302;
-      } else if (rendimientoNeto < 19747.5) {
-        const factor = (19747.5 - rendimientoNeto) / (19747.5 - 11250);
-        rendimientoNeto -= 7302 * factor;
+      // El IRPF se calcula mediante el servicio oficial de retenciones AEAT 2026.
+      const valor = id => (document.getElementById(id)?.value || '').trim();
+      const nif = valor('aeat-nif').toUpperCase();
+      const nifEmpresa = valor('aeat-nif-empresa').toUpperCase();
+      const nifConyuge = valor('aeat-nif-conyuge').toUpperCase();
+      const nombre = valor('aeat-nombre');
+      const empresa = valor('aeat-empresa');
+      const nacimiento = Number(valor('aeat-nacimiento'));
+      const aniosHijos = valor('aeat-anios-hijos').split(/[;,\s]+/).filter(Boolean).map(Number);
+      const monoparental = document.getElementById('aeat-monoparental').checked;
+      const rentaConyugeBaja = valor('aeat-renta-conyuge') === 'hasta1500';
+      const errorAEAT = document.getElementById('aeat-error');
+      errorAEAT.style.display = 'none';
+      const nifValido = v => /^[A-Z0-9]{9}$/.test(v);
+      if (!nombre || !nifValido(nif) || !nifValido(nifEmpresa) || !empresa || !Number.isInteger(nacimiento) || nacimiento < 1906 || nacimiento > 2026) {
+        errorAEAT.textContent = 'Completa nombre, NIF del trabajador y empresa, y año de nacimiento. Los NIF deben tener 9 caracteres.';
+        errorAEAT.style.display = 'block'; return;
       }
-      if (situacion.includes('3')) rendimientoNeto -= 600;
-      rendimientoNeto = Math.max(0, rendimientoNeto);
-
-      const minimo = calcularMinimoFamiliar(situacion, numeroHijos);
-      const cuotaBase = cuotaEscala(rendimientoNeto);
-      const cuotaMinimo = cuotaEscala(minimo);
-      let cuotaIRPF = Math.max(0, cuotaBase - cuotaMinimo);
-
-      let tipoRetencion = brutoAnual > 0 ? (cuotaIRPF / brutoAnual) : 0;
-      tipoRetencion = Math.floor(tipoRetencion * 10000) / 10000;
-
+      if (situacion === 'casado' && rentaConyugeBaja && !nifValido(nifConyuge)) {
+        errorAEAT.textContent = 'Para la situación familiar 2, la AEAT exige el NIF del cónyuge.';
+        errorAEAT.style.display = 'block'; return;
+      }
+      if (aniosHijos.length !== numeroHijos || aniosHijos.some(y => !Number.isInteger(y) || y < 1906 || y > 2026)) {
+        errorAEAT.textContent = 'Indica el año de nacimiento de cada hijo que da derecho a mínimo. Deben coincidir con el contador de hijos.';
+        errorAEAT.style.display = 'block'; return;
+      }
+      if (monoparental && (situacion !== 'soltero' || aniosHijos.length === 0)) {
+        errorAEAT.textContent = 'La situación familiar 1 requiere no estar casado/a y al menos un descendiente que conviva exclusivamente contigo.';
+        errorAEAT.style.display = 'block'; return;
+      }
+      const situacionAEAT = situacion === 'casado'
+        ? (rentaConyugeBaja ? 'Situacion2' : 'Situacion3')
+        : (monoparental ? 'Situacion1' : 'Situacion3');
+      const xmlEscape = v => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+      const descendientesXML = aniosHijos.map(y => '<Descendiente><Nacimiento>'+y+'</Nacimiento>'+(monoparental?'<ComputadoEntero/>':'')+'</Descendiente>').join('');
+      const nifConyugeXML = situacionAEAT === 'Situacion2' ? '<NifConyuge>'+xmlEscape(nifConyuge)+'</NifConyuge>' : '';
+      const cotizaciones = Math.max(0, Number(valor('aeat-cotizaciones')) || 0);
+      const cotizacionesXML = cotizaciones > 0 ? '<Cotizaciones>'+cotizaciones.toFixed(2)+'</Cotizaciones>' : '';
+      const xml = '<AEATRetencionesEntrada2026><IdDoc><CodModelo>RET</CodModelo><Ejercicio>2026</Ejercicio></IdDoc><Retenedor><Nif>'+xmlEscape(nifEmpresa)+'</Nif><ApellidosNombre>'+xmlEscape(empresa)+'</ApellidosNombre><Retenido><Nif>'+xmlEscape(nif)+'</Nif><ApellidosNombre>'+xmlEscape(nombre)+'</ApellidosNombre><Nacimiento>'+nacimiento+'</Nacimiento><SituacionFamiliar><'+situacionAEAT+'>'+nifConyugeXML+'</'+situacionAEAT+'></SituacionFamiliar><SituacionLaboral><TrabajadorActivo><Contrato>1</Contrato></TrabajadorActivo></SituacionLaboral>'+descendientesXML+'<RetribAnuales>'+brutoAnual.toFixed(2)+'</RetribAnuales>'+cotizacionesXML+'</Retenido></Retenedor></AEATRetencionesEntrada2026>';
+      let respuestaAEAT;
+      try {
+        respuestaAEAT = await solicitarCalculoAEAT(xml);
+      } catch (err) {
+        errorAEAT.textContent = err.message || 'No se pudo conectar con el servicio oficial de la AEAT.';
+        errorAEAT.style.display = 'block'; return;
+      }
+      if (!respuestaAEAT || !respuestaAEAT.ok || !respuestaAEAT.xml) {
+        errorAEAT.textContent = (respuestaAEAT && respuestaAEAT.error) || 'La AEAT no ha devuelto un resultado válido.';
+        errorAEAT.style.display = 'block'; return;
+      }
+      const xmlRespuesta = new DOMParser().parseFromString(respuestaAEAT.xml, 'text/xml');
+      const errores = Array.from(xmlRespuesta.getElementsByTagName('Descripcion')).map(e => e.textContent).filter(Boolean);
+      if (errores.length) {
+        errorAEAT.textContent = errores.join(' · ');
+        errorAEAT.style.display = 'block'; return;
+      }
+      const tipoAEAT = Number(xmlRespuesta.getElementsByTagName('TipoRetencion')[0]?.textContent);
+      if (!Number.isFinite(tipoAEAT) || tipoAEAT < 0 || tipoAEAT > 100) {
+        errorAEAT.textContent = 'La respuesta de la AEAT no contiene un porcentaje de retención reconocible.';
+        errorAEAT.style.display = 'block'; return;
+      }
+      const tipoRetencion = tipoAEAT / 100;
       const irpfMensual = brutoMensual * tipoRetencion;
       const netoMensual = brutoMensual - ssMensual - irpfMensual;
 
@@ -3258,11 +3313,11 @@
         <div class="label">Nocturnidad + transporte + antigüedad + otros</div><div class="value">${formatNum(plusesFijos)} €</div>
         <div class="label"><strong>Bruto del periodo</strong></div><div class="value"><strong>${formatNum(brutoMensual)} €</strong></div>
         <div class="label">Seguridad Social (${(tipoSS * 100).toFixed(2)} %)</div><div class="value">− ${formatNum(ssMensual)} €</div>
-        <div class="label">IRPF retención (${(tipoRetencion * 100).toFixed(2)} %)</div><div class="value">− ${formatNum(irpfMensual)} €</div>
+        <div class="label">IRPF AEAT (${(tipoAEAT).toFixed(2)} %)</div><div class="value">− ${formatNum(irpfMensual)} €</div>
         <div class="label total">Neto estimado a cobrar</div><div class="value total">${formatNum(netoMensual)} €</div>
       `;
       document.getElementById('resultado-nomina').style.display = 'block';
-      toast('Nómina calculada');
+      toast('Retención oficial AEAT calculada');
     });
 
     // ========== GEOLOCALIZACIÓN ==========
