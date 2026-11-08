@@ -2262,10 +2262,19 @@
     }
 
     function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+      // Un error de almacenamiento en WKWebView no debe interrumpir el registro
+      // ni impedir que se actualicen los totales y la interfaz.
+      let guardado = true;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+      } catch (error) {
+        guardado = false;
+        console.error('No se pudieron guardar las horas en el almacenamiento local:', error);
+      }
       if (document.getElementById('panel-calendario')?.classList.contains('active')) {
         renderCalendario();
       }
+      return guardado;
     }
 
     function saveConfig() {
@@ -2620,10 +2629,12 @@
       } else {
         registros.push({ fecha, horas, concepto });
       }
-      saveData();
+      const guardado = saveData();
       actualizarStats();
       renderLista();
-      toast(formatFecha(fecha) + ': ' + formatNum(horas, horas % 1 === 0 ? 0 : 1) + ' h');
+      toast(guardado
+        ? (formatFecha(fecha) + ': ' + formatNum(horas, horas % 1 === 0 ? 0 : 1) + ' h')
+        : 'Horas actualizadas, pero iOS no pudo guardarlas. Cierra y vuelve a abrir la app para comprobar el almacenamiento.');
     }
 
     document.querySelectorAll('.btn-hora[data-add]').forEach(btn => {
@@ -3630,11 +3641,13 @@
       } else {
         registros.push({ fecha, horas, concepto: '' });
       }
-      saveData();
+      const guardado = saveData();
       actualizarStats();
       renderLista();
       actualizarVistaRapido();
-      toast(horas > 0 ? ('Hoy: ' + formatNum(horas, horas % 1 ? 1 : 0) + ' h') : 'Hoy en 0 h');
+      toast(!guardado
+        ? 'Horas actualizadas, pero iOS no pudo guardarlas.'
+        : (horas > 0 ? ('Hoy: ' + formatNum(horas, horas % 1 ? 1 : 0) + ' h') : 'Hoy en 0 h'));
     }
 
     document.querySelectorAll('.rapido-btn[data-add]').forEach(btn => {
