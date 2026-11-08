@@ -3053,7 +3053,7 @@
       let bruto = buscarImporteCercano(normal, /total\s+a\s+abonar\s+(\d{1,3}(?:[. ]\d{3})*,\d{2})/i);
       if (bruto == null) bruto = extraerImporteNomina(original, [/total devengado/, /total percepciones/, /total bruto/, /total remuneraciones/]);
 
-      let base = buscarImporteCercano(normal, /base de cotizacion[\s\S]{0,260}?total\s+(\d{1,3}(?:[. ]\d{3})*,\d{2})/i);
+      let base = buscarImporteCercano(normal, /base[ .]*cotizacion[\s\S]{0,260}?total\s+(\d{1,3}(?:[. ]\d{3})*,\d{2})/i);
       if (base == null) base = buscarImporteCercano(normal, /base computable[\s\S]{0,120}?(\d{1,3}(?:[. ]\d{3})*,\d{2})/i);
 
       let ss = buscarImporteCercano(normal, /aportacion trabajador[\s\S]{0,300}?total\s+(\d{1,3}(?:[. ]\d{3})*,\d{2})/i);
