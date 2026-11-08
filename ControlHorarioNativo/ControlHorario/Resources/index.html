@@ -3628,7 +3628,7 @@
       actualizarAyudaGeoParametros();
       if (g.lat != null && g.lng != null) actualizarMapaGeo(Number(g.lat), Number(g.lng));
       const sec = el('geo-security-status');
-      if (sec) sec.textContent = (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) ? '✓ GPS nativo de iOS disponible: el iPhone solicitará permiso de ubicación.' : (geoEntornoSeguro() ? '✓ Dirección HTTPS segura: Safari puede solicitar el permiso GPS.' : '⚠ Archivo local/HTTP: publica esta app en HTTPS para usar el GPS.');
+      if (sec) sec.textContent = (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) ? '✓ Geovalla nativa de iOS: detecta entradas y salidas sin consultar el GPS continuamente. Requiere permiso «Siempre».' : (geoEntornoSeguro() ? '✓ Dirección HTTPS segura: Safari puede solicitar el permiso GPS.' : '⚠ Archivo local/HTTP: publica esta app en HTTPS para usar el GPS.');
       actualizarUIGeo();
     }
 
