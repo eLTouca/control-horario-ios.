@@ -93,8 +93,21 @@ struct ControlHorarioWebView: UIViewRepresentable {
         }
 
         // Selección de nómina y reconocimiento OCR completamente local en el iPhone.
+        private static func topViewController() -> UIViewController? {
+            let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            let root = scenes.flatMap { $0.windows }.first(where: { $0.isKeyWindow })?.rootViewController
+            var top = root
+            while let presented = top?.presentedViewController { top = presented }
+            if let nav = top as? UINavigationController { return nav.visibleViewController ?? nav }
+            if let tab = top as? UITabBarController { return tab.selectedViewController ?? tab }
+            return top
+        }
+
         private func presentPayrollSourcePicker() {
-            guard let webView, let presenter = webView.parentViewController else { return }
+            guard let webView, let presenter = Self.topViewController() else {
+                sendPayrollOCRResult(["ok": false, "error": "No se pudo abrir el selector. Cierra y vuelve a abrir la app."])
+                return
+            }
             let alert = UIAlertController(title: "Añadir nómina", message: "Haz una foto o selecciona una imagen de tu galería.", preferredStyle: .actionSheet)
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 alert.addAction(UIAlertAction(title: "Hacer una foto", style: .default) { [weak self] _ in
@@ -110,17 +123,24 @@ struct ControlHorarioWebView: UIViewRepresentable {
                 popover.sourceRect = CGRect(x: webView.bounds.midX, y: webView.bounds.midY, width: 0, height: 0)
                 popover.permittedArrowDirections = []
             }
-            presenter.present(alert, animated: true)
+            DispatchQueue.main.async { presenter.present(alert, animated: true) }
         }
 
         private func presentImagePicker(source: UIImagePickerController.SourceType) {
-            guard let webView, let presenter = webView.parentViewController else { return }
+            guard let webView, let presenter = Self.topViewController() else {
+                sendPayrollOCRResult(["ok": false, "error": "No se pudo abrir la cámara o galería."])
+                return
+            }
+            guard UIImagePickerController.isSourceTypeAvailable(source) else {
+                sendPayrollOCRResult(["ok": false, "error": source == .camera ? "La cámara no está disponible." : "La galería no está disponible."])
+                return
+            }
             let picker = UIImagePickerController()
             picker.sourceType = source
             picker.delegate = self
             picker.allowsEditing = false
             activeImagePicker = picker
-            presenter.present(picker, animated: true)
+            DispatchQueue.main.async { presenter.present(picker, animated: true) }
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -220,7 +240,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
 final class NativeLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var mode: Mode = .single
-    private var requestedAlways = false
+    private let askedForAlwaysKey = "ControlHorarioAskedForAlwaysLocation"
     @Published var showPermissionHelp = false
     var onUpdate: ((Double, Double, Double) -> Void)?
     var onError: ((Int) -> Void)?
@@ -258,8 +278,12 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         switch manager.authorizationStatus {
         case .notDetermined:
             if mode == .watching {
-                requestedAlways = true
-                manager.requestAlwaysAuthorization()
+                if !UserDefaults.standard.bool(forKey: askedForAlwaysKey) {
+                    UserDefaults.standard.set(true, forKey: askedForAlwaysKey)
+                    manager.requestAlwaysAuthorization()
+                } else {
+                    DispatchQueue.main.async { self.showPermissionHelp = true }
+                }
             } else {
                 manager.requestWhenInUseAuthorization()
             }
@@ -291,9 +315,10 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
                 manager.startUpdatingLocation()
             }
         case .authorizedWhenInUse:
-            if mode == .watching && !requestedAlways {
-                requestedAlways = true
-                manager.requestAlwaysAuthorization()
+            if mode == .watching {
+                // iOS conserva el permiso concedido; no repetir el diálogo en cada apertura.
+                manager.startUpdatingLocation()
+                DispatchQueue.main.async { self.showPermissionHelp = true }
             } else if mode == .single {
                 manager.startUpdatingLocation()
             }
