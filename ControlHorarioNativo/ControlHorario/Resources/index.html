@@ -141,28 +141,23 @@
 
     .panel {
       display: none;
-      animation: fadeUp 0.3s ease;
-      will-change: transform, opacity;
       transform-origin: center center;
     }
 
     .panel.active { display: block; }
 
-    .panel.swipe-in-left { animation: swipeInLeft 0.28s cubic-bezier(.2,.75,.25,1) both; }
-    .panel.swipe-in-right { animation: swipeInRight 0.28s cubic-bezier(.2,.75,.25,1) both; }
+    /* Una sola animación por cambio de pestaña; sin filtros que provoquen
+       repintados o destellos al terminar en WKWebView/iOS. */
+    .panel.swipe-in-left { animation: swipeInLeft 260ms cubic-bezier(.22,.72,.2,1) both; }
+    .panel.swipe-in-right { animation: swipeInRight 260ms cubic-bezier(.22,.72,.2,1) both; }
 
     @keyframes swipeInLeft {
-      from { opacity: .55; transform: translateX(34px) scale(.985); filter: blur(1px); }
-      to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+      from { opacity: .82; transform: translate3d(22px,0,0) scale(.995); }
+      to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
     }
     @keyframes swipeInRight {
-      from { opacity: .55; transform: translateX(-34px) scale(.985); filter: blur(1px); }
-      to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: .82; transform: translate3d(-22px,0,0) scale(.995); }
+      to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
     }
 
     .card {
@@ -2509,10 +2504,13 @@
 
       function restaurarPanel() {
         if (!panelArrastrado) return;
-        panelArrastrado.style.transition = 'transform 220ms cubic-bezier(.2,.8,.2,1), opacity 220ms ease, filter 220ms ease';
+        panelArrastrado.style.transition = 'transform 220ms cubic-bezier(.2,.8,.2,1), opacity 220ms ease';
         panelArrastrado.style.transform = '';
         panelArrastrado.style.opacity = '';
         panelArrastrado.style.filter = '';
+        panelArrastrado.style.willChange = '';
+        const panelRestaurado = panelArrastrado;
+        window.setTimeout(() => { panelRestaurado.style.transition = ''; }, 240);
         panelArrastrado = null;
       }
 
@@ -2555,7 +2553,7 @@
         const inclinacion = Math.max(-2.2, Math.min(2.2, dx / ancho * 2.2));
         panelArrastrado.style.transform = 'translate3d(' + resistencia + 'px,0,0) rotate(' + inclinacion + 'deg) scale(' + (1 - Math.min(Math.abs(dx) / ancho, .04)) + ')';
         panelArrastrado.style.opacity = String(1 - Math.min(Math.abs(dx) / (ancho * 2.8), .22));
-        panelArrastrado.style.filter = 'drop-shadow(' + (-Math.sign(dx) * 8) + 'px 8px 18px rgba(15,23,42,.10))';
+        panelArrastrado.style.filter = 'none';
       }, { passive: true });
 
       document.addEventListener('touchend', function(e) {
@@ -2576,10 +2574,10 @@
         const panelSalida = panelArrastrado;
         const direccion = dx < 0 ? -1 : 1;
         const ancho = Math.max(window.innerWidth, 320);
-        panelSalida.style.transition = 'transform 150ms cubic-bezier(.2,.75,.25,1), opacity 150ms ease, filter 150ms ease';
+        panelSalida.style.transition = 'transform 170ms cubic-bezier(.2,.75,.25,1), opacity 170ms ease';
         panelSalida.style.transform = 'translate3d(' + (direccion * ancho * .92) + 'px,0,0) rotate(' + (direccion * 2) + 'deg) scale(.97)';
         panelSalida.style.opacity = '.25';
-        panelSalida.style.filter = 'blur(1px)';
+        panelSalida.style.filter = 'none';
         panelArrastrado = null;
         window.direccionCambioPestana = dx < 0 ? 'left' : 'right';
         setTimeout(function() {
@@ -2613,9 +2611,13 @@
           void panelDestino.offsetWidth;
           panelDestino.classList.add(window.direccionCambioPestana === 'left' ? 'swipe-in-left' : 'swipe-in-right');
           window.direccionCambioPestana = null;
-          panelDestino.addEventListener('animationend', function() {
+          const finalizarEntrada = function(event) {
+            if (event.target !== panelDestino ||
+                (event.animationName !== 'swipeInLeft' && event.animationName !== 'swipeInRight')) return;
             panelDestino.classList.remove('swipe-in-left', 'swipe-in-right');
-          }, { once: true });
+            panelDestino.removeEventListener('animationend', finalizarEntrada);
+          };
+          panelDestino.addEventListener('animationend', finalizarEntrada);
         }
 
         if (btn.dataset.panel === 'nomina') {
