@@ -177,7 +177,9 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         region.notifyOnExit = true
         pendingRegion = region
         switch manager.authorizationStatus {
-        case .notDetermined, .authorizedWhenInUse:
+        case .notDetermined:
+            manager.requestWhenInUseAuthorization()
+        case .authorizedWhenInUse:
             requestedAlways = true
             manager.requestAlwaysAuthorization()
         case .authorizedAlways:
