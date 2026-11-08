@@ -2500,7 +2500,17 @@
       let inicioX = 0, inicioY = 0, panelArrastrado = null;
       let gestoValido = false, ejeHorizontal = false, desplazamiento = 0;
       const distanciaMinima = 65;
-      const selectoresInteractivos = 'button, a, input, select, textarea, label, [contenteditable="true"], iframe, .leaflet-container, .map, .geo-map-card, #pdf-preview-box';
+      const selectoresInteractivos = 'input, select, textarea, [contenteditable="true"], iframe, .leaflet-container, .map, .geo-map-card, #pdf-preview-box';
+      let bloquearClickHasta = 0;
+
+      // Si el usuario arrastra horizontalmente desde un botón o enlace,
+      // cambiamos de pestaña y evitamos que después se dispare su clic accidental.
+      document.addEventListener('click', function(e) {
+        if (e.isTrusted && Date.now() < bloquearClickHasta) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        }
+      }, true);
 
       function restaurarPanel() {
         if (!panelArrastrado) return;
@@ -2572,6 +2582,8 @@
         if (siguiente < 0 || siguiente >= botones.length) { restaurarPanel(); return; }
 
         const panelSalida = panelArrastrado;
+        // Evita que el toque termine activando un botón/enlace bajo el dedo.
+        bloquearClickHasta = Date.now() + 450;
         const direccion = dx < 0 ? -1 : 1;
         const ancho = Math.max(window.innerWidth, 320);
         panelSalida.style.transition = 'transform 170ms cubic-bezier(.2,.75,.25,1), opacity 170ms ease';
