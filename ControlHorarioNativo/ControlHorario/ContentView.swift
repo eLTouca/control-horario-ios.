@@ -149,7 +149,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
                 let request = VNRecognizeTextRequest()
                 request.recognitionLevel = .accurate
                 request.automaticallyDetectsLanguage = true
-                request.recognitionLanguages = ["es-ES", "es"]
+                request.recognitionLanguages = ["es-ES"]
                 request.usesLanguageCorrection = true
                 do {
                     try VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
