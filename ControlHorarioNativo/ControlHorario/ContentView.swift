@@ -241,6 +241,7 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
     private let manager = CLLocationManager()
     private var mode: Mode = .single
     private let askedForAlwaysKey = "ControlHorarioAskedForAlwaysLocation"
+    private let shownLocationHelpKey = "ControlHorarioShownLocationHelp"
     @Published var showPermissionHelp = false
     var onUpdate: ((Double, Double, Double) -> Void)?
     var onError: ((Int) -> Void)?
@@ -273,6 +274,12 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         manager.allowsBackgroundLocationUpdates = false
     }
 
+    private func showLocationHelpOnce() {
+        guard !UserDefaults.standard.bool(forKey: shownLocationHelpKey) else { return }
+        UserDefaults.standard.set(true, forKey: shownLocationHelpKey)
+        DispatchQueue.main.async { self.showPermissionHelp = true }
+    }
+
     private func requestPermissionAndStart() {
         guard CLLocationManager.locationServicesEnabled() else { onError?(2); return }
         switch manager.authorizationStatus {
@@ -287,9 +294,7 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
                 manager.requestAlwaysAuthorization()
             } else {
                 manager.startUpdatingLocation()
-                if mode == .watching {
-                    DispatchQueue.main.async { self.showPermissionHelp = true }
-                }
+                if mode == .watching { showLocationHelpOnce() }
             }
         case .denied, .restricted:
             showPermissionHelp = true
@@ -311,7 +316,7 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
                 manager.requestAlwaysAuthorization()
             } else {
                 manager.startUpdatingLocation()
-                DispatchQueue.main.async { self.showPermissionHelp = (mode == .watching) }
+                if mode == .watching { showLocationHelpOnce() }
             }
         case .denied, .restricted:
             DispatchQueue.main.async {
