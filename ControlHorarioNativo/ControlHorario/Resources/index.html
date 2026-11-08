@@ -3622,8 +3622,8 @@
       if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
         const titulo = document.getElementById('geo-status-titulo');
         const detalle = document.getElementById('geo-status-detalle');
-        if (titulo) titulo.textContent = 'Solicitando permiso GPS de iOS…';
-        if (detalle) detalle.textContent = 'El iPhone mostrará el aviso del sistema. Selecciona «Permitir mientras se usa la app».';
+        if (titulo) titulo.textContent = 'Buscando tu posición…';
+        if (detalle) detalle.textContent = 'Usando el permiso de ubicación de iOS. Solo se solicitará si todavía no está concedido.';
         window.webkit.messageHandlers.location.postMessage('once');
         return;
       }
