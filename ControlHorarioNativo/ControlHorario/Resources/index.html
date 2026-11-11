@@ -3483,10 +3483,10 @@
     }
 
     function geoOtMsHoy() {
-      asegurarDiaGeo();
-      let total = geoState.pendingOtMs || 0;
-      // el tick ya va metiendo en pending; no sumar enterAt genérico
-      return total;
+      // While inside, do not reset the previous day's accumulator before
+      // tickGeoTiempo has split the elapsed interval at midnight.
+      if (!geoState.inside) asegurarDiaGeo();
+      return geoState.pendingOtMs || 0;
     }
 
     function prepararDiaGeo(fecha) {
@@ -3555,10 +3555,12 @@
           sincronizarHorasExtraRegistro(fechaTramo);
           cursor = tramoFin;
         }
-      } else {
+      } else if (!geoState.inside) {
         asegurarDiaGeo();
       }
-      geoState.lastTick = now;
+      // Never move the saved timestamp backwards when an old/duplicate
+      // native event arrives after a newer one.
+      if (!geoState.lastTick || now > geoState.lastTick) geoState.lastTick = now;
       geoState.enFranjaExtra = geoState.inside && esFranjaHoraExtra(new Date(now));
       saveGeoState();
       actualizarUIGeo();
