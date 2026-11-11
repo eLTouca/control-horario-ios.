@@ -2285,6 +2285,18 @@
             <input type="text" id="config-empresa" placeholder="Empresa" />
           </div>
         </div>
+        <h3 style="font-size:.9rem;margin:1rem 0 .55rem;">Periodo de horas extras</h3>
+        <p class="note" style="margin-bottom:.75rem;">Indica el día en que comienza y termina tu periodo de cálculo. Por defecto: del día 21 al 20.</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="config-periodo-inicio">Día de inicio</label>
+            <input type="number" id="config-periodo-inicio" min="1" max="31" step="1" inputmode="numeric" />
+          </div>
+          <div class="form-group">
+            <label for="config-periodo-fin">Día de cierre</label>
+            <input type="number" id="config-periodo-fin" min="1" max="31" step="1" inputmode="numeric" />
+          </div>
+        </div>
         <button class="btn btn-primary" id="btn-guardar-config">Guardar configuración</button>
       </div>
 
@@ -2312,6 +2324,8 @@
     let config = {
       nombre: '',
       empresa: '',
+      periodoInicio: 21,
+      periodoFin: 20,
       precioHora: 23.93,
       sueldoBase: 1860.37,
       geo: {
@@ -2688,6 +2702,8 @@
         if (btn.dataset.panel === 'config') {
           document.getElementById('config-nombre').value = config.nombre || '';
           document.getElementById('config-empresa').value = config.empresa || '';
+          document.getElementById('config-periodo-inicio').value = config.periodoInicio || 21;
+          document.getElementById('config-periodo-fin').value = config.periodoFin || 20;
         }
         if (btn.dataset.panel === 'calendario') {
           renderCalendario();
@@ -2777,15 +2793,19 @@
       renderChartPeriodo(desde, hasta);
     }
 
-    /** Periodo 21 del mes anterior → 20 del mes indicado (YYYY-MM) */
+    /** Periodo de horas extras asociado al mes de cierre indicado (YYYY-MM). */
     function periodoDeMesCierre(ym) {
       if (!ym) return getPeriodo20();
       const [y, m] = ym.split('-').map(Number);
-      // cierre el día 20 del mes ym
-      const fin = new Date(y, m - 1, 20);
-      const ini = new Date(y, m - 2, 21); // día 21 del mes anterior
-      const pad = n => String(n).padStart(2, '0');
-      const toYMD = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      const inicioDia = Math.max(1, Math.min(31, Number(config.periodoInicio) || 21));
+      const finDia = Math.max(1, Math.min(31, Number(config.periodoFin) || 20));
+      const cruzaMes = inicioDia > finDia;
+      const fin = crearFechaPeriodo(y, m - 1, finDia);
+      const ini = crearFechaPeriodo(y, m - 1 - (cruzaMes ? 1 : 0), inicioDia);
+      const toYMD = d => {
+        const pad = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      };
       return { desde: toYMD(ini), hasta: toYMD(fin) };
     }
 
@@ -3264,15 +3284,28 @@
       '2B': { nombre: 'Jefe de taller', base: 2490.80, he: 32.75, anual: 34871.14 }
     };
 
+    function crearFechaPeriodo(anio, mes, dia) {
+      const ultimoDia = new Date(anio, mes + 1, 0).getDate();
+      return new Date(anio, mes, Math.min(dia, ultimoDia));
+    }
+
     function getPeriodo20() {
       const hoyD = new Date();
-      let fin = new Date(hoyD.getFullYear(), hoyD.getMonth(), 20);
-      if (hoyD.getDate() > 20) {
-        fin = new Date(hoyD.getFullYear(), hoyD.getMonth() + 1, 20);
+      const inicioDia = Math.max(1, Math.min(31, Number(config.periodoInicio) || 21));
+      const finDia = Math.max(1, Math.min(31, Number(config.periodoFin) || 20));
+      let anioFin = hoyD.getFullYear();
+      let mesFin = hoyD.getMonth();
+      const finEsteMes = crearFechaPeriodo(anioFin, mesFin, finDia);
+      if (hoyD > finEsteMes) {
+        mesFin++;
       }
-      const ini = new Date(fin.getFullYear(), fin.getMonth() - 1, 21);
-      const pad = n => String(n).padStart(2, '0');
-      const toYMD = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      const cruzaMes = inicioDia > finDia;
+      const fin = crearFechaPeriodo(anioFin, mesFin, finDia);
+      const ini = crearFechaPeriodo(anioFin, mesFin - (cruzaMes ? 1 : 0), inicioDia);
+      const toYMD = d => {
+        const pad = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      };
       return { desde: toYMD(ini), hasta: toYMD(fin) };
     }
 
@@ -3970,9 +4003,22 @@
     document.getElementById('btn-guardar-config').addEventListener('click', () => {
       config.nombre = document.getElementById('config-nombre').value.trim();
       config.empresa = document.getElementById('config-empresa').value.trim();
+      const inicioPeriodo = Number(document.getElementById('config-periodo-inicio').value);
+      const finPeriodo = Number(document.getElementById('config-periodo-fin').value);
+      if (!Number.isInteger(inicioPeriodo) || inicioPeriodo < 1 || inicioPeriodo > 31 ||
+          !Number.isInteger(finPeriodo) || finPeriodo < 1 || finPeriodo > 31) {
+        toast('Indica días válidos entre 1 y 31');
+        return;
+      }
+      config.periodoInicio = inicioPeriodo;
+      config.periodoFin = finPeriodo;
       saveConfig();
       document.getElementById('pdf-nombre').value = config.nombre;
       document.getElementById('pdf-empresa').value = config.empresa;
+      actualizarStats();
+      rellenarHorasPeriodo20();
+      renderLista();
+      if (typeof actualizarVistaRapido === 'function') actualizarVistaRapido();
       toast('Configuración guardada');
     });
 
