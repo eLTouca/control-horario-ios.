@@ -125,21 +125,38 @@ struct ControlHorarioWebView: UIViewRepresentable {
                   let webView,
                   let presenter = webView.parentViewController else { return }
 
-            if action == "choose", let json = payload["data"] as? String {
-                pendingBackupData = Data(json.utf8)
-                let tempURL = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("copia-seguridad-control-horario.json")
-                do {
-                    try pendingBackupData?.write(to: tempURL, options: .atomic)
-                    let picker = UIDocumentPickerViewController(forExporting: [tempURL], asCopy: true)
-                    picker.delegate = self
-                    picker.shouldShowFileExtensions = true
-                    presenter.present(picker, animated: true)
-                } catch {
-                    notifyBackup("No se pudo preparar la copia de seguridad.")
-                }
+            if action == "confirm", let json = payload["data"] as? String {
+                let alert = UIAlertController(
+                    title: "Copia de seguridad",
+                    message: "¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad en la ubicación que elijas en tu iPhone?\\n\\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "Ahora no", style: .cancel))
+                alert.addAction(UIAlertAction(title: "Sí, configurar", style: .default) { [weak self] _ in
+                    DispatchQueue.main.async {
+                        self?.presentBackupPicker(with: Data(json.utf8))
+                    }
+                })
+                presenter.present(alert, animated: true)
             } else if action == "update", let json = payload["data"] as? String {
                 writeBackup(Data(json.utf8))
+            }
+        }
+
+        private func presentBackupPicker(with data: Data) {
+            guard let webView, let presenter = webView.parentViewController else { return }
+            pendingBackupData = data
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("copia-seguridad-control-horario.json")
+            do {
+                try data.write(to: tempURL, options: .atomic)
+                let picker = UIDocumentPickerViewController(forExporting: [tempURL], asCopy: true)
+                picker.delegate = self
+                picker.shouldShowFileExtensions = true
+                presenter.present(picker, animated: true)
+            } catch {
+                pendingBackupData = nil
+                notifyBackup("No se pudo preparar la copia de seguridad.")
             }
         }
 
@@ -191,10 +208,10 @@ struct ControlHorarioWebView: UIViewRepresentable {
         }
 
         private func notifyBackup(_ message: String) {
-            let escaped = message.replacingOccurrences(of: "\\\\", with: "\\\\\\\\")
-                .replacingOccurrences(of: "'", with: "\\\\'")
+            let encoded = (try? JSONSerialization.data(withJSONObject: [message], options: []))
+                .flatMap { String(data: $0, encoding: .utf8) } ?? "[\"Copia de seguridad\"]"
             DispatchQueue.main.async {
-                self.webView?.evaluateJavaScript("window.toast && window.toast('\(escaped)')")
+                self.webView?.evaluateJavaScript("window.toast && window.toast(\(encoded)[0])")
             }
         }
 
