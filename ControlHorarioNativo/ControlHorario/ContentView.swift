@@ -43,6 +43,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
         let content = WKUserContentController()
         content.add(context.coordinator, name: "location")
         content.add(context.coordinator, name: "pdf")
+        content.add(context.coordinator, name: "backup")
         let config = WKWebViewConfiguration()
         config.userContentController = content
         let web = WKWebView(frame: .zero, configuration: config)
@@ -74,12 +75,22 @@ struct ControlHorarioWebView: UIViewRepresentable {
 
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 
-    final class Coordinator: NSObject, WKScriptMessageHandler {
+    final class Coordinator: NSObject, WKScriptMessageHandler, UIDocumentPickerDelegate {
         let locationManager: NativeLocationManager
         weak var webView: WKWebView?
-        init(locationManager: NativeLocationManager) { self.locationManager = locationManager }
+        private let backupBookmarkKey = "ControlHorario.backupBookmark"
+        private var pendingBackupData: Data?
+
+        init(locationManager: NativeLocationManager) {
+            self.locationManager = locationManager
+            super.init()
+        }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            if message.name == "backup" {
+                handleBackupMessage(message.body)
+                return
+            }
             if message.name == "pdf" {
                 handlePDFMessage(message.body)
                 return
@@ -105,6 +116,85 @@ struct ControlHorarioWebView: UIViewRepresentable {
                let lng = payload["lng"] as? Double,
                let radius = payload["radius"] as? Double {
                 locationManager.startWatching(latitude: lat, longitude: lng, radius: radius)
+            }
+        }
+
+        private func handleBackupMessage(_ body: Any) {
+            guard let payload = body as? [String: Any],
+                  let action = payload["action"] as? String,
+                  let webView,
+                  let presenter = webView.parentViewController else { return }
+
+            if action == "choose", let json = payload["data"] as? String {
+                pendingBackupData = Data(json.utf8)
+                let tempURL = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("copia-seguridad-control-horario.json")
+                do {
+                    try pendingBackupData?.write(to: tempURL, options: .atomic)
+                    let picker = UIDocumentPickerViewController(forExporting: [tempURL], asCopy: true)
+                    picker.delegate = self
+                    picker.shouldShowFileExtensions = true
+                    presenter.present(picker, animated: true)
+                } catch {
+                    notifyBackup("No se pudo preparar la copia de seguridad.")
+                }
+            } else if action == "update", let json = payload["data"] as? String {
+                writeBackup(Data(json.utf8))
+            }
+        }
+
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            guard let url = urls.first else { return }
+            do {
+                let bookmark = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+                UserDefaults.standard.set(bookmark, forKey: backupBookmarkKey)
+                if let data = pendingBackupData {
+                    try writeBackupData(data, to: url)
+                    notifyBackup("Copia de seguridad creada. Se actualizará automáticamente al guardar cambios.")
+                }
+            } catch {
+                notifyBackup("No se pudo guardar la ubicación de la copia. Inténtalo de nuevo.")
+            }
+            pendingBackupData = nil
+        }
+
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            pendingBackupData = nil
+        }
+
+        private func writeBackup(_ data: Data) {
+            guard let bookmark = UserDefaults.standard.data(forKey: backupBookmarkKey) else { return }
+            var stale = false
+            do {
+                let url = try URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
+                if stale {
+                    let refreshed = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+                    UserDefaults.standard.set(refreshed, forKey: backupBookmarkKey)
+                }
+                try writeBackupData(data, to: url)
+            } catch {
+                notifyBackup("No se pudo actualizar la copia de seguridad. Vuelve a elegir su ubicación.")
+            }
+        }
+
+        private func writeBackupData(_ data: Data, to url: URL) throws {
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+            var coordinationError: NSError?
+            var writeError: Error?
+            NSFileCoordinator(filePresenter: nil).coordinate(writingItemAt: url, options: .forReplacing, error: &coordinationError) { destination in
+                do { try data.write(to: destination, options: .atomic) }
+                catch { writeError = error }
+            }
+            if let coordinationError { throw coordinationError }
+            if let writeError { throw writeError }
+        }
+
+        private func notifyBackup(_ message: String) {
+            let escaped = message.replacingOccurrences(of: "\\\\", with: "\\\\\\\\")
+                .replacingOccurrences(of: "'", with: "\\\\'")
+            DispatchQueue.main.async {
+                self.webView?.evaluateJavaScript("window.toast && window.toast('\(escaped)')")
             }
         }
 
