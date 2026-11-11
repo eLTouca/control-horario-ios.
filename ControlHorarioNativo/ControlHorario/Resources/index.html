@@ -1827,6 +1827,28 @@
       #panel-nomina .form-group label { font-size: 0.58rem; }
     }
 
+    /* Ajustes: días del periodo en dos columnas equilibradas */
+    #panel-config .periodo-config-row {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.7rem;
+      align-items: start;
+      margin-bottom: 0.85rem;
+    }
+    #panel-config .periodo-config-row .form-group {
+      min-width: 0; width: 100%; flex: initial;
+      display: flex; flex-direction: column; align-items: stretch;
+    }
+    #panel-config .periodo-config-row label {
+      min-height: 1.2em; margin: 0 0 0.35rem;
+      text-align: center; line-height: 1.2; font-size: 0.68rem;
+    }
+    #panel-config .periodo-config-row input {
+      display: block; width: 100%; min-width: 0; max-width: 100%;
+      min-height: 44px; box-sizing: border-box; margin: 0;
+      padding: 0.55rem 0.4rem; text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
 </style>
 
 
@@ -2300,7 +2322,7 @@
         </div>
         <h3 style="font-size:.9rem;margin:1rem 0 .55rem;">Periodo de horas extras</h3>
         <p class="note" style="margin-bottom:.75rem;">Indica el día en que comienza y termina tu periodo de cálculo. Por defecto: del día 21 al 20.</p>
-        <div class="form-row">
+        <div class="form-row periodo-config-row">
           <div class="form-group">
             <label for="config-periodo-inicio">Día de inicio</label>
             <input type="number" id="config-periodo-inicio" min="1" max="31" step="1" inputmode="numeric" />
