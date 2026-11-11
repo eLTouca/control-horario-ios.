@@ -2285,10 +2285,10 @@
 
       <div class="card">
         <h2>🗑️ Datos</h2>
-        <p class="note" style="margin-bottom: 1rem;">Puedes exportar o borrar todos los registros de horas.</p>
+        <p class="note" style="margin-bottom: 1rem;">Guarda y recupera una copia de tus registros y configuración.</p>
         <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-          <button class="btn btn-outline" id="btn-exportar">Exportar JSON</button>
-          <button class="btn btn-outline" id="btn-importar">Importar JSON</button>
+          <button class="btn btn-outline" id="btn-exportar">Exportar copia de seguridad</button>
+          <button class="btn btn-outline" id="btn-importar">Importar copia de seguridad</button>
           <input type="file" id="input-import" accept=".json" style="display:none" />
           <button class="btn btn-danger" id="btn-borrar-todo">Borrar todos los registros</button>
         </div>
@@ -2363,8 +2363,23 @@
       localStorage.setItem(GEO_STATE_KEY, JSON.stringify(geoState));
     }
 
+    let backupUpdateTimer = null;
+    function scheduleBackupUpdate() {
+      if (backupUpdateTimer) clearTimeout(backupUpdateTimer);
+      backupUpdateTimer = setTimeout(() => {
+        backupUpdateTimer = null;
+        if (window.webkit?.messageHandlers?.backup) {
+          window.webkit.messageHandlers.backup.postMessage({
+            action: 'update',
+            data: JSON.stringify({ registros, config })
+          });
+        }
+      }, 600);
+    }
+
     function saveData() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+      scheduleBackupUpdate();
       if (document.getElementById('panel-calendario')?.classList.contains('active')) {
         renderCalendario();
       }
@@ -2372,6 +2387,7 @@
 
     function saveConfig() {
       localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+      scheduleBackupUpdate();
     }
 
     // ========== UTILIDADES ==========
@@ -3956,12 +3972,19 @@
     });
 
     document.getElementById('btn-exportar').addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify({ registros, config }, null, 2)], { type: 'application/json' });
+      const data = JSON.stringify({ registros, config }, null, 2);
+      const mensaje = '¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad en la ubicación que elijas en tu iPhone?\\n\\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.';
+      if (window.webkit?.messageHandlers?.backup) {
+        if (!confirm(mensaje)) return;
+        window.webkit.messageHandlers.backup.postMessage({ action: 'choose', data });
+        return;
+      }
+      const blob = new Blob([data], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'backup-horas-extras.json';
+      a.download = 'copia-seguridad-control-horario.json';
       a.click();
-      toast('Exportado');
+      toast('Copia de seguridad descargada');
     });
 
     document.getElementById('btn-importar').addEventListener('click', () => {
@@ -4000,6 +4023,7 @@
 
     // ========== INIT ==========
     loadData();
+    scheduleBackupUpdate();
     window.nativeGeofenceReady = true;
 
     // Restore the saved JavaScript state before processing queued native events.
