@@ -128,7 +128,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
             if action == "confirm", let json = payload["data"] as? String {
                 let alert = UIAlertController(
                     title: "Copia de seguridad",
-                    message: "¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad en la ubicación que elijas en tu iPhone?\\n\\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.",
+                    message: "¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad en la ubicación que elijas en tu iPhone?\n\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.",
                     preferredStyle: .alert
                 )
                 alert.addAction(UIAlertAction(title: "Ahora no", style: .cancel))
