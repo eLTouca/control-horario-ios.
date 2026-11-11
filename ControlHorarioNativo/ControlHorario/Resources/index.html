@@ -3832,10 +3832,16 @@
       // No reiniciar lastTick al reabrir: así se recupera todo el intervalo
       // aunque iOS haya suspendido la WebView durante horas.
       if (state === 'state-inside') {
-        asegurarDiaGeo();
-        geoState.inside = true;
-        if (!geoState.lastTick) geoState.lastTick = eventTime;
-        saveGeoState();
+        // If the app was relaunched while already inside, account for the
+        // elapsed interval before updating the last processed timestamp.
+        if (geoState.inside && geoState.lastTick) {
+          tickGeoTiempo(eventTime);
+        } else {
+          geoState.inside = true;
+          geoState.date = hoyFecha(new Date(eventTime));
+          geoState.lastTick = eventTime;
+          saveGeoState();
+        }
       } else if (state === 'state-outside') {
         if (geoState.inside) tickGeoTiempo(eventTime);
         geoState.inside = false;
