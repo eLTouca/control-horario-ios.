@@ -4122,7 +4122,7 @@
       const elTotal = document.getElementById('rapido-total');
       const elFecha = document.getElementById('rapido-fecha');
       const elPer = document.getElementById('rapido-periodo');
-      if (elTotal) elTotal.innerHTML = formatNum(horas, horas % 1 ? 1 : 0) + ' <span>h hoy</span>';
+      if (elTotal) elTotal.innerHTML = formatNum(horas, horas % 1 ? 1 : 0) + ' <span>horas hoy</span>';
       if (elFecha) {
         const d = new Date(fecha + 'T12:00:00');
         elFecha.textContent = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
