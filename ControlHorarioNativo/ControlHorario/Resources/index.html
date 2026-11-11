@@ -2526,7 +2526,11 @@
       let inicioX = 0, inicioY = 0, panelArrastrado = null;
       let gestoValido = false, ejeHorizontal = false, desplazamiento = 0;
       const distanciaMinima = 40;
-      const selectoresInteractivos = 'input, select, textarea, [contenteditable="true"], iframe, .leaflet-container, .map, .geo-map-card, #pdf-preview-box';
+      // Los campos, casillas, selectores, botones y pestañas también permiten
+      // iniciar un swipe: un toque normal sigue activándolos, pero un arrastre
+      // claramente horizontal cambia de pestaña. Solo excluimos superficies
+      // donde el gesto tiene otro significado o controles de edición compleja.
+      const selectoresInteractivos = '[contenteditable="true"], iframe, .leaflet-container, .map, .geo-map-card, #pdf-preview-box';
       let bloquearClickHasta = 0;
 
       // Si el usuario arrastra horizontalmente desde un botón o enlace,
@@ -2557,6 +2561,9 @@
         if (e.target && e.target.closest && e.target.closest(selectoresInteractivos)) {
           gestoValido = false; return;
         }
+        // No se excluyen input/select/textarea: el gesto solo se captura al
+        // superar el umbral horizontal; los toques y movimientos verticales
+        // siguen comportándose como controles de formulario normales.
         const botones = Array.from(document.querySelectorAll('.nav-btn'));
         const indice = botones.findIndex(b => b.classList.contains('active'));
         if (indice < 0) { gestoValido = false; return; }
