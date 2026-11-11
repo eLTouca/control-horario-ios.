@@ -3835,7 +3835,7 @@
         // If the app was relaunched while already inside, account for the
         // elapsed interval before updating the last processed timestamp.
         if (geoState.inside && geoState.lastTick) {
-          tickGeoTiempo(eventTime);
+          if (eventTime > geoState.lastTick) tickGeoTiempo(eventTime);
         } else {
           geoState.inside = true;
           geoState.date = hoyFecha(new Date(eventTime));
@@ -3863,11 +3863,6 @@
       }
       actualizarUIGeo();
     };
-    // Recupera eventos de geovalla que iOS haya entregado mientras la app
-    // estaba cerrada o antes de que la WebView terminase de cargar.
-    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
-      window.webkit.messageHandlers.location.postMessage('sync');
-    }
     window.nativeLocationError = function(code) { onGeoError({code:Number(code)}); };
 
     document.getElementById('btn-geo-aqui').addEventListener('click', () => {
@@ -4115,6 +4110,12 @@
     actualizarVistaRapido();
     rellenarFormGeo();
     if (config.geo && config.geo.activo) startGeoWatch();
+
+    // Important: sync only after loadData() has restored geoState from localStorage.
+    // Otherwise a queued entry/exit could be applied to defaults and then overwritten.
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
+      window.webkit.messageHandlers.location.postMessage('sync');
+    }
 
     // Al volver del segundo plano, recupera el tiempo transcurrido usando la última zona conocida.
     document.addEventListener('visibilitychange', () => {
