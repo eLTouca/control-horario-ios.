@@ -2375,6 +2375,7 @@
       periodoFin: 20,
       precioHora: 23.93,
       sueldoBase: 1860.37,
+      nominaPagas: 14,
       geo: {
         activo: false,
         autoRegistrar: true,
@@ -4120,6 +4121,15 @@
 
     // ========== INIT ==========
     loadData();
+    const selectorPagas = document.getElementById('pagas');
+    if (selectorPagas) {
+      const pagasGuardadas = String(config.nominaPagas || 14);
+      selectorPagas.value = pagasGuardadas === '12' || pagasGuardadas === '14' ? pagasGuardadas : '14';
+      selectorPagas.addEventListener('change', () => {
+        config.nominaPagas = Number(selectorPagas.value) === 12 ? 12 : 14;
+        saveConfig();
+      });
+    }
     scheduleBackupUpdate();
     window.nativeGeofenceReady = true;
 
