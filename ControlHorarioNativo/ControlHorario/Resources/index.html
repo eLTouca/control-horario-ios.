@@ -4003,6 +4003,7 @@
 
     // ========== INIT ==========
     loadData();
+    window.nativeGeofenceReady = true;
 
     // Restore the saved JavaScript state before processing queued native events.
     if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
