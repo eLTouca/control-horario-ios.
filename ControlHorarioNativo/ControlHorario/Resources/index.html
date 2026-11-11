@@ -2059,17 +2059,6 @@
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="pdf-nombre">Tu nombre (aparece en el PDF)</label>
-            <input type="text" id="pdf-nombre" placeholder="Nombre y apellidos" />
-          </div>
-          <div class="form-group">
-            <label for="pdf-empresa">Empresa / Proyecto (opcional)</label>
-            <input type="text" id="pdf-empresa" placeholder="Nombre de la empresa" />
-          </div>
-        </div>
-
         <button class="btn btn-primary" id="btn-generar-pdf" style="margin-top: 0.5rem;">
           👁 Generar previa del PDF
         </button>
@@ -3167,8 +3156,8 @@
     function construirPdf() {
       const desde = document.getElementById('pdf-desde').value;
       const hasta = document.getElementById('pdf-hasta').value;
-      const nombre = document.getElementById('pdf-nombre').value || config.nombre || 'Trabajador';
-      const empresa = document.getElementById('pdf-empresa').value || config.empresa || '';
+      const nombre = (config.nombre || '').trim() || 'Trabajador';
+      const empresa = (config.empresa || '').trim();
 
       if (!desde || !hasta) {
         toast('Indica el rango de fechas');
@@ -3282,9 +3271,6 @@
       document.querySelector('input[name="tipo-pdf"][value="personalizado"]').checked = true;
       document.getElementById('pdf-desde').value = desde;
       document.getElementById('pdf-hasta').value = hasta;
-      document.getElementById('pdf-nombre').value = document.getElementById('pdf-nombre').value || config.nombre || '';
-      document.getElementById('pdf-empresa').value = document.getElementById('pdf-empresa').value || config.empresa || '';
-
       const result = construirPdf();
       if (!result) return;
       if (pdfPendiente && pdfPendiente.url) URL.revokeObjectURL(pdfPendiente.url);
@@ -4063,8 +4049,6 @@
       config.periodoInicio = inicioPeriodo;
       config.periodoFin = finPeriodo;
       saveConfig();
-      document.getElementById('pdf-nombre').value = config.nombre;
-      document.getElementById('pdf-empresa').value = config.empresa;
       actualizarStats();
       rellenarHorasPeriodo20();
       renderLista();
@@ -4153,8 +4137,6 @@
       const { hasta } = getPeriodo20();
       document.getElementById('filtro-mes').value = hasta.slice(0, 7);
     })();
-    document.getElementById('pdf-nombre').value = config.nombre || '';
-    document.getElementById('pdf-empresa').value = config.empresa || '';
     actualizarRangoPDF();
     actualizarStats();
     renderLista();
