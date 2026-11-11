@@ -1849,6 +1849,30 @@
       padding: 0.55rem 0.4rem; text-align: center;
       font-variant-numeric: tabular-nums;
     }
+
+
+    /* La barra de pestañas tiene su propio desplazamiento horizontal.
+       Los gestos iniciados aquí nunca cambian de panel. */
+    header nav {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      touch-action: pan-x;
+      scrollbar-width: none;
+      gap: 0.3rem;
+    }
+    header nav::-webkit-scrollbar { display: none; }
+    header nav .nav-btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
 </style>
 
 
@@ -2589,7 +2613,7 @@
       // iniciar un swipe: un toque normal sigue activándolos, pero un arrastre
       // claramente horizontal cambia de pestaña. Solo excluimos superficies
       // donde el gesto tiene otro significado o controles de edición compleja.
-      const selectoresInteractivos = '[contenteditable="true"], iframe, .leaflet-container, .map, .geo-map-card, #pdf-preview-box';
+      const selectoresInteractivos = 'nav, [contenteditable="true"], iframe, .leaflet-container, .map, .geo-map-card, #pdf-preview-box';
       let bloquearClickHasta = 0;
 
       // Si el usuario arrastra horizontalmente desde un botón o enlace,
