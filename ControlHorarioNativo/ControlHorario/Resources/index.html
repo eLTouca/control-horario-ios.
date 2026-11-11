@@ -2540,7 +2540,7 @@
 
       function restaurarPanel() {
         if (!panelArrastrado) return;
-        panelArrastrado.style.transition = 'transform 220ms cubic-bezier(.2,.8,.2,1), opacity 220ms ease';
+        panelArrastrado.style.transition = 'transform 180ms cubic-bezier(.22,.8,.2,1), opacity 180ms ease';
         panelArrastrado.style.transform = '';
         panelArrastrado.style.opacity = '';
         panelArrastrado.style.filter = '';
@@ -2577,20 +2577,23 @@
         const dx = e.touches[0].clientX - inicioX;
         const dy = e.touches[0].clientY - inicioY;
         if (!ejeHorizontal) {
-          if (Math.abs(dy) > 9 && Math.abs(dy) > Math.abs(dx)) {
+          if (Math.abs(dy) > 7 && Math.abs(dy) > Math.abs(dx) * 1.05) {
             gestoValido = false; restaurarPanel(); return;
           }
-          if (Math.abs(dx) > 9 && Math.abs(dx) > Math.abs(dy) * 1.15) ejeHorizontal = true;
+          if (Math.abs(dx) > 7 && Math.abs(dx) > Math.abs(dy) * 1.2) ejeHorizontal = true;
         }
         if (!ejeHorizontal) return;
+
+        // Una vez identificado el gesto horizontal, capturamos el movimiento:
+        // evita que iOS desplace la página verticalmente mientras cambiamos de pestaña.
+        if (e.cancelable) e.preventDefault();
         desplazamiento = dx;
         const ancho = Math.max(window.innerWidth, 320);
-        const resistencia = Math.sign(dx) * Math.min(Math.abs(dx), ancho * .72);
-        const inclinacion = Math.max(-2.2, Math.min(2.2, dx / ancho * 2.2));
-        panelArrastrado.style.transform = 'translate3d(' + resistencia + 'px,0,0) rotate(' + inclinacion + 'deg) scale(' + (1 - Math.min(Math.abs(dx) / ancho, .04)) + ')';
-        panelArrastrado.style.opacity = String(1 - Math.min(Math.abs(dx) / (ancho * 2.8), .22));
+        const resistencia = Math.sign(dx) * Math.min(Math.abs(dx), ancho * .78);
+        panelArrastrado.style.transform = 'translate3d(' + resistencia + 'px,0,0)';
+        panelArrastrado.style.opacity = String(1 - Math.min(Math.abs(dx) / (ancho * 3.5), .18));
         panelArrastrado.style.filter = 'none';
-      }, { passive: true });
+      }, { passive: false });
 
       document.addEventListener('touchend', function(e) {
         if (!gestoValido || !e.changedTouches || e.changedTouches.length !== 1) {
@@ -2612,9 +2615,9 @@
         bloquearClickHasta = Date.now() + 450;
         const direccion = dx < 0 ? -1 : 1;
         const ancho = Math.max(window.innerWidth, 320);
-        panelSalida.style.transition = 'transform 170ms cubic-bezier(.2,.75,.25,1), opacity 170ms ease';
-        panelSalida.style.transform = 'translate3d(' + (direccion * ancho * .92) + 'px,0,0) rotate(' + (direccion * 2) + 'deg) scale(.97)';
-        panelSalida.style.opacity = '.25';
+        panelSalida.style.transition = 'transform 190ms cubic-bezier(.22,.8,.2,1), opacity 190ms ease';
+        panelSalida.style.transform = 'translate3d(' + (direccion * ancho * .92) + 'px,0,0)';
+        panelSalida.style.opacity = '.2';
         panelSalida.style.filter = 'none';
         panelArrastrado = null;
         window.direccionCambioPestana = dx < 0 ? 'left' : 'right';
