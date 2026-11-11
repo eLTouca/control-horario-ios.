@@ -1923,7 +1923,7 @@
           <div class="label">Esta semana</div>
         </div>
         <div class="stat-card">
-          <div class="value" id="stat-media">0</div>
+          <div class="value" id="stat-hoy">0</div>
           <div class="label">Horas hoy</div>
         </div>
         <div class="stat-card">
@@ -2816,12 +2816,14 @@
         .filter(r => r.fecha >= iniSem && r.fecha <= finSem)
         .reduce((s, r) => s + r.horas, 0);
       const dias = new Set(delPeriodo.map(r => r.fecha)).size;
-      const media = dias > 0 ? horasPeriodo / dias : 0;
+      const horasHoy = registros
+        .filter(r => r.fecha === hoy())
+        .reduce((s, r) => s + (Number(r.horas) || 0), 0);
 
       document.getElementById('stat-mes').textContent = formatNum(horasPeriodo, 1);
       document.getElementById('stat-semana').textContent = formatNum(horasSem, 1);
-      const mediaEl = document.getElementById('stat-media');
-      if (mediaEl) mediaEl.textContent = formatNum(media, 1);
+      const horasHoyEl = document.getElementById('stat-hoy');
+      if (horasHoyEl) horasHoyEl.textContent = formatNum(horasHoy, 1);
       document.getElementById('stat-dias').textContent = dias;
 
       const bannerRango = document.getElementById('periodo-banner-rango');
@@ -3651,6 +3653,18 @@
       geoState.enFranjaExtra = geoState.inside && esFranjaHoraExtra(new Date(now));
       saveGeoState();
       actualizarUIGeo();
+      // Refresca el total del día aunque todavía no se haya completado otra hora automática.
+      actualizarHorasHoyDashboard();
+    }
+
+    function actualizarHorasHoyDashboard() {
+      const el = document.getElementById('stat-hoy');
+      if (!el) return;
+      const fecha = hoy();
+      const total = registros
+        .filter(r => r.fecha === fecha)
+        .reduce((s, r) => s + (Number(r.horas) || 0), 0);
+      el.textContent = formatNum(total, 1);
     }
 
     function sumarHorasRegistro(fecha, horasAdd, concepto) {
