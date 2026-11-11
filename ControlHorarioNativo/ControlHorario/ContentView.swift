@@ -89,7 +89,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
                 else if command == "stop" { locationManager.stopWatching() }
                 else if command == "sync" {
                     for event in locationManager.pendingGeofenceEvents() {
-                        let js = "window.nativeGeofenceEvent ? (window.nativeGeofenceEvent('\\(event.state)', \\(event.timestamp * 1000)), true) : false;"
+                        let js = "window.nativeGeofenceReady && window.nativeGeofenceEvent ? (window.nativeGeofenceEvent('\\(event.state)', \\(event.timestamp * 1000)), true) : false;"
                         self.webView?.evaluateJavaScript(js) { result, error in
                             if error == nil, let delivered = result as? Bool, delivered {
                                 locationManager.acknowledgeGeofenceEvent(event.state, timestamp: event.timestamp)
