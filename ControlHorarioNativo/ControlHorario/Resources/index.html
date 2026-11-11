@@ -3489,15 +3489,18 @@
       return total;
     }
 
-    function asegurarDiaGeo() {
-      const today = hoy();
-      if (geoState.date !== today) {
+    function prepararDiaGeo(fecha) {
+      if (geoState.date !== fecha) {
         if (geoState.date) sincronizarHorasExtraRegistro(geoState.date);
-        geoState.date = today;
+        geoState.date = fecha;
         geoState.pendingOtMs = 0;
         geoState.horasYaRegistradas = 0;
         saveGeoState();
       }
+    }
+
+    function asegurarDiaGeo() {
+      prepararDiaGeo(hoy());
     }
 
     function extraMsEntre(inicioMs, finMs) {
@@ -3837,8 +3840,8 @@
         if (geoState.inside && geoState.lastTick) {
           if (eventTime > geoState.lastTick) tickGeoTiempo(eventTime);
         } else {
+          prepararDiaGeo(hoyFecha(new Date(eventTime)));
           geoState.inside = true;
-          geoState.date = hoyFecha(new Date(eventTime));
           geoState.lastTick = eventTime;
           saveGeoState();
         }
@@ -3849,8 +3852,8 @@
         saveGeoState();
         sincronizarHorasExtraRegistro(hoyFecha(new Date(eventTime)));
       } else if (state === 'enter' && !geoState.inside) {
+        prepararDiaGeo(hoyFecha(new Date(eventTime)));
         geoState.inside = true;
-        geoState.date = hoyFecha(new Date(eventTime));
         geoState.lastTick = eventTime;
         saveGeoState();
         toast('Entrada detectada en ' + (config.geo.nombre || 'el centro'));
@@ -4000,6 +4003,12 @@
 
     // ========== INIT ==========
     loadData();
+
+    // Restore the saved JavaScript state before processing queued native events.
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.location) {
+      window.webkit.messageHandlers.location.postMessage('sync');
+    }
+
     const plusHoraExtraInput = document.getElementById('plus-por-hora-extra');
     try {
       const plusHoraExtraGuardado = localStorage.getItem('controlHorario.plusPorHoraExtra');
