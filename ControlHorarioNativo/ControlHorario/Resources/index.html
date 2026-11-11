@@ -3850,7 +3850,7 @@
       } else if (state === 'state-outside') {
         if (geoState.inside) tickGeoTiempo(eventTime);
         geoState.inside = false;
-        geoState.lastTick = eventTime;
+        if (!geoState.lastTick || eventTime > geoState.lastTick) geoState.lastTick = eventTime;
         saveGeoState();
         sincronizarHorasExtraRegistro(hoyFecha(new Date(eventTime)));
       } else if (state === 'enter' && !geoState.inside) {
