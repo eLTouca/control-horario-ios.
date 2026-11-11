@@ -88,9 +88,13 @@ struct ControlHorarioWebView: UIViewRepresentable {
                 if command == "once" { locationManager.requestSingleLocation() }
                 else if command == "stop" { locationManager.stopWatching() }
                 else if command == "sync" {
-                    for event in locationManager.takePendingGeofenceEvents() {
-                        let js = "window.nativeGeofenceEvent && window.nativeGeofenceEvent('\(event.state)', \(event.timestamp * 1000));"
-                        self.webView?.evaluateJavaScript(js)
+                    for event in locationManager.pendingGeofenceEvents() {
+                        let js = "window.nativeGeofenceEvent ? (window.nativeGeofenceEvent('\\(event.state)', \\(event.timestamp * 1000)), true) : false;"
+                        self.webView?.evaluateJavaScript(js) { result, error in
+                            if error == nil, let delivered = result as? Bool, delivered {
+                                locationManager.acknowledgeGeofenceEvent(event.state, timestamp: event.timestamp)
+                            }
+                        }
                     }
                 }
                 return
@@ -158,9 +162,10 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
         let timestamp: TimeInterval
     }
 
-    func takePendingGeofenceEvents() -> [PendingGeofenceEvent] {
+    // Read without deleting: each event is removed only after the WebView
+    // confirms that JavaScript processed it successfully.
+    func pendingGeofenceEvents() -> [PendingGeofenceEvent] {
         let stored = UserDefaults.standard.array(forKey: pendingEventsKey) as? [[String: Any]] ?? []
-        UserDefaults.standard.removeObject(forKey: pendingEventsKey)
         return stored.compactMap { item in
             guard let state = item["state"] as? String,
                   let timestamp = item["timestamp"] as? TimeInterval else { return nil }
@@ -282,9 +287,11 @@ final class NativeLocationManager: NSObject, ObservableObject, CLLocationManager
     }
 
     func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
-        guard region.identifier == regionID, isGeofenceActive else { return }
-        if state == .inside { onGeofenceEvent?("state-inside", Date().timeIntervalSince1970) }
-        else if state == .outside { onGeofenceEvent?("state-outside", Date().timeIntervalSince1970) }
+        // Core Location may relaunch the app for a region event. Do not require
+        // an in-memory flag: it is reset when iOS creates a new process.
+        guard region.identifier == regionID else { return }
+        if state == .inside { queueGeofenceEvent("state-inside") }
+        else if state == .outside { queueGeofenceEvent("state-outside") }
     }
 
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
