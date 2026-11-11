@@ -3973,7 +3973,7 @@
 
     document.getElementById('btn-exportar').addEventListener('click', () => {
       const data = JSON.stringify({ registros, config }, null, 2);
-      const mensaje = '¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad en la ubicación que elijas en tu iPhone?\\n\\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.';
+      const mensaje = '¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad en la ubicación que elijas en tu iPhone?\n\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.';
       if (window.webkit?.messageHandlers?.backup) {
         if (!confirm(mensaje)) return;
         window.webkit.messageHandlers.backup.postMessage({ action: 'choose', data });
