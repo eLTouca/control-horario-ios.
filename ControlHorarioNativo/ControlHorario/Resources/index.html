@@ -2041,10 +2041,10 @@
         <div class="form-group" style="margin-bottom: 1rem;">
           <label>Tipo de resumen</label>
           <div class="pdf-options">
-            <label><input type="radio" name="tipo-pdf" value="semanal" checked /> Semanal</label>
+            <label><input type="radio" name="tipo-pdf" value="semanal" /> Semanal</label>
             <label><input type="radio" name="tipo-pdf" value="mensual" /> Mensual</label>
             <label><input type="radio" name="tipo-pdf" value="anual" /> Anual</label>
-            <label><input type="radio" name="tipo-pdf" value="personalizado" /> Personalizado</label>
+            <label><input type="radio" name="tipo-pdf" value="personalizado" checked /> Periodo de horas extras</label>
           </div>
         </div>
 
@@ -2753,7 +2753,12 @@
           rellenarHorasPeriodo20();
         }
         if (btn.dataset.panel === 'pdf') {
-          actualizarRangoPDF();
+          // Por defecto, el PDF utiliza exactamente el ciclo configurado
+          // para las horas extra que se muestra en la pantalla principal.
+          const periodoHoras = getPeriodo20();
+          document.querySelector('input[name="tipo-pdf"][value="personalizado"]').checked = true;
+          document.getElementById('pdf-desde').value = periodoHoras.desde;
+          document.getElementById('pdf-hasta').value = periodoHoras.hasta;
         }
         if (btn.dataset.panel === 'config') {
           document.getElementById('config-nombre').value = config.nombre || '';
