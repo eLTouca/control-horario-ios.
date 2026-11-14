@@ -3495,6 +3495,8 @@
       frame.src = url + '#zoom=page-width';
       box.classList.add('visible');
       box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // En iOS, PDFKit muestra todas las páginas con desplazamiento continuo.
+      enviarPdfAIOS(result.doc, result.nombreArchivo, 'preview');
       toast('Previa lista — revisa y guarda si está bien');
     });
 
@@ -3517,6 +3519,7 @@
       pdfPendiente = { doc: result.doc, nombreArchivo: result.nombreArchivo, url };
       document.getElementById('pdf-preview-frame').src = url + '#zoom=page-width';
       document.getElementById('pdf-preview-box').classList.add('visible');
+      enviarPdfAIOS(result.doc, result.nombreArchivo, 'preview');
       toast('Resumen del periodo listo. Pulsa Compartir para enviarlo.');
     }
 
