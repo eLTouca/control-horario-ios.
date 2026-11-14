@@ -1873,6 +1873,55 @@
       flex: 0 0 auto;
       white-space: nowrap;
     }
+
+    /* Nuevo panel principal: objetivo, calendario de intensidad y evolución */
+    #legacy-entry-card, #legacy-list-card { display:none !important; }
+    .intro-action { display:none !important; }
+    .progress-card { background:linear-gradient(145deg,#fff 0%,#f5f7ff 100%); border:1px solid var(--border); border-radius:20px; padding:1.15rem; margin-bottom:1rem; box-shadow:var(--shadow); }
+    .progress-heading,.section-heading { display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
+    .progress-heading h3,.section-heading h3 { font-size:1rem; font-weight:750; letter-spacing:-.02em; }
+    .goal-control { display:flex; align-items:center; gap:.4rem; color:var(--text-secondary); font-size:.72rem; font-weight:650; }
+    .goal-control input { width:62px; border:1px solid var(--border); border-radius:9px; padding:.4rem .35rem; color:var(--text); background:#fff; font:700 .9rem inherit; text-align:center; }
+    .progress-content { display:flex; align-items:center; justify-content:center; gap:1.4rem; padding:1rem .25rem .8rem; }
+    .progress-ring { --progress:0%; width:156px; height:156px; flex:0 0 156px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#4f46e5 var(--progress),#e8eaf5 0); position:relative; }
+    .progress-ring:before { content:""; position:absolute; inset:11px; border-radius:50%; background:white; box-shadow:inset 0 1px 5px rgba(15,23,42,.05); }
+    .progress-ring-center { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; line-height:1.2; }
+    .progress-ring-center strong { font-size:1.55rem; letter-spacing:-.04em; }
+    .progress-ring-center span { font-size:.8rem; color:var(--text-secondary); font-weight:650; margin-top:.25rem; }
+    .progress-details { display:flex; flex-direction:column; gap:.25rem; min-width:0; }
+    .progress-details strong { font-size:1.35rem; color:var(--primary); }
+    .progress-details span,.progress-details small { color:var(--text-secondary); font-size:.8rem; }
+    .mini-stats { border-top:1px solid var(--border); padding-top:.75rem; display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+    .mini-stats div { display:flex; flex-direction:column; align-items:center; gap:.1rem; }
+    .mini-stats strong { font-size:1.05rem; }
+    .mini-stats span { color:var(--text-secondary); font-size:.65rem; text-transform:uppercase; font-weight:650; }
+    .dashboard-calendar { padding:1rem; }
+    .section-heading { margin-bottom:.8rem; }
+    .section-heading p { color:var(--text-secondary); font-size:.75rem; }
+    .section-heading > span { color:var(--text-secondary); font-size:.72rem; font-weight:650; }
+    .dashboard-cal-grid { gap:4px; }
+    .heat-day { width:100%; min-width:0; height:43px; border:1px solid #e2e8f0; border-radius:8px; background:#f1f5f9; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1px; padding:1px; font:600 .76rem inherit; color:#334155; }
+    .heat-day small { font-size:.56rem; font-weight:700; }
+    .heat-day.level-1 { background:#e0e7ff; border-color:#c7d2fe; color:#4338ca; }
+    .heat-day.level-2 { background:#c7d2fe; border-color:#a5b4fc; color:#3730a3; }
+    .heat-day.level-3 { background:#818cf8; border-color:#6366f1; color:white; }
+    .heat-day.level-4 { background:#4f46e5; border-color:#4338ca; color:white; }
+    .heat-day.today { outline:2px solid #0f172a; outline-offset:1px; }
+    .evolution-card { padding:1rem; }
+    .line-chart { width:100%; min-height:150px; }
+    .line-chart svg { display:block; width:100%; height:auto; overflow:visible; }
+    .line-chart-foot { display:flex; justify-content:space-between; gap:.3rem; color:var(--text-secondary); font-size:.65rem; margin-top:.2rem; }
+    .line-chart-foot strong { color:var(--primary); font-size:.75rem; }
+    .day-edit-modal { position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.48); display:flex; align-items:flex-end; justify-content:center; padding:1rem; }
+    .day-edit-modal[hidden] { display:none; }
+    .day-edit-sheet { width:min(100%,480px); background:white; border-radius:22px; padding:1.2rem; box-shadow:0 20px 60px rgba(15,23,42,.25); }
+    .day-edit-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+    .day-edit-top h3 { font-size:1.15rem; }
+    .day-edit-sheet > label { display:block; color:var(--text-secondary); font-size:.72rem; font-weight:700; text-transform:uppercase; margin:.7rem 0 .3rem; }
+    .day-edit-sheet > input { width:100%; min-height:46px; border:1.5px solid var(--border); border-radius:10px; padding:.65rem .8rem; font:inherit; font-size:1rem; }
+    .day-edit-actions { display:flex; align-items:center; gap:.45rem; margin-top:1.2rem; }
+    .day-edit-actions span { flex:1; }
+    @media(max-width:420px) { .progress-ring { width:132px;height:132px;flex-basis:132px; } .progress-content { gap:.85rem; } .progress-ring-center strong {font-size:1.3rem;} .heat-day {height:39px;} .day-edit-actions {flex-wrap:wrap;} .day-edit-actions span {display:none;} }
 </style>
 
 
@@ -1900,9 +1949,7 @@
           <h2>Tu jornada, bajo control.</h2>
           <p id="dashboard-fecha">Organiza y consulta tus horas extra.</p>
         </div>
-        <button type="button" class="intro-action" id="btn-ir-registro">
-          <span aria-hidden="true">＋</span> Registrar horas
-        </button>
+
       </div>
       <div class="periodo-banner" id="periodo-banner" role="button" tabindex="0" aria-label="Generar y compartir resumen PDF del periodo de horas extras" title="Pulsa para generar y compartir el resumen PDF">
         <div>
@@ -1913,31 +1960,34 @@
         <div class="badge-h" id="periodo-banner-horas">0 h</div>
       </div>
 
-      <div class="stats" id="stats-horas">
-        <div class="stat-card">
-          <div class="value" id="stat-mes">0</div>
-          <div class="label">Horas del periodo</div>
+      <section class="progress-card">
+        <div class="progress-heading">
+          <div><div class="eyebrow">OBJETIVO DEL PERIODO</div><h3>Tu progreso</h3></div>
+          <label class="goal-control">Objetivo <input id="objetivo-horas" type="number" min="1" max="999" step="1" inputmode="numeric" value="40" aria-label="Objetivo de horas extra"></label>
         </div>
-        <div class="stat-card">
-          <div class="value" id="stat-semana">0</div>
-          <div class="label">Esta semana</div>
+        <div class="progress-content">
+          <div class="progress-ring" id="progress-ring" role="img" aria-label="Progreso hacia el objetivo"><div class="progress-ring-center"><strong id="progress-horas">0 h</strong><span id="progress-porcentaje">0 %</span></div></div>
+          <div class="progress-details"><strong id="progress-restantes">40 h</strong><span>para alcanzar tu objetivo</span><small id="progress-rango">Periodo actual</small></div>
         </div>
-        <div class="stat-card">
-          <div class="value" id="stat-hoy">0</div>
-          <div class="label">Horas hoy</div>
+        <div class="mini-stats">
+          <div><strong id="stat-semana">0</strong><span>Esta semana</span></div>
+          <div><strong id="stat-hoy">0</strong><span>Hoy</span></div>
+          <div><strong id="stat-dias">0</strong><span>Días con horas</span></div>
         </div>
-        <div class="stat-card">
-          <div class="value" id="stat-dias">0</div>
-          <div class="label">Días con horas</div>
-        </div>
+      </section>
+
+      <div class="dashboard-calendar card">
+        <div class="section-heading"><div><h3>Actividad diaria</h3><p>Intensidad de tus horas extra</p></div><span id="dashboard-cal-titulo"></span></div>
+        <div class="cal-grid dashboard-cal-grid" id="dashboard-cal-grid"></div>
+        <div class="cal-legend"><span><i style="background:#f1f5f9;border:1px solid #e2e8f0;"></i> Sin horas</span><span><i style="background:#c7d2fe;border:1px solid #a5b4fc;"></i> Pocas</span><span><i style="background:#4f46e5;border:1px solid #4338ca;"></i> Muchas</span></div>
       </div>
 
-      <div class="chart-card">
-        <h3>Horas por día <span id="chart-subtitulo">periodo actual</span></h3>
-        <div class="bars" id="chart-bars"></div>
+      <div class="chart-card evolution-card">
+        <h3>Evolución del periodo <span id="chart-subtitulo">horas acumuladas</span></h3>
+        <div id="chart-evolucion" class="line-chart" aria-label="Gráfico de evolución de horas extra"></div>
       </div>
 
-      <div class="card">
+      <div class="card" id="legacy-entry-card">
         <h2>➕ Añadir / Editar horas</h2>
         <div class="form-row">
           <div class="form-group">
@@ -1973,7 +2023,7 @@
         <p class="note" id="nota-horas">Pulsa +1, +2… y se guarda solo en la fecha seleccionada. Para corregir un día, usa <strong>Editar</strong>.</p>
       </div>
 
-      <div class="card">
+      <div class="card" id="legacy-list-card">
         <h2>📋 Registro de horas</h2>
         <div class="form-row" style="margin-bottom: 0.75rem;">
           <div class="form-group">
@@ -2027,7 +2077,17 @@
         </div>
         <div class="cal-summary" id="cal-summary"></div>
       </div>
-      <p class="note" style="margin-top:0.5rem;">Pulsa un día con horas para editarlo, o un día vacío para añadir horas en esa fecha.</p>
+      <p class="note" style="margin-top:0.5rem;">Pulsa cualquier día para consultar, añadir o corregir las horas extra.</p>
+      <div class="day-edit-modal" id="day-edit-modal" role="dialog" aria-modal="true" aria-labelledby="day-edit-title" hidden>
+        <div class="day-edit-sheet">
+          <div class="day-edit-top"><div><div class="eyebrow">REGISTRO DIARIO</div><h3 id="day-edit-title">Editar día</h3></div><button type="button" class="btn btn-outline btn-sm" id="day-edit-close" aria-label="Cerrar">✕</button></div>
+          <label for="day-edit-hours">Horas extra</label>
+          <input id="day-edit-hours" type="number" min="0" max="24" step="0.25" inputmode="decimal" placeholder="0">
+          <label for="day-edit-concept">Concepto (opcional)</label>
+          <input id="day-edit-concept" type="text" placeholder="Ej. Trabajo fuera de horario">
+          <div class="day-edit-actions"><button type="button" class="btn btn-danger" id="day-edit-delete">Eliminar</button><span></span><button type="button" class="btn btn-outline" id="day-edit-cancel">Cancelar</button><button type="button" class="btn btn-primary" id="day-edit-save">Guardar</button></div>
+        </div>
+      </div>
     </section>
 
     <!-- PANEL PDF -->
@@ -2381,6 +2441,7 @@
       empresa: '',
       periodoInicio: 21,
       periodoFin: 20,
+      objetivoHoras: 40,
       precioHora: 23.93,
       sueldoBase: 1860.37,
       nominaPagas: 14,
@@ -2569,26 +2630,48 @@
         btn.addEventListener('click', () => {
           const fecha = btn.dataset.fecha;
           const r = registros.find(x => x.fecha === fecha);
-          // Ir a pestaña Horas y precargar
-          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-          document.querySelector('.nav-btn[data-panel="horas"]').classList.add('active');
-          document.getElementById('panel-horas').classList.add('active');
-          document.getElementById('fecha').value = fecha;
-          if (r) {
-            setHoras(r.horas);
-            document.getElementById('concepto').value = r.concepto || '';
-            setModoEdicion(true);
-            toast('Editando ' + formatFecha(fecha));
-          } else {
-            setHoras(0);
-            document.getElementById('concepto').value = '';
-            setModoEdicion(false);
-            toast('Añadir horas el ' + formatFecha(fecha));
-          }
+          abrirEditorDia(fecha);
         });
       });
     }
+
+    function abrirEditorDia(fecha) {
+      const r = registros.find(x => x.fecha === fecha);
+      document.getElementById('day-edit-title').textContent = (r ? 'Editar ' : 'Añadir horas · ') + formatFecha(fecha);
+      document.getElementById('day-edit-hours').value = r ? r.horas : '';
+      document.getElementById('day-edit-concept').value = r ? (r.concepto || '') : '';
+      document.getElementById('day-edit-delete').style.display = r ? 'inline-flex' : 'none';
+      document.getElementById('day-edit-modal').hidden = false;
+      document.getElementById('day-edit-hours').focus();
+      window.fechaEditandoCalendario = fecha;
+    }
+
+    function cerrarEditorDia() {
+      document.getElementById('day-edit-modal').hidden = true;
+      window.fechaEditandoCalendario = null;
+    }
+
+    ['day-edit-close','day-edit-cancel'].forEach(id => document.getElementById(id).addEventListener('click', cerrarEditorDia));
+    document.getElementById('day-edit-modal').addEventListener('click', e => { if (e.target.id === 'day-edit-modal') cerrarEditorDia(); });
+    document.getElementById('day-edit-save').addEventListener('click', () => {
+      const fecha = window.fechaEditandoCalendario;
+      if (!fecha) return;
+      const horas = Math.max(0, Number(document.getElementById('day-edit-hours').value) || 0);
+      const concepto = document.getElementById('day-edit-concept').value.trim();
+      const idx = registros.findIndex(r => r.fecha === fecha);
+      if (horas <= 0) { if (idx >= 0) registros.splice(idx,1); }
+      else if (idx >= 0) registros[idx] = { fecha, horas, concepto };
+      else registros.push({ fecha, horas, concepto });
+      saveData(); actualizarStats(); renderLista(); renderCalendario(); cerrarEditorDia();
+      toast(horas > 0 ? 'Horas guardadas para ' + formatFecha(fecha) : 'Día actualizado');
+    });
+    document.getElementById('day-edit-delete').addEventListener('click', () => {
+      const fecha = window.fechaEditandoCalendario;
+      if (!fecha) return;
+      registros = registros.filter(r => r.fecha !== fecha);
+      saveData(); actualizarStats(); renderLista(); renderCalendario(); cerrarEditorDia();
+      toast('Registro eliminado');
+    });
 
     document.getElementById('cal-prev').addEventListener('click', () => {
       calMonth--;
@@ -2793,43 +2876,66 @@
     }
 
     function renderChartPeriodo(desde, hasta) {
-      const cont = document.getElementById('chart-bars');
-      const sub = document.getElementById('chart-subtitulo');
-      if (!cont) return;
+      const objetivo = Math.max(1, Number(config.objetivoHoras) || 40);
+      const total = registros.filter(r => r.fecha >= desde && r.fecha <= hasta).reduce((sum, r) => sum + (Number(r.horas) || 0), 0);
+      const pct = Math.round(total / objetivo * 100);
+      const ring = document.getElementById('progress-ring');
+      if (ring) ring.style.setProperty('--progress', Math.min(100, pct) + '%');
+      const put = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+      put('progress-horas', formatNum(total, 1) + ' h');
+      put('progress-porcentaje', pct + ' %');
+      put('progress-restantes', formatNum(Math.max(0, objetivo - total), 1) + ' h');
+      put('progress-rango', formatFecha(desde) + ' → ' + formatFecha(hasta));
+      const goal = document.getElementById('objetivo-horas');
+      if (goal && document.activeElement !== goal) goal.value = objetivo;
+      renderDashboardCalendar();
+      renderEvolutionChart(desde, hasta);
+    }
 
-      // Mantener el gráfico de barras original: un elemento por cada día
-      // con horas registradas, sin limitarlo a los últimos 16 días.
+    function renderDashboardCalendar() {
+      const grid = document.getElementById('dashboard-cal-grid');
+      const title = document.getElementById('dashboard-cal-titulo');
+      if (!grid) return;
+      const first = new Date(calYear, calMonth, 1);
+      let offset = first.getDay() - 1; if (offset < 0) offset = 6;
+      const days = new Date(calYear, calMonth + 1, 0).getDate();
+      const prefix = calYear + '-' + String(calMonth + 1).padStart(2, '0');
       const map = {};
-      registros.forEach(r => {
-        if (r.fecha >= desde && r.fecha <= hasta && r.horas > 0) {
-          map[r.fecha] = (map[r.fecha] || 0) + r.horas;
-        }
-      });
-
-      const dias = Object.keys(map).sort().map(fecha => ({ fecha, horas: map[fecha] }));
-      if (dias.length === 0) {
-        cont.classList.remove('muchos-dias');
-        cont.innerHTML = '<div class="empty" style="padding:1.5rem;width:100%;">Sin horas en este periodo</div>';
-        if (sub) sub.textContent = formatFecha(desde) + ' → ' + formatFecha(hasta);
-        return;
+      registros.forEach(r => { if (r.fecha.startsWith(prefix)) map[r.fecha] = (map[r.fecha] || 0) + Number(r.horas || 0); });
+      if (title) title.textContent = MESES[calMonth] + ' ' + calYear;
+      let html = DIAS_SEM.map(d => '<div class="cal-weekday">' + d + '</div>').join('');
+      for (let i=0;i<offset;i++) html += '<div class="cal-day empty"></div>';
+      for (let day=1;day<=days;day++) {
+        const fecha = prefix + '-' + String(day).padStart(2,'0');
+        const h = map[fecha] || 0;
+        const level = h <= 0 ? 0 : h < 2 ? 1 : h < 4 ? 2 : h < 6 ? 3 : 4;
+        html += '<button type="button" class="heat-day level-' + level + (fecha === hoy() ? ' today' : '') + '" data-fecha="' + fecha + '" aria-label="' + formatFecha(fecha) + ': ' + formatNum(h,1) + ' horas"><span>' + day + '</span>' + (h > 0 ? '<small>' + formatNum(h, h % 1 ? 1 : 0) + 'h</small>' : '') + '</button>';
       }
+      grid.innerHTML = html;
+      grid.querySelectorAll('button[data-fecha]').forEach(btn => btn.addEventListener('click', () => abrirEditorDia(btn.dataset.fecha)));
+    }
 
-      const max = Math.max(...dias.map(x => x.horas), 1);
-      cont.classList.toggle('muchos-dias', dias.length > 16);
-      cont.innerHTML = dias.map(x => {
-        const h = Math.max(3, Math.round((x.horas / max) * 88));
-        const alto = x.horas >= 4 ? ' alto' : '';
-        const d = new Date(x.fecha + 'T12:00:00');
-        const dia = d.toLocaleDateString('es-ES', { weekday: 'narrow' });
-        const valor = formatNum(x.horas, x.horas % 1 ? 1 : 0);
-        return `<div class="bar-col" title="${formatFecha(x.fecha)}: ${valor} h" aria-label="${formatFecha(x.fecha)}: ${valor} horas">
-          <div class="bar-val">${valor}</div>
-          <div class="bar${alto}" style="height:${h}px"></div>
-          <div class="bar-label">${dia}</div>
-        </div>`;
-      }).join('');
-
-      if (sub) sub.textContent = formatFecha(desde) + ' → ' + formatFecha(hasta);
+    function renderEvolutionChart(desde, hasta) {
+      const el = document.getElementById('chart-evolucion');
+      if (!el) return;
+      const inicio = new Date(desde + 'T12:00:00');
+      const fin = new Date(hasta + 'T12:00:00');
+      const totalDias = Math.max(1, Math.round((fin - inicio) / 86400000) + 1);
+      const pasos = Math.min(12, totalDias);
+      const pts = [];
+      for (let i=0;i<pasos;i++) {
+        const dia = Math.round(i * (totalDias - 1) / Math.max(1, pasos - 1));
+        const d = new Date(inicio); d.setDate(d.getDate() + dia);
+        const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        const acumulado = registros.filter(r => r.fecha >= desde && r.fecha <= iso).reduce((sum,r) => sum + Number(r.horas || 0),0);
+        pts.push({x:i, y:acumulado, label:formatFecha(iso)});
+      }
+      const max = Math.max(1, ...pts.map(p => p.y));
+      const w=320, h=132, pad=18;
+      const coords=pts.map((p,i)=>({x:pad+i*(w-2*pad)/Math.max(1,pts.length-1),y:h-pad-(p.y/max)*(h-2*pad),...p}));
+      const line=coords.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+      const area=line+' L'+coords[coords.length-1].x+','+(h-pad)+' L'+coords[0].x+','+(h-pad)+' Z';
+      el.innerHTML='<svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Evolución acumulada de horas extra"><defs><linearGradient id="evolution-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#818cf8" stop-opacity=".28"/><stop offset="100%" stop-color="#818cf8" stop-opacity="0"/></linearGradient></defs><path d="'+area+'" fill="url(#evolution-fill)"/><path d="'+line+'" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+coords.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#4f46e5"><title>'+p.label+': '+formatNum(p.y,1)+' h acumuladas</title></circle>').join('')+'</svg><div class="line-chart-foot"><span>'+formatFecha(desde)+'</span><strong>'+formatNum(pts[pts.length-1].y,1)+' h acumuladas</strong><span>'+formatFecha(hasta)+'</span></div>';
     }
 
     function actualizarStats() {
@@ -4312,6 +4418,15 @@
       });
     });
 
+    const objetivoInput = document.getElementById('objetivo-horas');
+    if (objetivoInput) {
+      objetivoInput.addEventListener('change', () => {
+        config.objetivoHoras = Math.max(1, Math.min(999, Math.round(Number(objetivoInput.value) || 40)));
+        objetivoInput.value = config.objetivoHoras;
+        saveConfig(); actualizarStats();
+      });
+    }
+
     // ========== CONFIG ==========
     document.getElementById('btn-guardar-config').addEventListener('click', () => {
       config.nombre = document.getElementById('config-nombre').value.trim();
@@ -4426,6 +4541,7 @@
     actualizarRangoPDF();
     actualizarStats();
     renderLista();
+    renderCalendario();
   
     // ========== MODO RÁPIDO / PWA ==========
     function actualizarVistaRapido() {
