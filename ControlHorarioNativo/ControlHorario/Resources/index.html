@@ -1899,6 +1899,10 @@
     .section-heading { margin-bottom:.8rem; }
     .section-heading p { color:var(--text-secondary); font-size:.75rem; }
     .section-heading > span { color:var(--text-secondary); font-size:.72rem; font-weight:650; }
+    .dashboard-cal-heading { align-items:center; }
+    .dashboard-cal-navigation { display:flex; align-items:center; gap:.4rem; }
+    .dashboard-cal-navigation .cal-nav-btn { width:30px; height:30px; border-radius:8px; font-size:1rem; }
+    .dashboard-cal-navigation > span { min-width:92px; text-align:center; white-space:nowrap; color:var(--text-secondary); font-size:.72rem; font-weight:700; }
     .dashboard-cal-grid { gap:4px; }
     .heat-day { width:100%; min-width:0; height:43px; border:1px solid #e2e8f0; border-radius:8px; background:#f1f5f9; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1px; padding:1px; font-family:inherit; font-size:.76rem; font-weight:600; color:#334155; }
     .heat-day small { font-size:.56rem; font-weight:700; }
@@ -1977,7 +1981,14 @@
       </section>
 
       <div class="dashboard-calendar card">
-        <div class="section-heading"><div><h3>Actividad diaria</h3><p>Intensidad de tus horas extra</p></div><span id="dashboard-cal-titulo"></span></div>
+        <div class="section-heading dashboard-cal-heading">
+          <div><h3>Actividad diaria</h3><p>Intensidad de tus horas extra</p></div>
+          <div class="dashboard-cal-navigation">
+            <button type="button" class="cal-nav-btn" id="dashboard-cal-prev" aria-label="Mes anterior">‹</button>
+            <span id="dashboard-cal-titulo"></span>
+            <button type="button" class="cal-nav-btn" id="dashboard-cal-next" aria-label="Mes siguiente">›</button>
+          </div>
+        </div>
         <div class="cal-grid dashboard-cal-grid" id="dashboard-cal-grid"></div>
         <div class="cal-legend"><span><i style="background:#f1f5f9;border:1px solid #e2e8f0;"></i> Sin horas</span><span><i style="background:#c7d2fe;border:1px solid #a5b4fc;"></i> Pocas</span><span><i style="background:#4f46e5;border:1px solid #4338ca;"></i> Muchas</span></div>
       </div>
@@ -2674,6 +2685,17 @@
       saveData(); actualizarStats(); renderLista(); renderCalendario(); cerrarEditorDia();
       toast('Registro eliminado');
     });
+
+    function cambiarMesCalendario(delta) {
+      calMonth += delta;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderCalendario();
+      renderDashboardCalendar();
+    }
+
+    document.getElementById('dashboard-cal-prev').addEventListener('click', () => cambiarMesCalendario(-1));
+    document.getElementById('dashboard-cal-next').addEventListener('click', () => cambiarMesCalendario(1));
 
     document.getElementById('cal-prev').addEventListener('click', () => {
       calMonth--;
