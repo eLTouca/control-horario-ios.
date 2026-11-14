@@ -2078,16 +2078,7 @@
         <div class="cal-summary" id="cal-summary"></div>
       </div>
       <p class="note" style="margin-top:0.5rem;">Pulsa cualquier día para consultar, añadir o corregir las horas extra.</p>
-      <div class="day-edit-modal" id="day-edit-modal" role="dialog" aria-modal="true" aria-labelledby="day-edit-title" hidden>
-        <div class="day-edit-sheet">
-          <div class="day-edit-top"><div><div class="eyebrow">REGISTRO DIARIO</div><h3 id="day-edit-title">Editar día</h3></div><button type="button" class="btn btn-outline btn-sm" id="day-edit-close" aria-label="Cerrar">✕</button></div>
-          <label for="day-edit-hours">Horas extra</label>
-          <input id="day-edit-hours" type="number" min="0" max="24" step="0.25" inputmode="decimal" placeholder="0">
-          <label for="day-edit-concept">Concepto (opcional)</label>
-          <input id="day-edit-concept" type="text" placeholder="Ej. Trabajo fuera de horario">
-          <div class="day-edit-actions"><button type="button" class="btn btn-danger" id="day-edit-delete">Eliminar</button><span></span><button type="button" class="btn btn-outline" id="day-edit-cancel">Cancelar</button><button type="button" class="btn btn-primary" id="day-edit-save">Guardar</button></div>
-        </div>
-      </div>
+
     </section>
 
     <!-- PANEL PDF -->
@@ -2428,6 +2419,17 @@
     </section>
   </main>
 
+      <div class="day-edit-modal" id="day-edit-modal" role="dialog" aria-modal="true" aria-labelledby="day-edit-title" hidden>
+        <div class="day-edit-sheet">
+          <div class="day-edit-top"><div><div class="eyebrow">REGISTRO DIARIO</div><h3 id="day-edit-title">Editar día</h3></div><button type="button" class="btn btn-outline btn-sm" id="day-edit-close" aria-label="Cerrar">✕</button></div>
+          <label for="day-edit-hours">Horas extra</label>
+          <input id="day-edit-hours" type="number" min="0" max="24" step="0.25" inputmode="decimal" placeholder="0">
+          <label for="day-edit-concept">Concepto (opcional)</label>
+          <input id="day-edit-concept" type="text" placeholder="Ej. Trabajo fuera de horario">
+          <div class="day-edit-actions"><button type="button" class="btn btn-danger" id="day-edit-delete">Eliminar</button><span></span><button type="button" class="btn btn-outline" id="day-edit-cancel">Cancelar</button><button type="button" class="btn btn-primary" id="day-edit-save">Guardar</button></div>
+        </div>
+      </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -2677,12 +2679,14 @@
       calMonth--;
       if (calMonth < 0) { calMonth = 11; calYear--; }
       renderCalendario();
+      renderDashboardCalendar();
     });
 
     document.getElementById('cal-next').addEventListener('click', () => {
       calMonth++;
       if (calMonth > 11) { calMonth = 0; calYear++; }
       renderCalendario();
+      renderDashboardCalendar();
     });
 
     // ========== DESLIZAMIENTO FLUIDO ENTRE PESTAÑAS ==========
@@ -2954,7 +2958,8 @@
         .filter(r => r.fecha === hoy())
         .reduce((s, r) => s + (Number(r.horas) || 0), 0);
 
-      document.getElementById('stat-mes').textContent = formatNum(horasPeriodo, 1);
+      const statPeriodo = document.getElementById('stat-mes');
+      if (statPeriodo) statPeriodo.textContent = formatNum(horasPeriodo, 1);
       document.getElementById('stat-semana').textContent = formatNum(horasSem, 1);
       const horasHoyEl = document.getElementById('stat-hoy');
       if (horasHoyEl) horasHoyEl.textContent = formatNum(horasHoy, 1);
