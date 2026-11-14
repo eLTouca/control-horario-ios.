@@ -3108,6 +3108,10 @@
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
+    // El visor PDF nativo llama a esta función al cerrarse para retirar
+    // también la previsualización web que queda detrás en el WKWebView.
+    window.cerrarPreviaPdfDesdeIOS = cerrarPreviaPdf;
+
     function enviarPdfAIOS(doc, nombreArchivo, accion) {
       if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.pdf) {
         const bytes = new Uint8Array(doc.output('arraybuffer'));
