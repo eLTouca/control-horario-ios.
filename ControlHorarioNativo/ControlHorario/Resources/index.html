@@ -2059,6 +2059,14 @@
           </div>
         </div>
 
+        <div class="form-group" style="margin: 0.35rem 0 0.8rem;">
+          <label style="display:flex; align-items:center; gap:0.65rem; cursor:pointer;">
+            <input type="checkbox" id="pdf-incluir-nomina" style="width:18px; height:18px; accent-color:var(--primary);">
+            <span>Incluir cálculo estimado de nómina</span>
+          </label>
+          <p class="note" style="margin:0.25rem 0 0 1.7rem;">Utiliza la categoría, pagas y datos fiscales configurados en la pestaña Nómina.</p>
+        </div>
+
         <button class="btn btn-primary" id="btn-generar-pdf" style="margin-top: 0.5rem;">
           👁 Generar previa del PDF
         </button>
@@ -3156,6 +3164,99 @@
       }
     }
 
+    function calcularNominaParaPdf(horasExtraPeriodo) {
+      const sueldoBase = Math.max(0, parseFloat(document.getElementById('sueldo-base').value) || 0);
+      const precioHora = Math.max(0, parseFloat(document.getElementById('precio-hora-extra').value) || 0);
+      const horasExtra = Math.max(0, horasExtraPeriodo || 0);
+      const plusPorHoraExtra = Math.max(0, parseFloat(document.getElementById('plus-por-hora-extra').value) || 0);
+      const plusEspH = Math.max(0, parseFloat(document.getElementById('plus-especiales').value) || 0);
+      const horasEsp = Math.max(0, parseFloat(document.getElementById('horas-especiales').value) || 0);
+      const plusNoct = Math.max(0, parseFloat(document.getElementById('plus-nocturnidad').value) || 0);
+      const plusTrans = Math.max(0, parseFloat(document.getElementById('plus-transporte').value) || 0);
+      const antiguedad = Math.max(0, parseFloat(document.getElementById('antiguedad').value) || 0);
+      const otros = Math.max(0, parseFloat(document.getElementById('otros-pluses').value) || 0);
+      const nPagas = parseInt(document.getElementById('pagas').value, 10) || 14;
+      const contrato = document.getElementById('tipo-contrato').value;
+      const situacion = document.getElementById('situacion-familiar').value;
+      const hijos = Number(numeroHijos) || 0;
+
+      const importeExtras = horasExtra * precioHora;
+      const importePlusHoraExtra = horasExtra * plusPorHoraExtra;
+      const importeEsp = horasEsp * plusEspH;
+      const plusesFijos = plusTrans + plusNoct + antiguedad + otros;
+      const brutoMensual = sueldoBase + importeExtras + importePlusHoraExtra + importeEsp + plusesFijos;
+      const brutoAnual = sueldoBase * nPagas + (importeExtras + importePlusHoraExtra + importeEsp + plusesFijos) * 12;
+      const tipoSS = contrato === 'temporal' ? 0.0655 : 0.0650;
+      const ssMensual = brutoMensual * tipoSS;
+      const ssAnual = brutoAnual * tipoSS;
+
+      let rendimientoNeto = brutoAnual - ssAnual - 2000;
+      if (rendimientoNeto <= 11250) rendimientoNeto -= 7302;
+      else if (rendimientoNeto < 19747.5) {
+        const factor = (19747.5 - rendimientoNeto) / (19747.5 - 11250);
+        rendimientoNeto -= 7302 * factor;
+      }
+      rendimientoNeto = Math.max(0, rendimientoNeto);
+      const minimo = calcularMinimoFamiliar(situacion, hijos);
+      const cuotaIRPF = Math.max(0, cuotaEscala(rendimientoNeto) - cuotaEscala(minimo));
+      const tipoRetencion = brutoAnual > 0 ? Math.floor((cuotaIRPF / brutoAnual) * 10000) / 10000 : 0;
+      const irpfMensual = brutoMensual * tipoRetencion;
+      const netoMensual = brutoMensual - ssMensual - irpfMensual;
+
+      return {
+        sueldoBase, precioHora, horasExtra, plusPorHoraExtra, importeExtras,
+        importePlusHoraExtra, importeEsp, plusesFijos, brutoMensual,
+        ssMensual, tipoSS, irpfMensual, tipoRetencion, netoMensual,
+        nPagas, contrato, situacion, hijos,
+        categoria: document.getElementById('categoria-convenio').selectedOptions[0]?.textContent?.trim() || 'Personalizada'
+      };
+    }
+
+    function anadirNominaAlPdf(doc, nomina, fechaDesde, fechaHasta) {
+      let y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 16 : 60;
+      if (y > 225) {
+        doc.addPage();
+        y = 22;
+      }
+      doc.setTextColor(30, 30, 30);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text('Estimación de nómina', 14, y);
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      const situacionTxt = nomina.situacion === 'casado' ? 'Casado/a' : 'Soltero/a';
+      doc.text('Categoría: ' + nomina.categoria, 14, y, { maxWidth: 182 });
+      y += 5;
+      doc.text('Pagas: ' + nomina.nPagas + ' · Situación: ' + situacionTxt + ' · Hijos: ' + nomina.hijos, 14, y);
+      y += 5;
+      doc.text('Horas extra del periodo ' + formatFecha(fechaDesde) + ' al ' + formatFecha(fechaHasta) + ': ' + formatNum(nomina.horasExtra, 2) + ' h', 14, y);
+      y += 4;
+
+      doc.autoTable({
+        startY: y + 2,
+        head: [['Concepto', 'Importe']],
+        body: [
+          ['Sueldo base mensual', formatNum(nomina.sueldoBase) + ' €'],
+          ['Horas extra (' + formatNum(nomina.horasExtra, 2) + ' h × ' + formatNum(nomina.precioHora) + ' €)', formatNum(nomina.importeExtras) + ' €'],
+          ['Plus adicional por horas extra', formatNum(nomina.importePlusHoraExtra) + ' €'],
+          ['Otros pluses y complementos', formatNum(nomina.importeEsp + nomina.plusesFijos) + ' €'],
+          ['Bruto estimado del periodo', formatNum(nomina.brutoMensual) + ' €'],
+          ['Seguridad Social (' + (nomina.tipoSS * 100).toFixed(2) + ' %)', '− ' + formatNum(nomina.ssMensual) + ' €'],
+          ['IRPF estimado (' + (nomina.tipoRetencion * 100).toFixed(2) + ' %)', '− ' + formatNum(nomina.irpfMensual) + ' €'],
+          [{ content: 'NETO ESTIMADO A COBRAR', styles: { fontStyle: 'bold' } }, { content: formatNum(nomina.netoMensual) + ' €', styles: { fontStyle: 'bold' } }]
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+        styles: { fontSize: 9, cellPadding: 2.5 },
+        columnStyles: { 1: { halign: 'right', cellWidth: 38 } }
+      });
+      const avisoY = doc.lastAutoTable.finalY + 6;
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      doc.text('Cálculo orientativo según los datos guardados en Nómina. No es una nómina oficial; la retención y cotización reales pueden variar.', 14, avisoY, { maxWidth: 182 });
+    }
+
     function construirPdf() {
       const desde = document.getElementById('pdf-desde').value;
       const hasta = document.getElementById('pdf-hasta').value;
@@ -3172,6 +3273,8 @@
         .sort((a, b) => a.fecha.localeCompare(b.fecha));
 
       const totalHoras = lista.reduce((s, r) => s + r.horas, 0);
+      const incluirNomina = document.getElementById('pdf-incluir-nomina')?.checked === true;
+      const nominaPdf = incluirNomina ? calcularNominaParaPdf(totalHoras) : null;
       const tipo = document.querySelector('input[name="tipo-pdf"]:checked').value;
 
       const { jsPDF } = window.jspdf;
@@ -3236,6 +3339,8 @@
       doc.setFontSize(9);
       doc.setTextColor(100);
       doc.text('Documento generado automáticamente. Verificar con los registros oficiales de la empresa.', 14, finalY + 24);
+
+      if (nominaPdf) anadirNominaAlPdf(doc, nominaPdf, desde, hasta);
 
       return {
         doc,
