@@ -80,6 +80,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
         let locationManager: NativeLocationManager
         weak var webView: WKWebView?
         private let backupBookmarkKey = "ControlHorario.backupFolderBookmark"
+        private let legacyBackupBookmarkKey = "ControlHorario.backupBookmark"
         private let backupNeedsSetupKey = "ControlHorario.backupNeedsFolderSetup"
         private var pendingBackupData: Data?
         private var backupSetupPromptShown = false
@@ -131,7 +132,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
             if action == "confirm", let json = payload["data"] as? String {
                 let alert = UIAlertController(
                     title: "Copia de seguridad",
-                    message: "¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad dentro de la carpeta que elijas en la app Archivos?\\n\\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.",
+                    message: "¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad dentro de la carpeta que elijas en la app Archivos?\n\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.",
                     preferredStyle: .alert
                 )
                 alert.addAction(UIAlertAction(title: "Ahora no", style: .cancel))
@@ -179,6 +180,7 @@ struct ControlHorarioWebView: UIViewRepresentable {
                     notifyBackup("Copia de seguridad configurada. Se actualizará automáticamente al guardar cambios.")
                 }
             } catch {
+                UserDefaults.standard.removeObject(forKey: backupBookmarkKey)
                 UserDefaults.standard.set(true, forKey: backupNeedsSetupKey)
                 notifyBackup("No se pudo guardar el acceso a esa carpeta. Prueba con una carpeta de iCloud Drive o En mi iPhone.")
             }
@@ -191,6 +193,10 @@ struct ControlHorarioWebView: UIViewRepresentable {
 
         private func writeBackup(_ data: Data) {
             guard let bookmark = UserDefaults.standard.data(forKey: backupBookmarkKey) else {
+                if UserDefaults.standard.data(forKey: legacyBackupBookmarkKey) != nil {
+                    UserDefaults.standard.removeObject(forKey: legacyBackupBookmarkKey)
+                    UserDefaults.standard.set(true, forKey: backupNeedsSetupKey)
+                }
                 if UserDefaults.standard.bool(forKey: backupNeedsSetupKey) {
                     requestBackupFolderIfNeeded(with: data)
                 }
