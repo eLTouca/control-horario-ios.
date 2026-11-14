@@ -8,9 +8,11 @@ import PDFKit
 final class NativePDFPreviewController: UIViewController {
     private let document: PDFDocument
     private let pdfView = PDFView()
+    private let onClose: () -> Void
 
-    init(document: PDFDocument) {
+    init(document: PDFDocument, onClose: @escaping () -> Void) {
         self.document = document
+        self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -55,6 +57,7 @@ final class NativePDFPreviewController: UIViewController {
     }
 
     @objc private func closePreview() {
+        onClose()
         dismiss(animated: true)
     }
 
@@ -354,7 +357,9 @@ struct ControlHorarioWebView: UIViewRepresentable {
             DispatchQueue.main.async {
                 if action == "preview" {
                     guard let document = PDFDocument(url: fileURL) else { return }
-                    let preview = NativePDFPreviewController(document: document)
+                    let preview = NativePDFPreviewController(document: document) { [weak webView] in
+                        webView?.evaluateJavaScript("window.cerrarPreviaPdfDesdeIOS && window.cerrarPreviaPdfDesdeIOS()")
+                    }
                     let navigation = UINavigationController(rootViewController: preview)
                     navigation.modalPresentationStyle = .fullScreen
                     presenter.present(navigation, animated: true)
