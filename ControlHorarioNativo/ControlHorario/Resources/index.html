@@ -2733,6 +2733,20 @@
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
+
+        // Mantener la pestaña activa siempre visible en la barra superior.
+        // Es especialmente importante al navegar con gestos hasta Nómina,
+        // PDF o Ajustes, que pueden quedar fuera del área visible.
+        const nav = btn.closest('nav');
+        if (nav) {
+          const destinoScroll = btn.offsetLeft - (nav.clientWidth - btn.offsetWidth) / 2;
+          const maxScroll = Math.max(0, nav.scrollWidth - nav.clientWidth);
+          nav.scrollTo({
+            left: Math.max(0, Math.min(destinoScroll, maxScroll)),
+            behavior: 'smooth'
+          });
+        }
+
         const panelDestino = document.getElementById('panel-' + btn.dataset.panel);
         panelDestino.classList.add('active');
         if (window.direccionCambioPestana) {
