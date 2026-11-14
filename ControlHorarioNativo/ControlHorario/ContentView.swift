@@ -2,6 +2,7 @@ import SwiftUI
 import WebKit
 import CoreLocation
 import UIKit
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @StateObject private var location = NativeLocationManager()
@@ -78,8 +79,10 @@ struct ControlHorarioWebView: UIViewRepresentable {
     final class Coordinator: NSObject, WKScriptMessageHandler, UIDocumentPickerDelegate {
         let locationManager: NativeLocationManager
         weak var webView: WKWebView?
-        private let backupBookmarkKey = "ControlHorario.backupBookmark"
+        private let backupBookmarkKey = "ControlHorario.backupFolderBookmark"
+        private let backupNeedsSetupKey = "ControlHorario.backupNeedsFolderSetup"
         private var pendingBackupData: Data?
+        private var backupSetupPromptShown = false
 
         init(locationManager: NativeLocationManager) {
             self.locationManager = locationManager
@@ -128,11 +131,11 @@ struct ControlHorarioWebView: UIViewRepresentable {
             if action == "confirm", let json = payload["data"] as? String {
                 let alert = UIAlertController(
                     title: "Copia de seguridad",
-                    message: "¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad en la ubicación que elijas en tu iPhone?\n\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.",
+                    message: "¿Deseas configurar copias de seguridad periódicas y actualizar el archivo de copia de seguridad dentro de la carpeta que elijas en la app Archivos?\\n\\nAsí podrás mantener tus datos protegidos y disponer de una copia actualizada para recuperarlos cuando lo necesites.",
                     preferredStyle: .alert
                 )
                 alert.addAction(UIAlertAction(title: "Ahora no", style: .cancel))
-                alert.addAction(UIAlertAction(title: "Sí, configurar", style: .default) { [weak self] _ in
+                alert.addAction(UIAlertAction(title: "Elegir carpeta", style: .default) { [weak self] _ in
                     DispatchQueue.main.async {
                         self?.presentBackupPicker(with: Data(json.utf8))
                     }
@@ -143,34 +146,41 @@ struct ControlHorarioWebView: UIViewRepresentable {
             }
         }
 
+        // Se guarda un bookmark de la carpeta, no del archivo exportado.
+        // Así podemos reemplazar el JSON sin perder el permiso persistente de iOS.
         private func presentBackupPicker(with data: Data) {
             guard let webView, let presenter = webView.parentViewController else { return }
             pendingBackupData = data
-            let tempURL = FileManager.default.temporaryDirectory
-                .appendingPathComponent("copia-seguridad-control-horario.json")
-            do {
-                try data.write(to: tempURL, options: .atomic)
-                let picker = UIDocumentPickerViewController(forExporting: [tempURL], asCopy: true)
-                picker.delegate = self
-                picker.shouldShowFileExtensions = true
-                presenter.present(picker, animated: true)
-            } catch {
-                pendingBackupData = nil
-                notifyBackup("No se pudo preparar la copia de seguridad.")
-            }
+            let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)
+            picker.delegate = self
+            picker.allowsMultipleSelection = false
+            presenter.present(picker, animated: true)
         }
 
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            guard let url = urls.first else { return }
+            guard let folderURL = urls.first else { return }
+            let accessing = folderURL.startAccessingSecurityScopedResource()
+            defer { if accessing { folderURL.stopAccessingSecurityScopedResource() } }
+
             do {
-                let bookmark = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+                var isDirectory: ObjCBool = false
+                guard accessing,
+                      FileManager.default.fileExists(atPath: folderURL.path, isDirectory: &isDirectory),
+                      isDirectory.boolValue else {
+                    throw NSError(domain: "ControlHorario.Backup", code: 1)
+                }
+
+                let bookmark = try folderURL.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
                 UserDefaults.standard.set(bookmark, forKey: backupBookmarkKey)
+                UserDefaults.standard.set(false, forKey: backupNeedsSetupKey)
+
                 if let data = pendingBackupData {
-                    try writeBackupData(data, to: url)
-                    notifyBackup("Copia de seguridad creada. Se actualizará automáticamente al guardar cambios.")
+                    try writeBackupData(data, in: folderURL)
+                    notifyBackup("Copia de seguridad configurada. Se actualizará automáticamente al guardar cambios.")
                 }
             } catch {
-                notifyBackup("No se pudo guardar la ubicación de la copia. Inténtalo de nuevo.")
+                UserDefaults.standard.set(true, forKey: backupNeedsSetupKey)
+                notifyBackup("No se pudo guardar el acceso a esa carpeta. Prueba con una carpeta de iCloud Drive o En mi iPhone.")
             }
             pendingBackupData = nil
         }
@@ -180,26 +190,65 @@ struct ControlHorarioWebView: UIViewRepresentable {
         }
 
         private func writeBackup(_ data: Data) {
-            guard let bookmark = UserDefaults.standard.data(forKey: backupBookmarkKey) else { return }
-            var stale = false
+            guard let bookmark = UserDefaults.standard.data(forKey: backupBookmarkKey) else {
+                if UserDefaults.standard.bool(forKey: backupNeedsSetupKey) {
+                    requestBackupFolderIfNeeded(with: data)
+                }
+                return
+            }
+
             do {
-                let url = try URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
+                var stale = false
+                let folderURL = try URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
+                let accessing = folderURL.startAccessingSecurityScopedResource()
+                defer { if accessing { folderURL.stopAccessingSecurityScopedResource() } }
+
+                var isDirectory: ObjCBool = false
+                guard accessing,
+                      FileManager.default.fileExists(atPath: folderURL.path, isDirectory: &isDirectory),
+                      isDirectory.boolValue else {
+                    throw NSError(domain: "ControlHorario.Backup", code: 2)
+                }
+
                 if stale {
-                    let refreshed = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+                    let refreshed = try folderURL.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
                     UserDefaults.standard.set(refreshed, forKey: backupBookmarkKey)
                 }
-                try writeBackupData(data, to: url)
+                try writeBackupData(data, in: folderURL)
             } catch {
-                notifyBackup("No se pudo actualizar la copia de seguridad. Vuelve a elegir su ubicación.")
+                // El bookmark antiguo podía apuntar al archivo exportado, no a una carpeta.
+                // Se descarta y se solicita una nueva carpeta una sola vez por sesión.
+                UserDefaults.standard.removeObject(forKey: backupBookmarkKey)
+                UserDefaults.standard.set(true, forKey: backupNeedsSetupKey)
+                requestBackupFolderIfNeeded(with: data)
             }
         }
 
-        private func writeBackupData(_ data: Data, to url: URL) throws {
-            let accessing = url.startAccessingSecurityScopedResource()
-            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+        private func requestBackupFolderIfNeeded(with data: Data) {
+            guard !backupSetupPromptShown,
+                  let webView,
+                  let presenter = webView.parentViewController else { return }
+            backupSetupPromptShown = true
+
+            let alert = UIAlertController(
+                title: "Volver a elegir la carpeta",
+                message: "iOS ya no permite actualizar la ubicación anterior. Elige una carpeta en Archivos una sola vez para que las copias automáticas vuelvan a funcionar.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "Ahora no", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Elegir carpeta", style: .default) { [weak self] _ in
+                self?.presentBackupPicker(with: data)
+            })
+            presenter.present(alert, animated: true)
+        }
+
+        private func writeBackupData(_ data: Data, in folderURL: URL) throws {
+            let fileURL = folderURL.appendingPathComponent("copia-seguridad-control-horario.json")
+            let exists = FileManager.default.fileExists(atPath: fileURL.path)
             var coordinationError: NSError?
             var writeError: Error?
-            NSFileCoordinator(filePresenter: nil).coordinate(writingItemAt: url, options: .forReplacing, error: &coordinationError) { destination in
+            let options: NSFileCoordinator.WritingOptions = exists ? .forReplacing : []
+            NSFileCoordinator(filePresenter: nil).coordinate(writingItemAt: fileURL, options: options, error: &coordinationError) { destination in
                 do { try data.write(to: destination, options: .atomic) }
                 catch { writeError = error }
             }
