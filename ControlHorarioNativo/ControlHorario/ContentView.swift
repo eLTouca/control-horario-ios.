@@ -3,6 +3,70 @@ import WebKit
 import CoreLocation
 import UIKit
 import UniformTypeIdentifiers
+import PDFKit
+
+final class NativePDFPreviewController: UIViewController {
+    private let document: PDFDocument
+    private let pdfView = PDFView()
+
+    init(document: PDFDocument) {
+        self.document = document
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "Vista previa del PDF"
+        view.backgroundColor = UIColor.systemGray5
+
+        pdfView.translatesAutoresizingMaskIntoConstraints = false
+        pdfView.document = document
+        pdfView.autoScales = true
+        pdfView.displayMode = .singlePageContinuous
+        pdfView.displayDirection = .vertical
+        pdfView.usePageViewController(false, withViewOptions: nil)
+        pdfView.backgroundColor = UIColor.systemGray5
+        pdfView.displaysPageBreaks = true
+        pdfView.pageShadowsEnabled = true
+        view.addSubview(pdfView)
+
+        NSLayoutConstraint.activate([
+            pdfView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            pdfView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            pdfView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            pdfView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .close,
+            target: self,
+            action: #selector(closePreview)
+        )
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            title: "Compartir",
+            style: .plain,
+            target: self,
+            action: #selector(sharePDF)
+        )
+    }
+
+    @objc private func closePreview() {
+        dismiss(animated: true)
+    }
+
+    @objc private func sharePDF() {
+        guard let url = document.documentURL else { return }
+        let activity = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        if let popover = activity.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItem
+        }
+        present(activity, animated: true)
+    }
+}
 
 struct ContentView: View {
     @StateObject private var location = NativeLocationManager()
@@ -288,7 +352,13 @@ struct ControlHorarioWebView: UIViewRepresentable {
             }
 
             DispatchQueue.main.async {
-                if action == "save" {
+                if action == "preview" {
+                    guard let document = PDFDocument(url: fileURL) else { return }
+                    let preview = NativePDFPreviewController(document: document)
+                    let navigation = UINavigationController(rootViewController: preview)
+                    navigation.modalPresentationStyle = .fullScreen
+                    presenter.present(navigation, animated: true)
+                } else if action == "save" {
                     let picker = UIDocumentPickerViewController(forExporting: [fileURL], asCopy: true)
                     picker.shouldShowFileExtensions = true
                     presenter.present(picker, animated: true)
