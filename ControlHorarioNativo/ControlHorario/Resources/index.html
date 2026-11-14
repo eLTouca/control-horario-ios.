@@ -1916,9 +1916,9 @@
     .line-chart svg { display:block; width:100%; height:auto; overflow:visible; }
     .line-chart-foot { display:flex; justify-content:space-between; gap:.3rem; color:var(--text-secondary); font-size:.65rem; margin-top:.2rem; }
     .line-chart-foot strong { color:var(--primary); font-size:.75rem; }
-    .day-edit-modal { position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.48); display:flex; align-items:flex-end; justify-content:center; padding:1rem; }
+    .day-edit-modal { position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,.62); display:flex; align-items:center; justify-content:center; padding:calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)); overflow-y:auto; overscroll-behavior:contain; }
     .day-edit-modal[hidden] { display:none; }
-    .day-edit-sheet { width:min(100%,480px); background:white; border-radius:22px; padding:1.2rem; box-shadow:0 20px 60px rgba(15,23,42,.25); }
+    .day-edit-sheet { width:min(100%,480px); max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem); overflow-y:auto; overscroll-behavior:contain; background:white; border-radius:22px; padding:1.2rem; padding-bottom:calc(1.2rem + env(safe-area-inset-bottom)); box-shadow:0 20px 60px rgba(15,23,42,.35); position:relative; flex-shrink:0; }
     .day-edit-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
     .day-edit-top h3 { font-size:1.15rem; }
     .day-edit-sheet > label { display:block; color:var(--text-secondary); font-size:.72rem; font-weight:700; text-transform:uppercase; margin:.7rem 0 .3rem; }
@@ -1933,10 +1933,9 @@
 <body>
   <header>
     <h1><span class="logo-icon">⏱</span> Control de Horas Extras</h1>
-    <p>Registro · Calendario · PDF · Nómina</p>
+    <p>Registro · PDF · Nómina</p>
     <nav>
       <button class="nav-btn active" data-panel="horas">Horas</button>
-      <button class="nav-btn" data-panel="calendario">Calendario</button>
       <button class="nav-btn" data-panel="ubicacion">Ubicación</button>
       <button class="nav-btn" data-panel="nomina">Nómina</button>
       <button class="nav-btn" data-panel="pdf">PDF</button>
@@ -2068,28 +2067,6 @@
         </div>
         <p class="note" style="margin:0;text-align:center;">Se guarda solo en la fecha de hoy. Ideal desde el iPhone o como acceso rápido.</p>
       </div>
-    </section>
-
-    <!-- PANEL CALENDARIO -->
-    <section id="panel-calendario" class="panel">
-      <div class="card">
-        <div class="cal-header">
-          <button type="button" class="cal-nav-btn" id="cal-prev" title="Mes anterior">‹</button>
-          <h3 id="cal-titulo">Noviembre 2026</h3>
-          <button type="button" class="cal-nav-btn" id="cal-next" title="Mes siguiente">›</button>
-        </div>
-        <div class="cal-grid" id="cal-grid">
-          <!-- se rellena con JS -->
-        </div>
-        <div class="cal-legend">
-          <span><i style="background:#eef2ff;border:1px solid #c7d2fe;"></i> Con horas</span>
-          <span><i style="background:#ecfdf5;border:1px solid #6ee7b7;"></i> ≥ 4 horas</span>
-          <span><i style="border:2px solid #4f46e5;background:#fff;"></i> Hoy</span>
-        </div>
-        <div class="cal-summary" id="cal-summary"></div>
-      </div>
-      <p class="note" style="margin-top:0.5rem;">Pulsa cualquier día para consultar, añadir o corregir las horas extra.</p>
-
     </section>
 
     <!-- PANEL PDF -->
@@ -2655,7 +2632,7 @@
       document.getElementById('day-edit-concept').value = r ? (r.concepto || '') : '';
       document.getElementById('day-edit-delete').style.display = r ? 'inline-flex' : 'none';
       document.getElementById('day-edit-modal').hidden = false;
-      document.getElementById('day-edit-hours').focus();
+      document.getElementById('day-edit-hours').focus({ preventScroll: true });
       window.fechaEditandoCalendario = fecha;
     }
 
@@ -2696,20 +2673,6 @@
 
     document.getElementById('dashboard-cal-prev').addEventListener('click', () => cambiarMesCalendario(-1));
     document.getElementById('dashboard-cal-next').addEventListener('click', () => cambiarMesCalendario(1));
-
-    document.getElementById('cal-prev').addEventListener('click', () => {
-      calMonth--;
-      if (calMonth < 0) { calMonth = 11; calYear--; }
-      renderCalendario();
-      renderDashboardCalendar();
-    });
-
-    document.getElementById('cal-next').addEventListener('click', () => {
-      calMonth++;
-      if (calMonth > 11) { calMonth = 0; calYear++; }
-      renderCalendario();
-      renderDashboardCalendar();
-    });
 
     // ========== DESLIZAMIENTO FLUIDO ENTRE PESTAÑAS ==========
     (function() {
