@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import Security
 import VLCKit
 
@@ -69,9 +70,7 @@ private struct TapoVideoSurface: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {
-        if player.drawable == nil {
-            player.drawable = uiView
-        }
+        player.drawable = uiView
     }
 }
 
