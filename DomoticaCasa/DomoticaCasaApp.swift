@@ -8,7 +8,7 @@ struct DomoticaCasaApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(home)
-                .preferredColorScheme(.light)
+                .preferredColorScheme(.dark)
         }
     }
 }
