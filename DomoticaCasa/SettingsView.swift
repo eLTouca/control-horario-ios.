@@ -27,6 +27,8 @@ struct SettingsView: View {
                     LabeledContent("Dispositivo", value: "iPad")
                 }
             }
+            .scrollContentBackground(.hidden).background(AppTheme.background)
+            .tint(AppTheme.blue)
             .frame(maxWidth: 900).navigationTitle("Ajustes")
         }
     }
