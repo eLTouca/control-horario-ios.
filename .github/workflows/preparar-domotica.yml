@@ -37,6 +37,14 @@ jobs:
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             build
+          xcodebuild \
+            -workspace DomoticaCasa.xcworkspace \
+            -scheme DomoticaCasa \
+            -destination 'generic/platform=iOS' \
+            -configuration Debug \
+            -derivedDataPath build-device \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
       - name: Crear ZIP listo para abrir en Xcode
         run: |
