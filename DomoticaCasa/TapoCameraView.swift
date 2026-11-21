@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import AVFAudio
 import Security
 import MobileVLCKit
 
@@ -37,31 +38,89 @@ private enum TapoCameraCredentials {
 }
 
 @MainActor
-private final class TapoCameraPlayer: ObservableObject {
+private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayerDelegate {
     let mediaPlayer = VLCMediaPlayer()
+    @Published private(set) var status = "Desconectada"
+
+    override init() {
+        super.init()
+        mediaPlayer.delegate = self
+    }
 
     func play(username: String, password: String) {
-        var components = URLComponents()
-        components.scheme = "rtsp"
-        components.host = "192.168.1.141"
-        components.port = 554
-        components.path = "/stream1"
-        components.user = username
-        components.password = password
-        guard let url = components.url else { return }
+        guard !username.isEmpty, !password.isEmpty else {
+            status = "Faltan las credenciales de la cámara"
+            return
+        }
+
+        status = "Preparando conexión RTSP…"
+
+        // VLC debe tener una sesión de audio válida en iPadOS.
+        do {
+            let audio = AVAudioSession.sharedInstance()
+            try audio.setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers])
+            try audio.setActive(true)
+        } catch {
+            status = "No se pudo activar el audio: \(error.localizedDescription)"
+        }
+
+        // Las credenciales se pasan como opciones RTSP para evitar problemas
+        // con caracteres especiales en el usuario o la contraseña de la URL.
+        guard let url = URL(string: "rtsp://192.168.1.141:554/stream1") else {
+            status = "Dirección RTSP no válida"
+            return
+        }
+
         let media = VLCMedia(url: url)
         media.addOptions([
             "rtsp-tcp": true,
-            "network-caching": 1000,
+            "rtsp-user": username,
+            "rtsp-pwd": password,
+            "network-caching": 1500,
+            "live-caching": 1500,
             "avcodec-hw": "none"
         ])
+
+        mediaPlayer.stop()
         mediaPlayer.media = media
+        status = "Conectando con 192.168.1.141…"
         mediaPlayer.play()
     }
 
     func stop() {
         mediaPlayer.stop()
         mediaPlayer.drawable = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        status = "Desconectada"
+    }
+
+    func mediaPlayerStateChanged(_ aNotification: Notification!) {
+        let newStatus: String
+        switch mediaPlayer.state {
+        case .opening:
+            newStatus = "Abriendo conexión con la cámara…"
+        case .buffering:
+            newStatus = "Recibiendo vídeo…"
+        case .playing:
+            newStatus = "Cámara conectada · vídeo y audio activos"
+        case .paused:
+            newStatus = "Reproducción pausada"
+        case .error:
+            newStatus = "VLC no pudo reproducir el flujo RTSP. Revisa usuario y contraseña de cámara."
+        case .ended:
+            newStatus = "La cámara ha terminado el flujo"
+        case .stopped:
+            newStatus = "Reproducción detenida"
+        @unknown default:
+            newStatus = "Estado de cámara: \(mediaPlayer.state.rawValue)"
+        }
+        DispatchQueue.main.async { [weak self] in
+            self?.status = newStatus
+        }
+    }
+
+    func mediaPlayerTimeChanged(_ aNotification: Notification!) {
+        // El estado de reproducción se comunica mediante mediaPlayerStateChanged.
     }
 }
 
@@ -89,6 +148,7 @@ private struct TapoVideoSurface: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView {
         let view = TapoVideoView()
         view.backgroundColor = .black
+        view.isOpaque = true
         view.onAttach = { [weak player] videoView in
             player?.drawable = videoView
         }
@@ -96,7 +156,9 @@ private struct TapoVideoSurface: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {
-        player.drawable = uiView
+        if player.drawable as? UIView !== uiView {
+            player.drawable = uiView
+        }
     }
 
     static func dismantleUIView(_ uiView: UIView, coordinator: ()) {
@@ -109,7 +171,6 @@ struct TapoCameraView: View {
     @StateObject private var camera = TapoCameraPlayer()
     @State private var username = TapoCameraCredentials.load("username")
     @State private var password = TapoCameraCredentials.load("password")
-    @State private var isConnecting = false
 
     var body: some View {
         NavigationStack {
@@ -133,7 +194,6 @@ struct TapoCameraView: View {
                         TapoCameraCredentials.save(username, account: "username")
                         TapoCameraCredentials.save(password, account: "password")
                         camera.play(username: username, password: password)
-                        isConnecting = true
                     } label: {
                         Label("Conectar con la cámara", systemImage: "video.fill")
                             .frame(maxWidth: .infinity)
@@ -141,9 +201,7 @@ struct TapoCameraView: View {
                     .buttonStyle(.borderedProminent)
                     .tint(AppTheme.blue)
                     .disabled(username.isEmpty || password.isEmpty)
-                    Text(isConnecting
-                         ? "Conectando a 192.168.1.141… Si no aparece vídeo, comprueba que la cuenta de cámara y RTSP estén habilitados en Tapo."
-                         : "Cámara local · 192.168.1.141 · RTSP")
+                    Text(camera.status)
                         .font(.caption).foregroundStyle(AppTheme.muted)
                 }
                 .frame(maxWidth: 620, alignment: .leading)
