@@ -92,10 +92,8 @@ struct DashboardView: View {
     private var camerasCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             cardHeading("Cámaras", symbol: "video.fill")
-            HStack(spacing: 10) {
-                cameraPreview(name: "Entrada")
-                cameraPreview(name: "Salón")
-            }
+            cameraPreview(name: "Tapo C200 · Entrada")
+                .frame(maxWidth: 260)
             Text("Vista en directo pendiente de conectar").font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, minHeight: 165, alignment: .leading)
