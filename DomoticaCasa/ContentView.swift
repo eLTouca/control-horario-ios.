@@ -135,11 +135,10 @@ struct DashboardView: View {
                     .foregroundStyle(.white.opacity(0.85))
                 VStack {
                     HStack {
-                        Image(systemName: "video.fill").font(.system(size: 9, weight: .bold))
-                        Text("CÁMARA").font(.system(size: 8, weight: .bold))
+                        Circle().fill(.red).frame(width: 6, height: 6)
+                        Text("SIN SEÑAL").font(.system(size: 8, weight: .bold)).foregroundStyle(.white)
                         Spacer()
                     }
-                    .foregroundStyle(.white.opacity(0.85))
                     Spacer()
                 }.padding(8)
             }
@@ -187,9 +186,9 @@ struct DashboardView: View {
                 ForEach(lights) { device in
                     HStack(spacing: 10) {
                         Image(systemName: "lightbulb.fill")
-                            .foregroundStyle(device.isOn ? .blue : .secondary)
+                            .foregroundStyle(device.isOn ? .yellow : .secondary)
                             .frame(width: 34, height: 34)
-                            .background(Color.blue.opacity(device.isOn ? 0.12 : 0.07), in: RoundedRectangle(cornerRadius: 10))
+                            .background((device.isOn ? Color.yellow : Color.gray).opacity(0.13), in: RoundedRectangle(cornerRadius: 10))
                         VStack(alignment: .leading, spacing: 2) {
                             Text(device.name).font(.subheadline.weight(.semibold))
                             Text(device.room).font(.caption).foregroundStyle(.secondary)
@@ -197,7 +196,7 @@ struct DashboardView: View {
                         Spacer()
                         Toggle(device.name, isOn: Binding(get: { device.isOn }, set: { _ in home.toggleDevice(device) }))
                             .labelsHidden()
-                            .tint(Color(red: 0.20, green: 0.34, blue: 0.72))
+                            .tint(.blue)
                     }
                 }
             }
