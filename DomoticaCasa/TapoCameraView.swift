@@ -81,6 +81,8 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
         let media = VLCMedia(url: url)
         media.addOptions([
             ":rtsp-tcp": NSNull(),
+            ":avcodec-hw": "none",
+            ":verbose": 2,
             ":network-caching": 1500,
             ":live-caching": 1500
         ])
