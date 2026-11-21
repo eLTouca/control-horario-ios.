@@ -13,6 +13,8 @@
 		A10000000000000000000005 /* ScenesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* ScenesView.swift */; };
 		A10000000000000000000006 /* ConnectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* ConnectionsView.swift */; };
 		A10000000000000000000007 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* SettingsView.swift */; };
+		A10000000000000000000008 /* TapoCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* TapoCameraView.swift */; };
+		A10000000000000000000009 /* VLCKit in Frameworks */ = {isa = PBXBuildFile; productRef = H10000000000000000000001 /* VLCKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,11 +25,12 @@
 		B10000000000000000000005 /* ScenesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenesView.swift; sourceTree = "<group>"; };
 		B10000000000000000000006 /* ConnectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionsView.swift; sourceTree = "<group>"; };
 		B10000000000000000000007 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B10000000000000000000008 /* TapoCameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TapoCameraView.swift; sourceTree = "<group>"; };
 		C10000000000000000000001 /* DomoticaCasa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DomoticaCasa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		D10000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		D10000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000009 /* VLCKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -39,7 +42,7 @@
 		F10000000000000000000002 /* Products */ = { isa = PBXGroup; children = (C10000000000000000000001 /* DomoticaCasa.app */); name = Products; sourceTree = "<group>"; };
 		F10000000000000000000001 /* DomoticaCasa */ = {
 			isa = PBXGroup;
-			children = (B10000000000000000000001, B10000000000000000000002, B10000000000000000000003, B10000000000000000000004, B10000000000000000000005, B10000000000000000000006, B10000000000000000000007);
+			children = (B10000000000000000000001, B10000000000000000000002, B10000000000000000000003, B10000000000000000000004, B10000000000000000000005, B10000000000000000000006, B10000000000000000000007, B10000000000000000000008);
 			path = DomoticaCasa;
 			sourceTree = "<group>";
 		};
@@ -56,6 +59,7 @@
 			productName = DomoticaCasa;
 			productReference = C10000000000000000000001;
 			productType = "com.apple.product-type.application";
+			packageProductDependencies = (H10000000000000000000001 /* VLCKit */,);
 		};
 /* End PBXNativeTarget section */
 
@@ -72,23 +76,32 @@
 			productRefGroup = F10000000000000000000002;
 			projectDirPath = "";
 			projectRoot = "";
+			packageReferences = (G10000000000000000000001 /* XCRemoteSwiftPackageReference "vlckit" */,);
 			targets = (110000000000000000000001);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		130000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001, A10000000000000000000002, A10000000000000000000003, A10000000000000000000004, A10000000000000000000005, A10000000000000000000006, A10000000000000000000007); runOnlyForDeploymentPostprocessing = 0; };
+		130000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001, A10000000000000000000002, A10000000000000000000003, A10000000000000000000004, A10000000000000000000005, A10000000000000000000006, A10000000000000000000007, A10000000000000000000008); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXResourcesBuildPhase section */
 		140000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		G10000000000000000000001 /* XCRemoteSwiftPackageReference "vlckit" */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/videolan/vlckit"; requirement = {branch = master; kind = branch; }; };
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		H10000000000000000000001 /* VLCKit */ = {isa = XCSwiftPackageProductDependency; package = G10000000000000000000001 /* XCRemoteSwiftPackageReference "vlckit" */; productName = VLCKit; };
+/* End XCSwiftPackageProductDependency section */
+
 /* Begin XCBuildConfiguration section */
 		170000000000000000000001 /* Project Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Debug; };
 		170000000000000000000002 /* Project Release */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Release; };
-		180000000000000000000001 /* Target Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Domótica Casa"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = es.xeito.domoticacasa; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "2"; }; name = Debug; };
-		180000000000000000000002 /* Target Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Domótica Casa"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = es.xeito.domoticacasa; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "2"; }; name = Release; };
+		180000000000000000000001 /* Target Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Domótica Casa"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle"; INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Domótica Casa necesita acceder a tu red local para mostrar la cámara Tapo C200."; INFOPLIST_KEY_UILaunchScreen_Generation = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = es.xeito.domoticacasa; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "2"; }; name = Debug; };
+		180000000000000000000002 /* Target Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Domótica Casa"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle"; INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Domótica Casa necesita acceder a tu red local para mostrar la cámara Tapo C200."; INFOPLIST_KEY_UILaunchScreen_Generation = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = es.xeito.domoticacasa; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "2"; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
