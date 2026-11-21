@@ -19,15 +19,15 @@ struct ConnectionsView: View {
                                 .frame(width: 50, height: 50).background(AppTheme.blue.opacity(0.14), in: RoundedRectangle(cornerRadius: 15))
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(item.0).font(.headline)
-                                Text(item.2).font(.caption).foregroundStyle(.secondary)
-                                Text(item.3).font(.caption.weight(.semibold)).foregroundStyle(.orange)
+                                Text(item.2).font(.caption).foregroundStyle(AppTheme.muted)
+                                Text(item.3).font(.caption.weight(.semibold)).foregroundStyle(AppTheme.muted)
                             }
                             Spacer()
                         }
                         .padding(16).background(AppTheme.panel, in: RoundedRectangle(cornerRadius: 20))
                     }
                     Label("No se guardan contraseñas ni se envían datos a ningún servidor en esta versión.", systemImage: "lock.shield")
-                        .font(.footnote).foregroundStyle(.secondary).padding(.top, 4)
+                        .font(.footnote).foregroundStyle(AppTheme.muted).padding(.top, 4)
                 }
                 .padding(22).frame(maxWidth: 900).frame(maxWidth: .infinity)
             }
