@@ -14,7 +14,6 @@
 		A10000000000000000000006 /* ConnectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* ConnectionsView.swift */; };
 		A10000000000000000000007 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* SettingsView.swift */; };
 		A10000000000000000000008 /* TapoCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* TapoCameraView.swift */; };
-		A10000000000000000000009 /* VLCKit in Frameworks */ = {isa = PBXBuildFile; productRef = H10000000000000000000001 /* VLCKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,7 +29,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		D10000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000009 /* VLCKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
+		D10000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -59,7 +58,6 @@
 			productName = DomoticaCasa;
 			productReference = C10000000000000000000001;
 			productType = "com.apple.product-type.application";
-			packageProductDependencies = (H10000000000000000000001 /* VLCKit */,);
 		};
 /* End PBXNativeTarget section */
 
@@ -76,7 +74,6 @@
 			productRefGroup = F10000000000000000000002;
 			projectDirPath = "";
 			projectRoot = "";
-			packageReferences = (G10000000000000000000001 /* XCRemoteSwiftPackageReference "vlckit" */,);
 			targets = (110000000000000000000001);
 		};
 /* End PBXProject section */
@@ -89,13 +86,6 @@
 		140000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		G10000000000000000000001 /* XCRemoteSwiftPackageReference "vlckit" */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/videolan/vlckit"; requirement = {branch = master; kind = branch; }; };
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		H10000000000000000000001 /* VLCKit */ = {isa = XCSwiftPackageProductDependency; package = G10000000000000000000001 /* XCRemoteSwiftPackageReference "vlckit" */; productName = VLCKit; };
-/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		170000000000000000000001 /* Project Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Debug; };
