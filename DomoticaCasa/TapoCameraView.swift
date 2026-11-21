@@ -50,7 +50,11 @@ private final class TapoCameraPlayer: ObservableObject {
         components.password = password
         guard let url = components.url else { return }
         let media = VLCMedia(url: url)
-        media.addOptions(["rtsp-tcp": true, "network-caching": 1000])
+        media.addOptions([
+            "rtsp-tcp": true,
+            "network-caching": 1000,
+            "avcodec-hw": "none"
+        ])
         mediaPlayer.media = media
         mediaPlayer.play()
     }
@@ -61,18 +65,42 @@ private final class TapoCameraPlayer: ObservableObject {
     }
 }
 
+private final class TapoVideoView: UIView {
+    var onAttach: ((UIView) -> Void)?
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil {
+            onAttach?(self)
+        }
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        if window != nil {
+            onAttach?(self)
+        }
+    }
+}
+
 private struct TapoVideoSurface: UIViewRepresentable {
     let player: VLCMediaPlayer
 
     func makeUIView(context: Context) -> UIView {
-        let view = UIView()
+        let view = TapoVideoView()
         view.backgroundColor = .black
-        player.drawable = view
+        view.onAttach = { [weak player] videoView in
+            player?.drawable = videoView
+        }
         return view
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {
         player.drawable = uiView
+    }
+
+    static func dismantleUIView(_ uiView: UIView, coordinator: ()) {
+        (uiView as? TapoVideoView)?.onAttach = nil
     }
 }
 
