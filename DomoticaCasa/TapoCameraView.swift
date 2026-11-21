@@ -85,7 +85,11 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
             ":live-caching": 1500
         ])
 
-        mediaPlayer.stop()
+        // No detener un reproductor que ya está parado: VLC puede emitir una
+        // notificación tardía que sobrescriba el estado de este nuevo intento.
+        if mediaPlayer.state != .stopped {
+            mediaPlayer.stop()
+        }
         mediaPlayer.media = media
         status = "Conectando con 192.168.1.141…"
         mediaPlayer.play()
@@ -100,14 +104,21 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
 
     func mediaPlayerStateChanged(_ aNotification: Notification!) {
         let playerState = mediaPlayer.state
-        NSLog("DomoticaCasa Tapo VLC state: %ld", playerState.rawValue)
-
-        // VLC can deliver the .stopped notification asynchronously from the
-        // stop() used immediately before assigning a new media item. Ignore
-        // that stale notification while a media item is loaded.
-        if playerState == .stopped, mediaPlayer.media != nil {
-            return
+        let stateName: String
+        switch playerState {
+        case .stopped: stateName = "stopped"
+        case .opening: stateName = "opening"
+        case .buffering: stateName = "buffering"
+        case .playing: stateName = "playing"
+        case .paused: stateName = "paused"
+        case .error: stateName = "error"
+        case .ended: stateName = "ended"
+        @unknown default: stateName = "unknown"
         }
+        NSLog("DomoticaCasa Tapo VLC state: %@ (%ld)", stateName, playerState.rawValue)
+
+        // No se descartan estados: necesitamos ver también el estado final
+        // que VLC comunica después de abrir y almacenar el flujo.
 
         let newStatus: String
         switch playerState {
@@ -120,11 +131,11 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
         case .paused:
             newStatus = "Reproducción pausada"
         case .error:
-            newStatus = "VLC no pudo reproducir el flujo RTSP. Revisa usuario y contraseña de cámara."
+            newStatus = "VLC ha notificado un error de reproducción (estado 7). No confirma un problema de contraseña."
         case .ended:
             newStatus = "La cámara ha terminado el flujo"
         case .stopped:
-            newStatus = "Reproducción detenida"
+            newStatus = "VLC ha detenido el flujo (estado 0)."
         @unknown default:
             newStatus = "Estado de cámara: \(mediaPlayer.state.rawValue)"
         }
