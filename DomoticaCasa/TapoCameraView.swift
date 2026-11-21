@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 import Security
-import VLCKit
+import MobileVLCKit
 
 private enum TapoCameraCredentials {
     private static let service = "es.xeito.domoticacasa.tapo.c200"
