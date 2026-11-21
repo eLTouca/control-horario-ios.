@@ -99,8 +99,18 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
     }
 
     func mediaPlayerStateChanged(_ aNotification: Notification!) {
+        let playerState = mediaPlayer.state
+        NSLog("DomoticaCasa Tapo VLC state: %ld", playerState.rawValue)
+
+        // VLC can deliver the .stopped notification asynchronously from the
+        // stop() used immediately before assigning a new media item. Ignore
+        // that stale notification while a media item is loaded.
+        if playerState == .stopped, mediaPlayer.media != nil {
+            return
+        }
+
         let newStatus: String
-        switch mediaPlayer.state {
+        switch playerState {
         case .opening:
             newStatus = "Abriendo conexión con la cámara…"
         case .buffering:
