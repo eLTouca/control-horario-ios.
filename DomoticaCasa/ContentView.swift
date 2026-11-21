@@ -116,8 +116,8 @@ struct DashboardView: View {
                 Text("--").font(.system(size: 48, weight: .semibold, design: .rounded))
                 Text("°C").font(.title2.weight(.medium))
             }
-            Text("Sin sensor conectado").font(.subheadline).foregroundStyle(.secondary)
-            Label("Temperatura de la casa", systemImage: "house").font(.caption).foregroundStyle(.secondary)
+            Text("Sin sensor conectado").font(.subheadline).foregroundStyle(AppTheme.muted)
+            Label("Temperatura de la casa", systemImage: "house").font(.caption).foregroundStyle(AppTheme.muted)
         }
         .frame(maxWidth: .infinity, minHeight: 165, alignment: .leading)
         .padding(18)
@@ -129,7 +129,7 @@ struct DashboardView: View {
             cardHeading("Cámaras", symbol: "video.fill")
             cameraPreview(name: "Tapo C200 · Entrada")
                 .frame(maxWidth: 260)
-            Text("Vista en directo pendiente de conectar").font(.caption).foregroundStyle(.secondary)
+            Text("Vista en directo pendiente de conectar").font(.caption).foregroundStyle(AppTheme.muted)
         }
         .frame(maxWidth: .infinity, minHeight: 165, alignment: .leading)
         .padding(18)
@@ -167,7 +167,7 @@ struct DashboardView: View {
                     HStack {
                         Text(room).font(.subheadline.weight(.semibold))
                         Spacer()
-                        Text("\(Int(blindPositions[room] ?? 0))%").font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                        Text("\(Int(blindPositions[room] ?? 0))%").font(.subheadline.monospacedDigit()).foregroundStyle(AppTheme.muted)
                     }
                     Slider(value: Binding(
                         get: { blindPositions[room] ?? 0 },
@@ -177,10 +177,10 @@ struct DashboardView: View {
                         Label("Subir", systemImage: "arrow.up").font(.caption)
                         Spacer()
                         Label("Bajar", systemImage: "arrow.down").font(.caption)
-                    }.foregroundStyle(.secondary)
+                    }.foregroundStyle(AppTheme.muted)
                 }
             }
-            Text("Controles de muestra").font(.caption).foregroundStyle(.secondary)
+            Text("Controles de muestra").font(.caption).foregroundStyle(AppTheme.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
@@ -192,17 +192,17 @@ struct DashboardView: View {
             cardHeading("Luces", symbol: "lightbulb.fill")
             let lights = home.devices.filter { $0.kind == "Luz" }
             if lights.isEmpty {
-                Text("Añade luces desde Estancias").font(.subheadline).foregroundStyle(.secondary)
+                Text("Añade luces desde Estancias").font(.subheadline).foregroundStyle(AppTheme.muted)
             } else {
                 ForEach(lights) { device in
                     HStack(spacing: 10) {
                         Image(systemName: "lightbulb.fill")
-                            .foregroundStyle(device.isOn ? .yellow : .secondary)
+                            .foregroundStyle(AppTheme.blue)
                             .frame(width: 34, height: 34)
                             .background(AppTheme.blue.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
                         VStack(alignment: .leading, spacing: 2) {
                             Text(device.name).font(.subheadline.weight(.semibold))
-                            Text(device.room).font(.caption).foregroundStyle(.secondary)
+                            Text(device.room).font(.caption).foregroundStyle(AppTheme.muted)
                         }
                         Spacer()
                         Toggle(device.name, isOn: Binding(get: { device.isOn }, set: { _ in home.toggleDevice(device) }))
@@ -211,7 +211,7 @@ struct DashboardView: View {
                     }
                 }
             }
-            Text("Interruptores de demostración").font(.caption).foregroundStyle(.secondary)
+            Text("Interruptores de demostración").font(.caption).foregroundStyle(AppTheme.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
@@ -237,7 +237,7 @@ struct MetricCard: View {
             Image(systemName: symbol).font(.title2).foregroundStyle(tint).frame(width: 44, height: 44).background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
             VStack(alignment: .leading, spacing: 4) {
                 Text(value).font(.title.bold())
-                Text(title).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(title).font(.caption).foregroundStyle(AppTheme.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
