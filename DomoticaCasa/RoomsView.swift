@@ -27,13 +27,13 @@ struct RoomsView: View {
                             ForEach(home.rooms) { room in
                                 Button { selectedRoom = room.name } label: {
                                     VStack(alignment: .leading, spacing: 14) {
-                                        Image(systemName: room.symbol).font(.system(size: 28)).foregroundStyle(room.tint)
-                                            .frame(width: 54, height: 54).background(room.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 17))
-                                        Text(room.name).font(.headline).foregroundStyle(.primary)
-                                        Text("\(home.devices(in: room.name).count) dispositivos").font(.caption).foregroundStyle(.secondary)
+                                        Image(systemName: room.symbol).font(.system(size: 28)).foregroundStyle(AppTheme.blue)
+                                            .frame(width: 54, height: 54).background(AppTheme.blue.opacity(0.14), in: RoundedRectangle(cornerRadius: 17))
+                                        Text(room.name).font(.headline).foregroundStyle(.white)
+                                        Text("\(home.devices(in: room.name).count) dispositivos").font(.caption).foregroundStyle(AppTheme.muted)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading).padding(18)
-                                    .background(.background, in: RoundedRectangle(cornerRadius: 22))
+                                    .background(AppTheme.panel, in: RoundedRectangle(cornerRadius: 22))
                                 }.buttonStyle(.plain)
                             }
                         }
@@ -42,7 +42,7 @@ struct RoomsView: View {
                 }
                 .padding(22).frame(maxWidth: 900).frame(maxWidth: .infinity)
             }
-            .background(Color(uiColor: .systemGroupedBackground))
+            .background(AppTheme.background)
             .navigationTitle(selectedRoom ?? "Estancias")
         }
     }
@@ -54,8 +54,8 @@ struct DeviceRow: View {
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: device.kind == "Cámara" ? "camera.fill" : device.kind == "Enchufe" ? "powerplug.fill" : "lightbulb.fill")
-                .font(.title3).foregroundStyle(device.isOn ? .blue : .secondary)
-                .frame(width: 44, height: 44).background(Color.blue.opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
+                .font(.title3).foregroundStyle(AppTheme.blue)
+                .frame(width: 44, height: 44).background(AppTheme.blue.opacity(0.14), in: RoundedRectangle(cornerRadius: 14))
             VStack(alignment: .leading, spacing: 3) {
                 Text(device.name).font(.headline)
                 Text(device.room).font(.caption).foregroundStyle(.secondary)
@@ -63,6 +63,6 @@ struct DeviceRow: View {
             Spacer()
             Toggle(device.name, isOn: Binding(get: { device.isOn }, set: { _ in action() })).labelsHidden()
         }
-        .padding(14).background(.background, in: RoundedRectangle(cornerRadius: 18))
+        .padding(14).background(AppTheme.panel, in: RoundedRectangle(cornerRadius: 18))
     }
 }
