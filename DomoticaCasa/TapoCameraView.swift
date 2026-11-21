@@ -43,13 +43,15 @@ private final class TapoCameraPlayer: ObservableObject {
     func play(username: String, password: String) {
         var components = URLComponents()
         components.scheme = "rtsp"
-        components.host = "192.168.5.31"
+        components.host = "192.168.1.141"
         components.port = 554
         components.path = "/stream1"
         components.user = username
         components.password = password
         guard let url = components.url else { return }
-        mediaPlayer.media = VLCMedia(url: url)
+        let media = VLCMedia(url: url)
+        media.addOptions(["rtsp-tcp": true, "network-caching": 1000])
+        mediaPlayer.media = media
         mediaPlayer.play()
     }
 
@@ -112,8 +114,8 @@ struct TapoCameraView: View {
                     .tint(AppTheme.blue)
                     .disabled(username.isEmpty || password.isEmpty)
                     Text(isConnecting
-                         ? "Conectando a 192.168.5.31… Si no aparece vídeo, comprueba que la cuenta de cámara y RTSP estén habilitados en Tapo."
-                         : "Cámara local · 192.168.5.31 · RTSP")
+                         ? "Conectando a 192.168.1.141… Si no aparece vídeo, comprueba que la cuenta de cámara y RTSP estén habilitados en Tapo."
+                         : "Cámara local · 192.168.1.141 · RTSP")
                         .font(.caption).foregroundStyle(AppTheme.muted)
                 }
                 .frame(maxWidth: 620, alignment: .leading)
