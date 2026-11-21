@@ -81,7 +81,7 @@ struct DashboardView: View {
                         }
                     }
 
-                    Text("Panel de demostración: las cámaras, persianas, sensores y luces todavía no están conectados a los equipos físicos.")
+                    Text("Panel de demostración: las persianas, sensores y luces todavía no están conectados a los equipos físicos.")
                         .font(.footnote).foregroundStyle(AppTheme.muted)
                         .padding(.top, 2)
                 }
