@@ -14,12 +14,12 @@ struct SettingsView: View {
                 Section("Acceso") {
                     Toggle("Acceso remoto", isOn: $remoteAccess)
                     Text("El acceso remoto requiere integrar los servicios oficiales de cada fabricante. Este ajuste es informativo y todavía no habilita conexiones externas.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(AppTheme.muted)
                 }
                 Section("Familia") {
                     Toggle("Sincronización familiar con iCloud", isOn: $familySync)
                     Text("La sincronización familiar se añadirá en una fase posterior. iCloud sincronizará ajustes y configuración, no hará de puente para controlar equipos.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(AppTheme.muted)
                 }
                 Section("Acerca de") {
                     LabeledContent("Aplicación", value: "Domótica Casa")
