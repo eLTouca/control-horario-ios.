@@ -66,19 +66,24 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
 
         // Las credenciales se pasan como opciones RTSP para evitar problemas
         // con caracteres especiales en el usuario o la contraseña de la URL.
-        guard let url = URL(string: "rtsp://192.168.1.141:554/stream1") else {
+        var components = URLComponents()
+        components.scheme = "rtsp"
+        components.host = "192.168.1.141"
+        components.port = 554
+        components.path = "/stream1"
+        components.user = username
+        components.password = password
+        guard let url = components.url else {
             status = "Dirección RTSP no válida"
             return
         }
 
         let media = VLCMedia(url: url)
         media.addOptions([
-            "rtsp-tcp": true,
-            "rtsp-user": username,
-            "rtsp-pwd": password,
-            "network-caching": 1500,
-            "live-caching": 1500,
-            "avcodec-hw": "none"
+            ":rtsp-tcp": NSNull(),
+            ":network-caching": 1500,
+            ":live-caching": 1500,
+            ":avcodec-hw": "none"
         ])
 
         mediaPlayer.stop()
