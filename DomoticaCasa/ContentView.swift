@@ -14,6 +14,7 @@ struct ContentView: View {
                 SettingsView().tabItem { Label("Ajustes", systemImage: "gearshape.fill") }.tag(4)
             }
             .tint(Color(red: 0.20, green: 0.34, blue: 0.72))
+            .preferredColorScheme(.dark)
             // Gesto simultáneo: deja que los ScrollView sigan desplazándose
             // verticalmente y solo cambia de pestaña cuando el movimiento
             // es claramente horizontal.
