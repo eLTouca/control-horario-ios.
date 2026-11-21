@@ -36,7 +36,8 @@
 			children = (F10000000000000000000001 /* DomoticaCasa */, F10000000000000000000002 /* Products */);
 			sourceTree = "<group>";
 		};
-		F10000000000000000000002 /* Products */ = { isa = PBXGroup; children = (C10000000000000000000001 /* DomoticaCasa.app */); name = Products; sourceTree = "<group>"; };\n\t\tF10000000000000000000001 /* DomoticaCasa */ = {
+		F10000000000000000000002 /* Products */ = { isa = PBXGroup; children = (C10000000000000000000001 /* DomoticaCasa.app */); name = Products; sourceTree = "<group>"; };
+		F10000000000000000000001 /* DomoticaCasa */ = {
 			isa = PBXGroup;
 			children = (B10000000000000000000001, B10000000000000000000002, B10000000000000000000003, B10000000000000000000004, B10000000000000000000005, B10000000000000000000006, B10000000000000000000007);
 			path = DomoticaCasa;
