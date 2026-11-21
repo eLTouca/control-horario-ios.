@@ -70,7 +70,7 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
         components.scheme = "rtsp"
         components.host = "192.168.1.141"
         components.port = 554
-        components.path = "/stream1"
+        components.path = "/stream2"
         components.user = username
         components.password = password
         guard let url = components.url else {
