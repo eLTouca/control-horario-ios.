@@ -1,0 +1,55 @@
+name: Preparar ZIP de Domotica Casa
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - domotica-casa-ipad-v1
+    paths:
+      - 'DomoticaCasa/**'
+      - 'DomoticaCasa.xcodeproj/**'
+      - 'Podfile'
+      - '.github/workflows/preparar-domotica.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  preparar:
+    runs-on: macos-latest
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@v4
+
+      - name: Instalar CocoaPods
+        run: |
+          sudo gem install cocoapods
+          pod install --repo-update
+
+      - name: Comprobar workspace y esquema
+        run: |
+          xcodebuild -list -workspace DomoticaCasa.xcworkspace
+          xcodebuild \
+            -workspace DomoticaCasa.xcworkspace \
+            -scheme DomoticaCasa \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Crear ZIP listo para abrir en Xcode
+        run: |
+          zip -r DomoticaCasa-Xcode-Preparado.zip \
+            DomoticaCasa.xcodeproj \
+            DomoticaCasa.xcworkspace \
+            DomoticaCasa \
+            Podfile Podfile.lock Pods README.md
+
+      - name: Publicar ZIP preparado
+        uses: actions/upload-artifact@v4
+        with:
+          name: DomoticaCasa-Xcode-Preparado
+          path: DomoticaCasa-Xcode-Preparado.zip
+          if-no-files-found: error
+          retention-days: 14
