@@ -5,14 +5,38 @@ struct ContentView: View {
     @State private var selection = 0
 
     var body: some View {
-        TabView(selection: $selection) {
-            DashboardView().tabItem { Label("Inicio", systemImage: "square.grid.2x2.fill") }.tag(0)
-            RoomsView().tabItem { Label("Estancias", systemImage: "house.fill") }.tag(1)
-            ScenesView().tabItem { Label("Escenas", systemImage: "sparkles") }.tag(2)
-            ConnectionsView().tabItem { Label("Conexiones", systemImage: "dot.radiowaves.left.and.right") }.tag(3)
-            SettingsView().tabItem { Label("Ajustes", systemImage: "gearshape.fill") }.tag(4)
+        GeometryReader { geometry in
+            TabView(selection: $selection) {
+                DashboardView().tabItem { Label("Inicio", systemImage: "square.grid.2x2.fill") }.tag(0)
+                RoomsView().tabItem { Label("Estancias", systemImage: "house.fill") }.tag(1)
+                ScenesView().tabItem { Label("Escenas", systemImage: "sparkles") }.tag(2)
+                ConnectionsView().tabItem { Label("Conexiones", systemImage: "dot.radiowaves.left.and.right") }.tag(3)
+                SettingsView().tabItem { Label("Ajustes", systemImage: "gearshape.fill") }.tag(4)
+            }
+            .tint(Color(red: 0.20, green: 0.34, blue: 0.72))
+            // Gesto simultáneo: deja que los ScrollView sigan desplazándose
+            // verticalmente y solo cambia de pestaña cuando el movimiento
+            // es claramente horizontal.
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 18, coordinateSpace: .local)
+                    .onEnded { value in
+                        let horizontal = value.translation.width
+                        let vertical = value.translation.height
+                        let startedAboveTabBar = value.startLocation.y < geometry.size.height - 70
+
+                        guard startedAboveTabBar,
+                              abs(horizontal) >= 48,
+                              abs(horizontal) > abs(vertical) * 1.25 else { return }
+
+                        let nextSelection = selection + (horizontal < 0 ? 1 : -1)
+                        guard (0..<5).contains(nextSelection) else { return }
+
+                        withAnimation(.easeInOut(duration: 0.22)) {
+                            selection = nextSelection
+                        }
+                    }
+            )
         }
-        .tint(Color(red: 0.20, green: 0.34, blue: 0.72))
     }
 }
 
