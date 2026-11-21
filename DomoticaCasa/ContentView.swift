@@ -1,5 +1,15 @@
 import SwiftUI
 
+// Paleta de colores copiada de Domótica Casa V1.
+enum AppTheme {
+    static let background = Color(red: 0.035, green: 0.047, blue: 0.075)
+    static let panel = Color(red: 0.075, green: 0.092, blue: 0.135)
+    static let panel2 = Color(red: 0.105, green: 0.125, blue: 0.175)
+    static let blue = Color(red: 0.20, green: 0.52, blue: 1.0)
+    static let muted = Color(red: 0.58, green: 0.64, blue: 0.75)
+    static let green = Color(red: 0.25, green: 0.82, blue: 0.62)
+}
+
 struct ContentView: View {
     @EnvironmentObject private var home: HomeStore
     @State private var selection = 0
@@ -13,7 +23,7 @@ struct ContentView: View {
                 ConnectionsView().tabItem { Label("Conexiones", systemImage: "dot.radiowaves.left.and.right") }.tag(3)
                 SettingsView().tabItem { Label("Ajustes", systemImage: "gearshape.fill") }.tag(4)
             }
-            .tint(Color(red: 0.20, green: 0.34, blue: 0.72))
+            .tint(AppTheme.blue)
             .preferredColorScheme(.dark)
             // Gesto simultáneo: deja que los ScrollView sigan desplazándose
             // verticalmente y solo cambia de pestaña cuando el movimiento
@@ -63,7 +73,7 @@ struct DashboardView: View {
                         HStack {
                             Text("Escenas rápidas").font(.title2.bold())
                             Spacer()
-                            Text("Ver en Escenas").font(.subheadline.weight(.semibold)).foregroundStyle(.blue)
+                            Text("Ver en Escenas").font(.subheadline.weight(.semibold)).foregroundStyle(AppTheme.blue)
                         }
                         ForEach(home.scenes) { scene in
                             SceneRow(scene: scene) { home.toggleScene(scene) }
@@ -71,14 +81,14 @@ struct DashboardView: View {
                     }
 
                     Text("Panel de demostración: las cámaras, persianas, sensores y luces todavía no están conectados a los equipos físicos.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(AppTheme.muted)
                         .padding(.top, 2)
                 }
                 .padding(22)
                 .frame(maxWidth: 1100)
                 .frame(maxWidth: .infinity)
             }
-            .background(Color(uiColor: .systemGroupedBackground))
+            .background(AppTheme.background)
             .navigationTitle("Mi casa")
         }
     }
@@ -96,7 +106,7 @@ struct DashboardView: View {
                 .foregroundStyle(.white.opacity(0.9))
         }
         .padding(24)
-        .background(LinearGradient(colors: [Color(red: 0.12, green: 0.20, blue: 0.43), Color(red: 0.25, green: 0.39, blue: 0.73)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 28))
+        .background(LinearGradient(colors: [AppTheme.panel2, AppTheme.panel], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 28))
     }
 
     private var temperatureCard: some View {
@@ -111,7 +121,7 @@ struct DashboardView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 165, alignment: .leading)
         .padding(18)
-        .background(.background, in: RoundedRectangle(cornerRadius: 22))
+        .background(AppTheme.panel, in: RoundedRectangle(cornerRadius: 22))
     }
 
     private var camerasCard: some View {
@@ -130,7 +140,7 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 6) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(LinearGradient(colors: [Color(red: 0.12, green: 0.16, blue: 0.23), Color(red: 0.30, green: 0.36, blue: 0.44)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(LinearGradient(colors: [AppTheme.panel2, AppTheme.background], startPoint: .topLeading, endPoint: .bottomTrailing))
                 Image(systemName: "video.slash")
                     .font(.title2)
                     .foregroundStyle(.white.opacity(0.85))
@@ -189,7 +199,7 @@ struct DashboardView: View {
                         Image(systemName: "lightbulb.fill")
                             .foregroundStyle(device.isOn ? .yellow : .secondary)
                             .frame(width: 34, height: 34)
-                            .background((device.isOn ? Color.yellow : Color.gray).opacity(0.13), in: RoundedRectangle(cornerRadius: 10))
+                            .background(AppTheme.blue.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
                         VStack(alignment: .leading, spacing: 2) {
                             Text(device.name).font(.subheadline.weight(.semibold))
                             Text(device.room).font(.caption).foregroundStyle(.secondary)
@@ -197,7 +207,7 @@ struct DashboardView: View {
                         Spacer()
                         Toggle(device.name, isOn: Binding(get: { device.isOn }, set: { _ in home.toggleDevice(device) }))
                             .labelsHidden()
-                            .tint(.blue)
+                            .tint(AppTheme.blue)
                     }
                 }
             }
