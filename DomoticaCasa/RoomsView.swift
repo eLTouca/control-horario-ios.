@@ -38,7 +38,7 @@ struct RoomsView: View {
                             }
                         }
                     }
-                    Text("Los interruptores son de demostración local.").font(.footnote).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Los interruptores son de demostración local.").font(.footnote).foregroundStyle(AppTheme.muted).frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(22).frame(maxWidth: 900).frame(maxWidth: .infinity)
             }
@@ -58,7 +58,7 @@ struct DeviceRow: View {
                 .frame(width: 44, height: 44).background(AppTheme.blue.opacity(0.14), in: RoundedRectangle(cornerRadius: 14))
             VStack(alignment: .leading, spacing: 3) {
                 Text(device.name).font(.headline)
-                Text(device.room).font(.caption).foregroundStyle(.secondary)
+                Text(device.room).font(.caption).foregroundStyle(AppTheme.muted)
             }
             Spacer()
             Toggle(device.name, isOn: Binding(get: { device.isOn }, set: { _ in action() })).labelsHidden()
