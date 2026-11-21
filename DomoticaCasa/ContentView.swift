@@ -54,6 +54,7 @@ struct ContentView: View {
 struct DashboardView: View {
     @EnvironmentObject private var home: HomeStore
     @State private var blindPositions: [String: Double] = ["Salón": 65, "Dormitorio": 100]
+    @State private var showTapoCamera = false
     private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
 
     var body: some View {
@@ -90,6 +91,9 @@ struct DashboardView: View {
             }
             .background(AppTheme.background)
             .navigationTitle("Mi casa")
+            .sheet(isPresented: $showTapoCamera) {
+                TapoCameraView()
+            }
         }
     }
 
@@ -127,9 +131,14 @@ struct DashboardView: View {
     private var camerasCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             cardHeading("Cámaras", symbol: "video.fill")
-            cameraPreview(name: "Tapo C200 · Entrada")
-                .frame(maxWidth: 260)
-            Text("Vista en directo pendiente de conectar").font(.caption).foregroundStyle(AppTheme.muted)
+            Button {
+                showTapoCamera = true
+            } label: {
+                cameraPreview(name: "Tapo C200 · Entrada")
+                    .frame(maxWidth: 260)
+            }
+            .buttonStyle(.plain)
+            Text("Toca para abrir la cámara").font(.caption).foregroundStyle(AppTheme.muted)
         }
         .frame(maxWidth: .infinity, minHeight: 165, alignment: .leading)
         .padding(18)
