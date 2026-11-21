@@ -18,51 +18,178 @@ struct ContentView: View {
 
 struct DashboardView: View {
     @EnvironmentObject private var home: HomeStore
-    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+    @State private var blindPositions: [String: Double] = ["Salón": 65, "Dormitorio": 100]
+    private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("CASA CONECTADA").font(.caption.weight(.bold)).tracking(1.5).foregroundStyle(.white.opacity(0.75))
-                        Text("Hola, bienvenido").font(.largeTitle.bold()).foregroundStyle(.white)
-                        Text(home.homeName).font(.title3).foregroundStyle(.white.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(24)
-                    .background(LinearGradient(colors: [Color(red: 0.12, green: 0.20, blue: 0.43), Color(red: 0.25, green: 0.39, blue: 0.73)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 28))
+                    header
 
-                    LazyVGrid(columns: columns, spacing: 14) {
-                        MetricCard(title: "Dispositivos activos", value: "\(home.activeCount)", symbol: "power", tint: .green)
-                        MetricCard(title: "Dispositivos", value: "\(home.devices.count)", symbol: "lightbulb.2.fill", tint: .blue)
-                        MetricCard(title: "Estancias", value: "\(home.rooms.count)", symbol: "door.left.hand.open", tint: .orange)
-                        MetricCard(title: "Escenas", value: "\(home.scenes.count)", symbol: "sparkles", tint: .purple)
+                    LazyVGrid(columns: columns, alignment: .center, spacing: 16) {
+                        temperatureCard
+                        camerasCard
+                        blindsCard
+                        lightsCard
                     }
 
-                    HStack {
-                        Text("Escenas rápidas").font(.title2.bold())
-                        Spacer()
-                        Text("Ver en Escenas").font(.subheadline.weight(.semibold)).foregroundStyle(.blue)
-                    }
-                    ForEach(home.scenes) { scene in
-                        SceneRow(scene: scene) { home.toggleScene(scene) }
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Escenas rápidas").font(.title2.bold())
+                            Spacer()
+                            Text("Ver en Escenas").font(.subheadline.weight(.semibold)).foregroundStyle(.blue)
+                        }
+                        ForEach(home.scenes) { scene in
+                            SceneRow(scene: scene) { home.toggleScene(scene) }
+                        }
                     }
 
-                    Text("Dispositivos").font(.title2.bold())
-                    ForEach(home.devices.prefix(4)) { device in
-                        DeviceRow(device: device) { home.toggleDevice(device) }
-                    }
-                    Text("Modo demostración: los cambios todavía no actúan sobre los equipos físicos.")
+                    Text("Panel de demostración: las cámaras, persianas, sensores y luces todavía no están conectados a los equipos físicos.")
                         .font(.footnote).foregroundStyle(.secondary)
-                        .padding(.top, 4)
+                        .padding(.top, 2)
                 }
                 .padding(22)
-                .frame(maxWidth: 900)
+                .frame(maxWidth: 1100)
                 .frame(maxWidth: .infinity)
             }
             .background(Color(uiColor: .systemGroupedBackground))
-            .navigationTitle("Inicio")
+            .navigationTitle("Mi casa")
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("CASA CONECTADA").font(.caption.weight(.bold)).tracking(1.5).foregroundStyle(.white.opacity(0.75))
+                Text("Hola, bienvenido").font(.largeTitle.bold()).foregroundStyle(.white)
+                Text(home.homeName).font(.title3).foregroundStyle(.white.opacity(0.85))
+            }
+            Spacer()
+            Image(systemName: "house.fill")
+                .font(.system(size: 34, weight: .medium))
+                .foregroundStyle(.white.opacity(0.9))
+        }
+        .padding(24)
+        .background(LinearGradient(colors: [Color(red: 0.12, green: 0.20, blue: 0.43), Color(red: 0.25, green: 0.39, blue: 0.73)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 28))
+    }
+
+    private var temperatureCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            cardHeading("Temperatura", symbol: "thermometer.medium")
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("--").font(.system(size: 48, weight: .semibold, design: .rounded))
+                Text("°C").font(.title2.weight(.medium))
+            }
+            Text("Sin sensor conectado").font(.subheadline).foregroundStyle(.secondary)
+            Label("Temperatura de la casa", systemImage: "house").font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 165, alignment: .leading)
+        .padding(18)
+        .background(.background, in: RoundedRectangle(cornerRadius: 22))
+    }
+
+    private var camerasCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            cardHeading("Cámaras", symbol: "video.fill")
+            HStack(spacing: 10) {
+                cameraPreview(name: "Entrada")
+                cameraPreview(name: "Salón")
+            }
+            Text("Vista en directo pendiente de conectar").font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 165, alignment: .leading)
+        .padding(18)
+        .background(.background, in: RoundedRectangle(cornerRadius: 22))
+    }
+
+    private func cameraPreview(name: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(LinearGradient(colors: [Color(red: 0.12, green: 0.16, blue: 0.23), Color(red: 0.30, green: 0.36, blue: 0.44)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                Image(systemName: "video.slash")
+                    .font(.title2)
+                    .foregroundStyle(.white.opacity(0.85))
+                VStack {
+                    HStack {
+                        Circle().fill(.red).frame(width: 6, height: 6)
+                        Text("SIN SEÑAL").font(.system(size: 8, weight: .bold)).foregroundStyle(.white)
+                        Spacer()
+                    }
+                    Spacer()
+                }.padding(8)
+            }
+            .frame(height: 76)
+            Text(name).font(.caption.weight(.semibold))
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var blindsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            cardHeading("Persianas", symbol: "blinds.horizontal")
+            ForEach(["Salón", "Dormitorio"], id: \.self) { room in
+                VStack(alignment: .leading, spacing: 7) {
+                    HStack {
+                        Text(room).font(.subheadline.weight(.semibold))
+                        Spacer()
+                        Text("\(Int(blindPositions[room] ?? 0))%").font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                    }
+                    Slider(value: Binding(
+                        get: { blindPositions[room] ?? 0 },
+                        set: { blindPositions[room] = $0 }
+                    ), in: 0...100)
+                    HStack {
+                        Label("Subir", systemImage: "arrow.up").font(.caption)
+                        Spacer()
+                        Label("Bajar", systemImage: "arrow.down").font(.caption)
+                    }.foregroundStyle(.secondary)
+                }
+            }
+            Text("Controles de muestra").font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(.background, in: RoundedRectangle(cornerRadius: 22))
+    }
+
+    private var lightsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            cardHeading("Luces", symbol: "lightbulb.fill")
+            let lights = home.devices.filter { $0.kind == "Luz" }
+            if lights.isEmpty {
+                Text("Añade luces desde Estancias").font(.subheadline).foregroundStyle(.secondary)
+            } else {
+                ForEach(lights) { device in
+                    HStack(spacing: 10) {
+                        Image(systemName: "lightbulb.fill")
+                            .foregroundStyle(device.isOn ? .yellow : .secondary)
+                            .frame(width: 34, height: 34)
+                            .background((device.isOn ? Color.yellow : Color.gray).opacity(0.13), in: RoundedRectangle(cornerRadius: 10))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(device.name).font(.subheadline.weight(.semibold))
+                            Text(device.room).font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Toggle(device.name, isOn: Binding(get: { device.isOn }, set: { _ in home.toggleDevice(device) }))
+                            .labelsHidden()
+                            .tint(.blue)
+                    }
+                }
+            }
+            Text("Interruptores de demostración").font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(.background, in: RoundedRectangle(cornerRadius: 22))
+    }
+
+    private func cardHeading(_ title: String, symbol: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: symbol).foregroundStyle(.blue)
+            Text(title).font(.headline)
+            Spacer()
         }
     }
 }
