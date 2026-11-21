@@ -33,10 +33,10 @@
 /* Begin PBXGroup section */
 		E10000000000000000000001 = {
 			isa = PBXGroup;
-			children = (F10000000000000000000001 /* DomoticaCasa */, C10000000000000000000001 /* Products */);
+			children = (F10000000000000000000001 /* DomoticaCasa */, F10000000000000000000002 /* Products */);
 			sourceTree = "<group>";
 		};
-		F10000000000000000000001 /* DomoticaCasa */ = {
+		F10000000000000000000002 /* Products */ = { isa = PBXGroup; children = (C10000000000000000000001 /* DomoticaCasa.app */); name = Products; sourceTree = "<group>"; };\n\t\tF10000000000000000000001 /* DomoticaCasa */ = {
 			isa = PBXGroup;
 			children = (B10000000000000000000001, B10000000000000000000002, B10000000000000000000003, B10000000000000000000004, B10000000000000000000005, B10000000000000000000006, B10000000000000000000007);
 			path = DomoticaCasa;
@@ -68,7 +68,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (es, en, Base);
 			mainGroup = E10000000000000000000001;
-			productRefGroup = C10000000000000000000001;
+			productRefGroup = F10000000000000000000002;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (110000000000000000000001);
