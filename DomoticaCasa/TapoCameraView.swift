@@ -82,8 +82,7 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
         media.addOptions([
             ":rtsp-tcp": NSNull(),
             ":network-caching": 1500,
-            ":live-caching": 1500,
-            ":avcodec-hw": "none"
+            ":live-caching": 1500
         ])
 
         mediaPlayer.stop()
@@ -107,7 +106,7 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
         case .buffering:
             newStatus = "Recibiendo vídeo…"
         case .playing:
-            newStatus = "Cámara conectada · vídeo y audio activos"
+            newStatus = "Flujo RTSP recibido · VLC reproduciendo"
         case .paused:
             newStatus = "Reproducción pausada"
         case .error:
