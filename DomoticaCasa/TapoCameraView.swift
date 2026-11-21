@@ -71,8 +71,6 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
         components.host = "192.168.1.141"
         components.port = 554
         components.path = "/stream2"
-        components.user = username
-        components.password = password
         guard let url = components.url else {
             status = "Dirección RTSP no válida"
             return
@@ -80,6 +78,8 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
 
         let media = VLCMedia(url: url)
         media.addOptions([
+            ":rtsp-user": username,
+            ":rtsp-pwd": password,
             ":rtsp-tcp": NSNull(),
             ":avcodec-hw": "none",
             ":verbose": 2,
