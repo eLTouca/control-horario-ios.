@@ -156,9 +156,7 @@ private struct TapoVideoSurface: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {
-        if player.drawable as? UIView !== uiView {
-            player.drawable = uiView
-        }
+        player.drawable = uiView
     }
 
     static func dismantleUIView(_ uiView: UIView, coordinator: ()) {
