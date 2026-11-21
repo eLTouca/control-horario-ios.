@@ -3,7 +3,7 @@ import SwiftUI
 struct ConnectionsView: View {
     private let services: [(String, String, String, String)] = [
         ("Tuya / Smart Life", "house.lodge.fill", "Bombillas, enchufes y sensores compatibles", "Integración pendiente"),
-        ("TP-Link Tapo", "video.fill", "Cámaras y dispositivos Tapo", "Integración pendiente"),
+        ("TP-Link Tapo", "video.fill", "Cámara C200 por RTSP local; enchufe P100M pendiente", "Cámara preparada · falta introducir credenciales"),
         ("Samsung SmartThings", "air.conditioner.horizontal.fill", "Climatización y dispositivos Samsung", "Integración pendiente"),
         ("Apple Casa", "apple.logo", "Accesorios compatibles con HomeKit", "Sin central Apple configurada")
     ]
@@ -26,7 +26,7 @@ struct ConnectionsView: View {
                         }
                         .padding(16).background(AppTheme.panel, in: RoundedRectangle(cornerRadius: 20))
                     }
-                    Label("No se guardan contraseñas ni se envían datos a ningún servidor en esta versión.", systemImage: "lock.shield")
+                    Label("Las credenciales de la cámara se guardan en el Llavero del iPad; no se envían a servidores propios.", systemImage: "lock.shield")
                         .font(.footnote).foregroundStyle(AppTheme.muted).padding(.top, 4)
                 }
                 .padding(22).frame(maxWidth: 900).frame(maxWidth: .infinity)
