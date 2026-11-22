@@ -142,6 +142,8 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
 
         var components = URLComponents()
         components.scheme = "rtsp"
+        components.user = username
+        components.password = password
         components.host = "192.168.1.141"
         components.port = 554
         components.path = "/stream2"
@@ -154,8 +156,6 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
         let media = VLCMedia(url: url)
         media.addOptions([
             "rtsp-tcp": true,
-            "rtsp-user": username,
-            "rtsp-pwd": password,
             "network-caching": 1500,
             "avcodec-hw": "none"
         ])
