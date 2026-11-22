@@ -68,7 +68,7 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
             self.appendDiagnostic(message)
         }
 
-        let library = VLCLibrary.sharedLibrary()
+        let library = VLCLibrary.shared()
         library.loggers = [vlcLogger]
 
         appendDiagnostic("Registrador interno de VLC activado (DEBUG).")
