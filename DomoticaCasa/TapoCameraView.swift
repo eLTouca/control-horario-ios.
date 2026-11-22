@@ -52,8 +52,8 @@ private final class TapoVLCLogger: NSObject, VLCLogging {
 
 private final class TapoVLCDialogRenderer: NSObject, VLCCustomDialogRendererProtocol {
     weak var provider: VLCDialogProvider?
-    var credentials: (() -> (String, String))?
-    var onLoginRequest: (() -> Void)?
+    var credentials: (@MainActor () -> (String, String))?
+    var onLoginRequest: (@MainActor () -> Void)?
 
     func showError(withTitle title: String, message: String) {}
 
@@ -64,11 +64,10 @@ private final class TapoVLCDialogRenderer: NSObject, VLCCustomDialogRendererProt
         askingForStorage: Bool,
         withReference reference: NSValue
     ) {
-        let values = credentials?() ?? ("", "")
-        onLoginRequest?()
-
-        DispatchQueue.main.async { [weak self] in
-            guard let provider = self?.provider else { return }
+        Task { @MainActor [weak self] in
+            guard let self, let provider = self.provider else { return }
+            let values = self.credentials?() ?? ("", "")
+            self.onLoginRequest?()
             provider.postUsername(
                 values.0,
                 andPassword: values.1,
