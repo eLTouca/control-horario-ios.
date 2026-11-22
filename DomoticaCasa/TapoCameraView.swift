@@ -52,7 +52,7 @@ private final class TapoVLCLogger: NSObject, VLCLogging {
 
 @MainActor
 private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayerDelegate {
-    let mediaPlayer = VLCMediaPlayer()
+    @Published private(set) var mediaPlayer = VLCMediaPlayer()
     @Published var status: String = "Desconectada"
     @Published var diagnosticLog: String = ""
 
@@ -68,8 +68,8 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
             self.appendDiagnostic(message)
         }
 
-        let library = VLCLibrary.shared()
-        library.loggers = [vlcLogger]
+        mediaPlayer.delegate = self
+        mediaPlayer.libraryInstance.loggers = [vlcLogger]
 
         appendDiagnostic("Registrador interno de VLC activado (DEBUG).")
     }
@@ -140,6 +140,19 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
         status = "Conectando con la cámara..."
         appendDiagnostic("Solicitada conexión RTSP a 192.168.1.141:554/stream2")
 
+        mediaPlayer.stop()
+        let playerOptions = [
+            "--rtsp-user=\(username)",
+            "--rtsp-pwd=\(password)",
+            "--rtsp-tcp",
+            "--network-caching=1500",
+            "--avcodec-hw=none"
+        ]
+        let authenticatedPlayer = VLCMediaPlayer(options: playerOptions)
+        authenticatedPlayer.delegate = self
+        authenticatedPlayer.libraryInstance.loggers = [vlcLogger]
+        mediaPlayer = authenticatedPlayer
+
         var components = URLComponents()
         components.scheme = "rtsp"
         components.host = "192.168.1.141"
@@ -152,15 +165,6 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
         }
 
         let media = VLCMedia(url: url)
-        media.addOptions([
-            ":rtsp-user": username,
-            ":rtsp-pwd": password,
-            ":rtsp-tcp": true,
-            ":network-caching": 1500,
-            ":avcodec-hw": "none"
-        ])
-
-        mediaPlayer.stop()
         mediaPlayer.media = media
         mediaPlayer.play()
     }
