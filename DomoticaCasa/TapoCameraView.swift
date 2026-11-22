@@ -61,8 +61,6 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
     override init() {
         super.init()
 
-        mediaPlayer.delegate = self
-
         vlcLogger.onMessage = { [weak self] message in
             guard let self else { return }
             self.appendDiagnostic(message)
@@ -210,6 +208,9 @@ private struct TapoVideoSurface: UIViewRepresentable {
 
     func updateUIView(_ uiView: UIView, context: Context) {
         player.drawable = uiView
+        (uiView as? TapoVideoView)?.onAttach = { [weak player] videoView in
+            player?.drawable = videoView
+        }
     }
 
     static func dismantleUIView(_ uiView: UIView, coordinator: ()) {
