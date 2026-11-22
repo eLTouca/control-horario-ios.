@@ -50,6 +50,58 @@ private final class TapoVLCLogger: NSObject, VLCLogging {
     }
 }
 
+private final class TapoVLCDialogRenderer: NSObject, VLCCustomDialogRendererProtocol {
+    weak var provider: VLCDialogProvider?
+    var credentials: (() -> (String, String))?
+    var onLoginRequest: (() -> Void)?
+
+    func showError(withTitle title: String, message: String) {}
+
+    func showLogin(
+        withTitle title: String,
+        message: String,
+        defaultUsername: String?,
+        askingForStorage: Bool,
+        withReference reference: NSValue
+    ) {
+        let values = credentials?() ?? ("", "")
+        onLoginRequest?()
+
+        DispatchQueue.main.async { [weak self] in
+            guard let provider = self?.provider else { return }
+            provider.postUsername(
+                values.0,
+                andPassword: values.1,
+                forDialogReference: reference,
+                store: false
+            )
+        }
+    }
+
+    func showQuestion(
+        withTitle title: String,
+        message: String,
+        type: VLCDialogQuestionType,
+        cancelString: String?,
+        action1String: String?,
+        action2String: String?,
+        withReference reference: NSValue
+    ) {}
+
+    func showProgress(
+        withTitle title: String,
+        message: String,
+        isIndeterminate: Bool,
+        position: Float,
+        cancelString: String?,
+        withReference reference: NSValue
+    ) {}
+
+    func updateProgress(withReference reference: NSValue, message: String?, position: Float) {}
+
+    func cancelDialog(withReference reference: NSValue) {}
+}
+
 @MainActor
 private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayerDelegate {
     let mediaPlayer = VLCMediaPlayer()
@@ -57,9 +109,25 @@ private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayer
     @Published var diagnosticLog: String = ""
 
     private let vlcLogger = TapoVLCLogger()
+    private var dialogProvider: VLCDialogProvider?
+    private var dialogRenderer: TapoVLCDialogRenderer?
 
     override init() {
         super.init()
+
+        let renderer = TapoVLCDialogRenderer()
+        let provider = VLCDialogProvider(library: VLCLibrary.shared(), customUI: true)
+        renderer.provider = provider
+        renderer.credentials = { [weak self] in
+            guard let self else { return ("", "") }
+            return (self.usernameForLog, self.passwordForLog)
+        }
+        renderer.onLoginRequest = { [weak self] in
+            self?.appendDiagnostic("VLC ha solicitado credenciales RTSP; se entregan las guardadas en la app.")
+        }
+        provider?.customRenderer = renderer
+        dialogRenderer = renderer
+        dialogProvider = provider
 
         vlcLogger.onMessage = { [weak self] message in
             guard let self else { return }
