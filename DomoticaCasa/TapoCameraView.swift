@@ -37,117 +37,139 @@ private enum TapoCameraCredentials {
     }
 }
 
+
+private final class TapoVLCLogger: NSObject, VLCLogging {
+    var level: VLCLogLevel = kVLCLogLevelDebug
+    var onMessage: ((String) -> Void)?
+
+    func handleMessage(_ message: String, logLevel: VLCLogLevel, context: VLCLogContext?) {
+        let line = message
+        DispatchQueue.main.async { [weak self] in
+            self?.onMessage?(line)
+        }
+    }
+}
+
 @MainActor
 private final class TapoCameraPlayer: NSObject, ObservableObject, VLCMediaPlayerDelegate {
     let mediaPlayer = VLCMediaPlayer()
-    @Published private(set) var status = "Desconectada"
+    @Published var status: String = "Desconectada"
+    @Published var diagnosticLog: String = ""
+
+    private let vlcLogger = TapoVLCLogger()
 
     override init() {
         super.init()
+
         mediaPlayer.delegate = self
+
+        vlcLogger.onMessage = { [weak self] message in
+            guard let self else { return }
+            self.appendDiagnostic(message)
+        }
+
+        let library = VLCLibrary.sharedLibrary()
+        library.loggers = [vlcLogger]
+
+        appendDiagnostic("Registrador interno de VLC activado (DEBUG).")
+    }
+
+    private func appendDiagnostic(_ message: String) {
+        var safeMessage = message
+
+        if !usernameForLog.isEmpty {
+            safeMessage = safeMessage.replacingOccurrences(
+                of: usernameForLog, with: "[usuario oculto]"
+            )
+        }
+
+        if !passwordForLog.isEmpty {
+            safeMessage = safeMessage.replacingOccurrences(
+                of: passwordForLog, with: "[contraseña oculta]"
+            )
+        }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+
+        let line = "[\(formatter.string(from: Date()))] \(safeMessage)"
+        diagnosticLog += line + "\n"
+
+        if diagnosticLog.count > 14000 {
+            diagnosticLog = String(diagnosticLog.suffix(12000))
+        }
+    }
+
+    private var usernameForLog = ""
+    private var passwordForLog = ""
+
+    nonisolated func mediaPlayerStateChanged(_ aNotification: Notification!) {
+        guard let player = aNotification.object as? VLCMediaPlayer else { return }
+        let currentState = player.state
+
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
+
+            switch currentState {
+            case .opening:
+                self.status = "Abriendo conexión con la cámara..."
+            case .buffering:
+                self.status = "Conexión abierta: cargando vídeo..."
+            case .playing:
+                self.status = "Reproduciendo cámara"
+            case .error:
+                self.status = "ERROR de VLC: no se pudo reproducir el vídeo"
+            case .ended:
+                self.status = "La transmisión ha terminado"
+            case .paused:
+                self.status = "Reproducción pausada"
+            case .stopped:
+                self.status = "Reproductor detenido"
+            default:
+                self.status = "Estado VLC: \(currentState.rawValue)"
+            }
+
+            self.appendDiagnostic("Estado del reproductor: \(currentState.rawValue)")
+        }
     }
 
     func play(username: String, password: String) {
-        guard !username.isEmpty, !password.isEmpty else {
-            status = "Faltan las credenciales de la cámara"
-            return
-        }
+        usernameForLog = username
+        passwordForLog = password
 
-        status = "Preparando conexión RTSP…"
+        status = "Conectando con la cámara..."
+        appendDiagnostic("Solicitada conexión RTSP a 192.168.1.141:554/stream2")
 
-        // VLC debe tener una sesión de audio válida en iPadOS.
-        do {
-            let audio = AVAudioSession.sharedInstance()
-            try audio.setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers])
-            try audio.setActive(true)
-        } catch {
-            status = "No se pudo activar el audio: \(error.localizedDescription)"
-        }
-
-        // Las credenciales se pasan como opciones RTSP para evitar problemas
-        // con caracteres especiales en el usuario o la contraseña de la URL.
         var components = URLComponents()
         components.scheme = "rtsp"
         components.host = "192.168.1.141"
         components.port = 554
         components.path = "/stream2"
+
         guard let url = components.url else {
-            status = "Dirección RTSP no válida"
+            appendDiagnostic("ERROR: No se pudo construir la dirección RTSP.")
             return
         }
 
         let media = VLCMedia(url: url)
         media.addOptions([
-            ":rtsp-user": username,
-            ":rtsp-pwd": password,
-            ":rtsp-tcp": NSNull(),
-            ":avcodec-hw": "none",
-            ":verbose": 2,
-            ":network-caching": 1500,
-            ":live-caching": 1500
+            "rtsp-tcp": true,
+            "rtsp-user": username,
+            "rtsp-pwd": password,
+            "network-caching": 1500,
+            "avcodec-hw": "none"
         ])
 
-        // No detener un reproductor que ya está parado: VLC puede emitir una
-        // notificación tardía que sobrescriba el estado de este nuevo intento.
-        if mediaPlayer.state != .stopped {
-            mediaPlayer.stop()
-        }
+        mediaPlayer.stop()
         mediaPlayer.media = media
-        status = "Conectando con 192.168.1.141…"
         mediaPlayer.play()
     }
 
     func stop() {
+        appendDiagnostic("Se ha solicitado detener el reproductor.")
+        status = "Desconectada"
         mediaPlayer.stop()
         mediaPlayer.drawable = nil
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        status = "Desconectada"
-    }
-
-    func mediaPlayerStateChanged(_ aNotification: Notification!) {
-        let playerState = mediaPlayer.state
-        let stateName: String
-        switch playerState {
-        case .stopped: stateName = "stopped"
-        case .opening: stateName = "opening"
-        case .buffering: stateName = "buffering"
-        case .playing: stateName = "playing"
-        case .paused: stateName = "paused"
-        case .error: stateName = "error"
-        case .ended: stateName = "ended"
-        @unknown default: stateName = "unknown"
-        }
-        NSLog("DomoticaCasa Tapo VLC state: %@ (%ld)", stateName, playerState.rawValue)
-
-        // No se descartan estados: necesitamos ver también el estado final
-        // que VLC comunica después de abrir y almacenar el flujo.
-
-        let newStatus: String
-        switch playerState {
-        case .opening:
-            newStatus = "Abriendo conexión con la cámara…"
-        case .buffering:
-            newStatus = "Recibiendo vídeo…"
-        case .playing:
-            newStatus = "Flujo RTSP recibido · VLC reproduciendo"
-        case .paused:
-            newStatus = "Reproducción pausada"
-        case .error:
-            newStatus = "VLC ha notificado un error de reproducción (estado 7). No confirma un problema de contraseña."
-        case .ended:
-            newStatus = "La cámara ha terminado el flujo"
-        case .stopped:
-            newStatus = "VLC ha detenido el flujo (estado 0)."
-        @unknown default:
-            newStatus = "Estado de cámara: \(mediaPlayer.state.rawValue)"
-        }
-        DispatchQueue.main.async { [weak self] in
-            self?.status = newStatus
-        }
-    }
-
-    func mediaPlayerTimeChanged(_ aNotification: Notification!) {
-        // El estado de reproducción se comunica mediante mediaPlayerStateChanged.
     }
 }
 
@@ -228,6 +250,35 @@ struct TapoCameraView: View {
                     .disabled(username.isEmpty || password.isEmpty)
                     Text(camera.status)
                         .font(.caption).foregroundStyle(AppTheme.muted)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Diagnóstico de VLC")
+                                .font(.headline)
+                            Spacer()
+                            Button {
+                                UIPasteboard.general.string = camera.diagnosticLog
+                            } label: {
+                                Label("Copiar", systemImage: "doc.on.doc")
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(camera.diagnosticLog.isEmpty)
+                        }
+
+                        ScrollView {
+                            Text(camera.diagnosticLog.isEmpty
+                                 ? "Esperando mensajes de VLC..."
+                                 : camera.diagnosticLog)
+                                .font(.system(.caption2, design: .monospaced))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .textSelection(.enabled)
+                                .padding(8)
+                        }
+                        .frame(height: 170)
+                        .background(.black.opacity(0.07))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+
                 }
                 .frame(maxWidth: 620, alignment: .leading)
                 Spacer(minLength: 0)
