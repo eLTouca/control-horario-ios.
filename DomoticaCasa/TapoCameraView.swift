@@ -39,7 +39,7 @@ private enum TapoCameraCredentials {
 
 
 private final class TapoVLCLogger: NSObject, VLCLogging {
-    var level: VLCLogLevel = kVLCLogLevelDebug
+    var level: VLCLogLevel = .debug
     var onMessage: ((String) -> Void)?
 
     func handleMessage(_ message: String, logLevel: VLCLogLevel, context: VLCLogContext?) {
