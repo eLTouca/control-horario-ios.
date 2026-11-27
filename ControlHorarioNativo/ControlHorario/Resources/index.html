@@ -1293,6 +1293,40 @@
       /* highlight as quick access */
     }
 
+
+    /* ===== ASISTENCIA Y VACACIONES ===== */
+    #panel-asistencia .asistencia-calendar { padding:1rem; }
+    #panel-asistencia .asistencia-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+    #panel-asistencia .asistencia-day { min-height:54px; border:1px solid var(--border); border-radius:10px; background:var(--card); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:3px 1px; color:var(--text); font:inherit; cursor:pointer; }
+    #panel-asistencia .asistencia-day .day-num { font-weight:700; font-size:.86rem; }
+    #panel-asistencia .asistencia-day small { font-size:.56rem; line-height:1.05; font-weight:700; }
+    #panel-asistencia .asistencia-day.asistido { background:#dcfce7; border-color:#86efac; color:#166534; }
+    #panel-asistencia .asistencia-day.vacaciones { background:var(--vacaciones-color,#f59e0b); border-color:var(--vacaciones-color,#f59e0b); color:#422006; }
+    #panel-asistencia .asistencia-day.festivo { background:#e0e7ff; border-color:#a5b4fc; color:#3730a3; }
+    #panel-asistencia .asistencia-day.hoy { outline:2px solid var(--primary); outline-offset:1px; }
+    #panel-asistencia .asistencia-day.empty { visibility:hidden; pointer-events:none; }
+    .asistencia-leyenda { display:flex; flex-wrap:wrap; gap:.55rem .9rem; margin-top:.85rem; font-size:.7rem; color:var(--text-secondary); }
+    .asistencia-leyenda span { display:inline-flex; align-items:center; gap:.3rem; }
+    .asistencia-leyenda i { width:11px; height:11px; border-radius:3px; display:inline-block; }
+    .asistencia-resumen { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.55rem; margin:.8rem 0; }
+    .asistencia-resumen > div { background:var(--bg-pattern); border:1px solid var(--border); border-radius:12px; padding:.7rem .35rem; text-align:center; min-width:0; }
+    .asistencia-resumen strong { display:block; font-size:1.15rem; }
+    .asistencia-resumen span { display:block; color:var(--text-secondary); font-size:.62rem; line-height:1.2; }
+    .asistencia-modal[hidden] { display:none !important; }
+    .asistencia-modal { position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.48); display:flex; align-items:flex-end; justify-content:center; padding:1rem; }
+    .asistencia-modal-sheet { width:min(100%,480px); background:var(--card); color:var(--text); border-radius:20px; padding:1.1rem; box-shadow:var(--shadow-lg); }
+    .asistencia-modal-sheet h3 { margin-bottom:.8rem; }
+    .asistencia-modal-sheet label { display:block; font-size:.72rem; color:var(--text-secondary); font-weight:700; margin:.7rem 0 .25rem; }
+    .asistencia-modal-sheet input,.asistencia-modal-sheet select { width:100%; min-height:44px; border:1px solid var(--border); border-radius:10px; padding:.55rem .7rem; background:var(--bg); color:var(--text); font:inherit; }
+    .asistencia-modal-actions { display:flex; gap:.5rem; justify-content:flex-end; flex-wrap:wrap; margin-top:1rem; }
+    .vacaciones-config { border:1.5px solid #f59e0b; border-radius:14px; padding:1rem; background:linear-gradient(145deg,#fffbeb,#fff); margin:1rem 0; }
+    .vacaciones-config h3 { color:#92400e; font-size:.95rem; margin-bottom:.35rem; }
+    .vacaciones-config p { color:#78350f; font-size:.75rem; margin-bottom:.75rem; }
+    .vacaciones-config .form-row { margin-bottom:.5rem; }
+    .vacaciones-color-row { display:flex; align-items:center; gap:.75rem; }
+    .vacaciones-color-row input[type=color] { width:58px; height:44px; padding:3px; border:1px solid #d97706; border-radius:9px; background:white; }
+    @media(max-width:360px) { #panel-asistencia .asistencia-grid { gap:3px; } #panel-asistencia .asistencia-day { min-height:48px; } }
+
     /* ===== CALENDARIO ===== */
     #panel-calendario .card {
       overflow: hidden;
@@ -1962,6 +1996,7 @@
     <p>Registro · PDF · Nómina</p>
     <nav>
       <button class="nav-btn active" data-panel="horas">Horas</button>
+      <button class="nav-btn" data-panel="asistencia">Asistencia</button>
       <button class="nav-btn" data-panel="ubicacion">Ubicación</button>
       <button class="nav-btn" data-panel="nomina">Nómina</button>
       <button class="nav-btn" data-panel="pdf">PDF</button>
@@ -2306,6 +2341,37 @@
       </div>
     </section>
 
+
+    <!-- PANEL ASISTENCIA -->
+    <section id="panel-asistencia" class="panel">
+      <div class="card asistencia-calendar">
+        <div class="cal-header">
+          <button type="button" class="cal-nav-btn" id="asistencia-prev" aria-label="Mes anterior">‹</button>
+          <h3 id="asistencia-titulo">Mes</h3>
+          <button type="button" class="cal-nav-btn" id="asistencia-next" aria-label="Mes siguiente">›</button>
+        </div>
+        <div class="asistencia-grid" id="asistencia-grid"></div>
+        <div class="asistencia-leyenda">
+          <span><i style="background:#dcfce7;border:1px solid #86efac"></i> Asistencia</span>
+          <span><i id="asistencia-leyenda-vacaciones" style="background:#f59e0b"></i> Vacaciones</span>
+          <span><i style="background:#e0e7ff;border:1px solid #a5b4fc"></i> Festivo</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Resumen de asistencia</h2>
+        <div class="asistencia-resumen">
+          <div><strong id="asistencia-dias">0</strong><span>Días asistidos</span></div>
+          <div><strong id="asistencia-horas">0 h</strong><span>Horas registradas</span></div>
+          <div><strong id="asistencia-vacaciones-usadas">0</strong><span>Vacaciones disfrutadas</span></div>
+        </div>
+        <div class="lista-resumen">
+          <span>Vacaciones disponibles: <strong id="asistencia-vacaciones-restantes">22 días</strong></span>
+          <span>Festivos locales: <strong>Cambados</strong></span>
+        </div>
+        <p class="note">La asistencia se registra al detectar la entrada y salida de tu zona de trabajo. Puedes corregir cualquier día manualmente pulsándolo en el calendario.</p>
+      </div>
+    </section>
+
     <!-- PANEL CONFIG -->
     <!-- PANEL UBICACIÓN -->
     <section id="panel-ubicacion" class="panel">
@@ -2440,6 +2506,21 @@
             <input type="number" id="config-periodo-fin" min="1" max="31" step="1" inputmode="numeric" />
           </div>
         </div>
+
+        <section class="vacaciones-config">
+          <h3>🏖️ Configuración de vacaciones</h3>
+          <p>Este ajuste solo cambia el color con el que se identifican tus vacaciones en el calendario de Asistencia.</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="config-vacaciones-color">Color de los días de vacaciones</label>
+              <div class="vacaciones-color-row"><input type="color" id="config-vacaciones-color" value="#f59e0b"><span id="config-vacaciones-color-text">#F59E0B</span></div>
+            </div>
+            <div class="form-group">
+              <label for="config-vacaciones-total">Días de vacaciones al año</label>
+              <input type="number" id="config-vacaciones-total" min="0" max="60" step="1" value="22">
+            </div>
+          </div>
+        </section>
         <button class="btn btn-primary" id="btn-guardar-config">Guardar configuración</button>
       </div>
 
@@ -2467,6 +2548,26 @@
         </div>
       </div>
 
+
+  <div class="asistencia-modal" id="asistencia-modal" role="dialog" aria-modal="true" aria-labelledby="asistencia-modal-title" hidden>
+    <div class="asistencia-modal-sheet">
+      <h3 id="asistencia-modal-title">Editar asistencia</h3>
+      <label for="asistencia-estado">Estado del día</label>
+      <select id="asistencia-estado">
+        <option value="asistido">Asistido</option>
+        <option value="vacaciones">Vacaciones</option>
+        <option value="festivo">Festivo / no laborable</option>
+        <option value="ausencia">No asistido</option>
+      </select>
+      <label for="asistencia-horas-manual">Horas trabajadas</label>
+      <input type="number" id="asistencia-horas-manual" min="0" max="24" step="0.25" inputmode="decimal" placeholder="Ej. 8">
+      <div class="asistencia-modal-actions">
+        <button type="button" class="btn btn-outline" id="asistencia-cancelar">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="asistencia-guardar">Guardar día</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -2475,12 +2576,20 @@
     const CONFIG_KEY = 'controlHorasConfig_v1';
 
     let registros = [];
+    const ASISTENCIA_KEY = 'controlHorarioAsistencia_v1';
+    let asistenciaDias = {};
+    let asistenciaMes = new Date().getMonth();
+    let asistenciaAnio = new Date().getFullYear();
+    let fechaAsistenciaEditando = null;
+    let asistenciaEntradaActiva = null;
     let config = {
       nombre: '',
       empresa: '',
       periodoInicio: 21,
       periodoFin: 20,
       objetivoHoras: 40,
+      vacacionesColor: '#f59e0b',
+      vacacionesAnuales: 22,
       precioHora: 23.93,
       sueldoBase: 1860.37,
       nominaPagas: 14,
@@ -2519,6 +2628,7 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         registros = raw ? JSON.parse(raw) : [];
       } catch { registros = []; }
+      try { asistenciaDias = JSON.parse(localStorage.getItem(ASISTENCIA_KEY) || '{}') || {}; } catch { asistenciaDias = {}; }
 
       try {
         const rawC = localStorage.getItem(CONFIG_KEY);
@@ -2723,6 +2833,110 @@
     document.getElementById('dashboard-cal-prev').addEventListener('click', () => cambiarMesCalendario(-1));
     document.getElementById('dashboard-cal-next').addEventListener('click', () => cambiarMesCalendario(1));
 
+
+    // ========== ASISTENCIA ==========
+    const FESTIVOS_CAMBADOS_2026 = new Set(['2026-02-16','2026-07-11']);
+    function guardarAsistencia() {
+      localStorage.setItem(ASISTENCIA_KEY, JSON.stringify(asistenciaDias));
+      scheduleBackupUpdate();
+      renderAsistencia();
+    }
+    function esFestivoCambados(fecha) {
+      return fecha.startsWith('2026-') && FESTIVOS_CAMBADOS_2026.has(fecha);
+    }
+    function renderAsistencia() {
+      const grid = document.getElementById('asistencia-grid');
+      if (!grid) return;
+      const prefix = asistenciaAnio + '-' + String(asistenciaMes + 1).padStart(2,'0');
+      document.getElementById('asistencia-titulo').textContent = MESES[asistenciaMes] + ' ' + asistenciaAnio;
+      const first = new Date(asistenciaAnio, asistenciaMes, 1);
+      let offset = first.getDay() - 1; if (offset < 0) offset = 6;
+      const count = new Date(asistenciaAnio, asistenciaMes + 1, 0).getDate();
+      let out = DIAS_SEM.map(d => '<div class="cal-weekday">' + d + '</div>').join('');
+      for (let i=0;i<offset;i++) out += '<div class="asistencia-day empty"></div>';
+      let dias=0, horas=0, vacaciones=0;
+      for (let day=1;day<=count;day++) {
+        const fecha=prefix+'-'+String(day).padStart(2,'0');
+        const item=asistenciaDias[fecha] || {};
+        const festivo=esFestivoCambados(fecha) || item.estado==='festivo';
+        const estado=item.estado || (festivo?'festivo':'');
+        const cls=['asistencia-day'];
+        if (estado==='asistido') { cls.push('asistido'); dias++; horas += Number(item.horas)||0; }
+        if (estado==='vacaciones') { cls.push('vacaciones'); vacaciones++; }
+        if (estado==='festivo') cls.push('festivo');
+        if (fecha===hoy()) cls.push('hoy');
+        const label=estado==='asistido' ? (Number(item.horas||0).toLocaleString('es-ES')+' h') : estado==='vacaciones'?'Vac.':estado==='festivo'?'Festivo':'';
+        out += '<button type="button" class="'+cls.join(' ')+'" data-asistencia-fecha="'+fecha+'" title="'+(estado||'Editar día')+'"><span class="day-num">'+day+'</span><small>'+label+'</small></button>';
+      }
+      grid.innerHTML=out;
+      const color=config.vacacionesColor||'#f59e0b';
+      document.documentElement.style.setProperty('--vacaciones-color',color);
+      const legend=document.getElementById('asistencia-leyenda-vacaciones'); if(legend) legend.style.background=color;
+      const yearPrefix=String(asistenciaAnio)+'-';
+      const vacationUsed=Object.keys(asistenciaDias).filter(f=>f.startsWith(yearPrefix)&&asistenciaDias[f]?.estado==='vacaciones').length;
+      document.getElementById('asistencia-dias').textContent=dias;
+      document.getElementById('asistencia-horas').textContent=formatNum(horas,1)+' h';
+      document.getElementById('asistencia-vacaciones-usadas').textContent=vacationUsed;
+      document.getElementById('asistencia-vacaciones-restantes').textContent=Math.max(0,(Number(config.vacacionesAnuales)||0)-vacationUsed)+' días';
+      grid.querySelectorAll('[data-asistencia-fecha]').forEach(btn=>btn.addEventListener('click',()=>abrirEditorAsistencia(btn.dataset.asistenciaFecha)));
+    }
+    function abrirEditorAsistencia(fecha) {
+      fechaAsistenciaEditando=fecha;
+      const item=asistenciaDias[fecha]||{};
+      document.getElementById('asistencia-modal-title').textContent='Asistencia · '+formatFecha(fecha);
+      document.getElementById('asistencia-estado').value=item.estado||(esFestivoCambados(fecha)?'festivo':'ausencia');
+      document.getElementById('asistencia-horas-manual').value=item.horas??'';
+      document.getElementById('asistencia-modal').hidden=false;
+    }
+    function cerrarEditorAsistencia() {
+      document.getElementById('asistencia-modal').hidden=true;
+      fechaAsistenciaEditando=null;
+    }
+    function registrarEntradaAsistencia(timestamp) {
+      const date=new Date(timestamp);
+      const fecha=hoyFecha(date);
+      const existing=asistenciaDias[fecha]||{};
+      asistenciaEntradaActiva={fecha,inicio:timestamp};
+      if(existing.origen==='manual') return;
+      asistenciaDias[fecha]={...existing,estado:'asistido',inicio:timestamp,origen:'gps',horas:Number(existing.horas)||0};
+      guardarAsistencia();
+    }
+    function registrarSalidaAsistencia(timestamp) {
+      if(!asistenciaEntradaActiva) return;
+      const fecha=asistenciaEntradaActiva.fecha;
+      const existing=asistenciaDias[fecha]||{};
+      const elapsed=Math.max(0,(timestamp-asistenciaEntradaActiva.inicio)/3600);
+      if(existing.origen!=='manual') {
+        asistenciaDias[fecha]={...existing,estado:'asistido',fin:timestamp,horas:Math.round(elapsed*100)/100,origen:'gps'};
+        guardarAsistencia();
+      }
+      asistenciaEntradaActiva=null;
+    }
+    function cambiarMesAsistencia(delta) {
+      asistenciaMes+=delta;
+      if(asistenciaMes<0){asistenciaMes=11;asistenciaAnio--;}
+      if(asistenciaMes>11){asistenciaMes=0;asistenciaAnio++;}
+      renderAsistencia();
+    }
+    document.getElementById('asistencia-prev').addEventListener('click',()=>cambiarMesAsistencia(-1));
+    document.getElementById('asistencia-next').addEventListener('click',()=>cambiarMesAsistencia(1));
+    document.getElementById('asistencia-cancelar').addEventListener('click',cerrarEditorAsistencia);
+    document.getElementById('asistencia-modal').addEventListener('click',e=>{if(e.target.id==='asistencia-modal')cerrarEditorAsistencia();});
+    document.getElementById('asistencia-guardar').addEventListener('click',()=>{
+      if(!fechaAsistenciaEditando)return;
+      const estado=document.getElementById('asistencia-estado').value;
+      const horas=Math.max(0,Number(document.getElementById('asistencia-horas-manual').value)||0);
+      if(estado==='ausencia') delete asistenciaDias[fechaAsistenciaEditando];
+      else asistenciaDias[fechaAsistenciaEditando]={estado,horas:estado==='asistido'?horas:0,origen:'manual'};
+      guardarAsistencia(); cerrarEditorAsistencia(); toast('Asistencia actualizada');
+    });
+    const colorVacaciones=document.getElementById('config-vacaciones-color');
+    colorVacaciones.addEventListener('input',()=>{
+      document.getElementById('config-vacaciones-color-text').textContent=colorVacaciones.value.toUpperCase();
+      document.documentElement.style.setProperty('--vacaciones-color',colorVacaciones.value);
+      const legend=document.getElementById('asistencia-leyenda-vacaciones'); if(legend)legend.style.background=colorVacaciones.value;
+    });
+
     // ========== DESLIZAMIENTO FLUIDO ENTRE PESTAÑAS ==========
     (function() {
       let inicioX = 0, inicioY = 0, panelArrastrado = null;
@@ -2904,6 +3118,7 @@
         if (btn.dataset.panel === 'calendario') {
           renderCalendario();
         }
+        if (btn.dataset.panel === 'asistencia') renderAsistencia();
       });
     });
 
@@ -4414,6 +4629,7 @@
       // No reiniciar lastTick al reabrir: así se recupera todo el intervalo
       // aunque iOS haya suspendido la WebView durante horas.
       if (state === 'state-inside') {
+        registrarEntradaAsistencia(eventTime * 1000);
         // If the app was relaunched while already inside, account for the
         // elapsed interval before updating the last processed timestamp.
         if (geoState.inside && geoState.lastTick) {
@@ -4425,18 +4641,21 @@
           saveGeoState();
         }
       } else if (state === 'state-outside') {
+        registrarSalidaAsistencia(eventTime * 1000);
         if (geoState.inside) tickGeoTiempo(eventTime);
         geoState.inside = false;
         if (!geoState.lastTick || eventTime > geoState.lastTick) geoState.lastTick = eventTime;
         saveGeoState();
         sincronizarHorasExtraRegistro(hoyFecha(new Date(eventTime)));
       } else if (state === 'enter' && !geoState.inside) {
+        registrarEntradaAsistencia(eventTime * 1000);
         prepararDiaGeo(hoyFecha(new Date(eventTime)));
         geoState.inside = true;
         geoState.lastTick = eventTime;
         saveGeoState();
         toast('Entrada detectada en ' + (config.geo.nombre || 'el centro'));
       } else if (state === 'exit' && geoState.inside) {
+        registrarSalidaAsistencia(eventTime * 1000);
         tickGeoTiempo(eventTime);
         geoState.inside = false;
         saveGeoState();
@@ -4547,7 +4766,10 @@
       }
       config.periodoInicio = inicioPeriodo;
       config.periodoFin = finPeriodo;
+      config.vacacionesColor = document.getElementById('config-vacaciones-color').value || '#f59e0b';
+      config.vacacionesAnuales = Math.max(0, Math.min(60, Number(document.getElementById('config-vacaciones-total').value) || 0));
       saveConfig();
+      renderAsistencia();
       actualizarStats();
       rellenarHorasPeriodo20();
       renderLista();
@@ -4664,6 +4886,8 @@
     actualizarStats();
     renderLista();
     renderCalendario();
+    renderAsistencia();
+    document.documentElement.style.setProperty('--vacaciones-color', config.vacacionesColor || '#f59e0b');
   
     // ========== MODO RÁPIDO / PWA ==========
     function actualizarVistaRapido() {
