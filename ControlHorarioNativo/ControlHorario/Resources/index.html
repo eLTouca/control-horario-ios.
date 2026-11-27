@@ -2629,6 +2629,7 @@
         registros = raw ? JSON.parse(raw) : [];
       } catch { registros = []; }
       try { asistenciaDias = JSON.parse(localStorage.getItem(ASISTENCIA_KEY) || '{}') || {}; } catch { asistenciaDias = {}; }
+      try { asistenciaEntradaActiva = JSON.parse(localStorage.getItem('controlHorarioAsistenciaEntrada_v1') || 'null'); } catch { asistenciaEntradaActiva = null; }
 
       try {
         const rawC = localStorage.getItem(CONFIG_KEY);
@@ -2656,7 +2657,7 @@
         if (window.webkit?.messageHandlers?.backup) {
           window.webkit.messageHandlers.backup.postMessage({
             action: 'update',
-            data: JSON.stringify({ registros, config })
+            data: JSON.stringify({ registros, config, asistenciaDias, asistenciaEntradaActiva })
           });
         }
       }, 600);
@@ -2838,6 +2839,7 @@
     const FESTIVOS_CAMBADOS_2026 = new Set(['2026-02-16','2026-07-11']);
     function guardarAsistencia() {
       localStorage.setItem(ASISTENCIA_KEY, JSON.stringify(asistenciaDias));
+      localStorage.setItem('controlHorarioAsistenciaEntrada_v1', JSON.stringify(asistenciaEntradaActiva));
       scheduleBackupUpdate();
       renderAsistencia();
     }
@@ -2896,7 +2898,10 @@
       const date=new Date(timestamp);
       const fecha=hoyFecha(date);
       const existing=asistenciaDias[fecha]||{};
-      asistenciaEntradaActiva={fecha,inicio:timestamp};
+      if (!asistenciaEntradaActiva) {
+        asistenciaEntradaActiva={fecha,inicio:timestamp};
+        localStorage.setItem('controlHorarioAsistenciaEntrada_v1', JSON.stringify(asistenciaEntradaActiva));
+      }
       if(existing.origen==='manual') return;
       asistenciaDias[fecha]={...existing,estado:'asistido',inicio:timestamp,origen:'gps',horas:Number(existing.horas)||0};
       guardarAsistencia();
@@ -2911,6 +2916,7 @@
         guardarAsistencia();
       }
       asistenciaEntradaActiva=null;
+      localStorage.removeItem('controlHorarioAsistenciaEntrada_v1');
     }
     function cambiarMesAsistencia(delta) {
       asistenciaMes+=delta;
@@ -4778,7 +4784,7 @@
     });
 
     document.getElementById('btn-exportar').addEventListener('click', () => {
-      const data = JSON.stringify({ registros, config }, null, 2);
+      const data = JSON.stringify({ registros, config, asistenciaDias, asistenciaEntradaActiva }, null, 2);
       if (window.webkit?.messageHandlers?.backup) {
         window.webkit.messageHandlers.backup.postMessage({ action: 'confirm', data });
         return;
@@ -4804,6 +4810,8 @@
           const data = JSON.parse(reader.result);
           if (data.registros) registros = data.registros;
           if (data.config) config = { ...config, ...data.config };
+          if (data.asistenciaDias) asistenciaDias = data.asistenciaDias;
+          if (data.asistenciaEntradaActiva !== undefined) asistenciaEntradaActiva = data.asistenciaEntradaActiva;
           saveData();
           saveConfig();
           actualizarStats();
